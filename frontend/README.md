@@ -1,118 +1,129 @@
-# QnA Frontend
+# Axon Frontend
 
-A modern React-based frontend for the AI-Powered Document Q&A System.
+A modern React-based frontend for the Axon AI-Powered Document & Database Intelligence Platform.
 
 ## 🚀 Features
 
-- **React 19** with TypeScript for type safety
-- **Vite** for fast development and building
-- **Modern UI** with responsive design
-- **Real-time chat interface** for document Q&A
-- **File upload** with drag-and-drop support
-- **Authentication** with login/register flows
+- **Multi-Model AI Chat** – Interact with Gemini 2.0 Flash or GPT-4o
+- **Document Upload** – PDF upload with drag-and-drop support
+- **Database Connectivity** – Connect to external SQL databases or upload SQLite files
+- **Schema Visualization** – Interactive Mermaid diagrams for database schemas
+- **SQL Query Editor** – Monaco Editor with syntax highlighting
+- **Export Options** – Export conversations to DOCX/ZIP, SQL results to XLSX
+- **Message Actions** – Copy, like, dislike, report messages with source citations
+- **Smooth Animations** – GSAP hero treatments and Framer Motion transitions
 
-## 🛠️ Tech Stack
+## ��️ Tech Stack
 
-- **React 19** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **ESLint** - Code linting
-- **Tailwind CSS** - Styling (if configured)
+| Technology | Purpose |
+|------------|---------|
+| **React 19** | UI framework |
+| **TypeScript** | Type safety |
+| **Vite** | Build tool and dev server |
+| **TailwindCSS 4** | Styling |
+| **Framer Motion** | Animations |
+| **GSAP** | Hero animations |
+| **Monaco Editor** | SQL query editor |
+| **Mermaid** | Database schema diagrams |
 
 ## 📦 Installation
 
-1. **Navigate to frontend directory:**
-   ```bash
-   cd frontend
-   ```
+```bash
+# Navigate to frontend directory
+cd frontend
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+# Install dependencies
+npm install
 
-3. **Start development server:**
-   ```bash
-   npm run dev
-   ```
+# Create environment file
+echo "VITE_API_BASE_URL=http://localhost:8000/api" > .env
 
-4. **Build for production:**
-   ```bash
-   npm run build
-   ```
-
-5. **Preview production build:**
-   ```bash
-   npm run preview
-   ```
+# Start development server
+npm run dev
+```
 
 ## 🔧 Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server (http://localhost:5173) |
+| `npm run build` | Build for production |
+| `npm run lint` | Run ESLint |
+| `npm run preview` | Preview production build |
 
-## 🌐 Development
-
-The development server will start on `http://localhost:5173` by default.
-
-### Project Structure
+## 📁 Project Structure
 
 ```
 frontend/
-├── public/           # Static assets
-├── src/             # Source code
-│   ├── components/  # React components
-│   ├── pages/       # Page components
-│   ├── hooks/       # Custom hooks
-│   ├── utils/       # Utility functions
-│   └── types/       # TypeScript types
-├── index.html       # Main HTML file
-├── package.json     # Dependencies and scripts
-├── tsconfig.json    # TypeScript configuration
-├── vite.config.ts   # Vite configuration
-└── eslint.config.js # ESLint configuration
+├── public/              # Static assets (images, icons)
+├── src/
+│   ├── components/
+│   │   ├── AuthModal.tsx              # Login/Register modal
+│   │   ├── Canvas.tsx                 # SQL results & schema view
+│   │   ├── ChatDisplay.tsx            # Message rendering with actions
+│   │   ├── DatabaseConnectionModal.tsx # DB connection form
+│   │   ├── InputSection.tsx           # Chat input with file upload
+│   │   ├── MainPanel.tsx              # Main content area with settings
+│   │   ├── SchemaDiagram.tsx          # Mermaid schema visualization
+│   │   └── Sidebar.tsx                # Conversation list
+│   ├── services/
+│   │   └── chatApi.ts                 # API client (auth, chat, export)
+│   ├── types/
+│   │   ├── mermaid.d.ts
+│   │   └── speech.d.ts
+│   ├── App.tsx                        # Root component
+│   ├── main.tsx                       # Entry point
+│   └── index.css                      # Global styles
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── vercel.json                        # Vercel deployment config
 ```
+
+## 🎨 Design System
+
+- **Primary Color**: `#2563eb` (Blue-600)
+- **Background**: Dark theme with slate tones
+- **Font**: System font stack
+- **Animations**: Smooth transitions with Framer Motion
 
 ## 🔗 Backend Integration
 
-This frontend communicates with the Django backend API. Make sure the backend is running on the configured API endpoint.
+The frontend communicates with the Django backend API. Ensure the backend is running at the configured `VITE_API_BASE_URL`.
 
-## 📝 Environment Variables
+### Key API Endpoints Used
 
-Create a `.env` file in the frontend root if needed:
+- `/auth/*` – Authentication (login, register, logout)
+- `/chat/` – Send messages
+- `/conversations/*` – Manage conversations
+- `/documents/*` – Manage uploaded documents
+- `/database/*` – Database operations
+- `/models/*` – AI model selection
 
-```env
-VITE_API_BASE_URL=http://localhost:8000/api
+## 🌐 Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:8000/api` |
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. Connect your GitHub repository to Vercel
+2. Set environment variable: `VITE_API_BASE_URL=https://your-backend-url/api`
+3. Deploy
+
+The `vercel.json` is pre-configured for SPA routing.
+
+### Manual Build
+
+```bash
+npm run build
+# Deploy the `dist/` folder to your static hosting
 ```
 
-## 🤝 Contributing
+## 📝 License
 
-1. Follow the existing code style
-2. Run `npm run lint` before committing
-3. Test your changes thoroughly
-4. Update documentation as needed
-
-## 📄 License
-
-This project is part of the QnA system. See main project license for details.
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Part of the Axon project. See main project license for details.
