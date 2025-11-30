@@ -24,3 +24,45 @@
         -moz-osx-font-smoothing: grayscale;
     }
 }
+
+/* Prose content styling for formatted messages */
+.prose-content {
+    line-height: 1.6;
+}
+
+.prose-content > *:first-child {
+    margin-top: 0;
+}
+
+.prose-content > *:last-child {
+    margin-bottom: 0;
+}
+
+.prose-content pre {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.prose-content code {
+    word-break: break-word;
+}
+
+/* Custom scrollbar for results tables */
+.overflow-auto::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}

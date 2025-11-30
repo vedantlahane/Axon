@@ -57,6 +57,223 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     return match ? match[1].trim() : null;
   };
 
+  // Parse markdown-like content into formatted elements
+  const parseFormattedContent = (text: string): React.ReactNode[] => {
+    const elements: React.ReactNode[] = [];
+    const lines = text.split('\n');
+    let inCodeBlock = false;
+    let codeBlockLang = '';
+    let codeBlockContent: string[] = [];
+    let listItems: { level: number; content: string; ordered: boolean; num?: number }[] = [];
+    
+    const flushList = () => {
+      if (listItems.length > 0) {
+        const renderList = (items: typeof listItems, startIdx = 0): React.ReactNode => {
+          const result: React.ReactNode[] = [];
+          let i = startIdx;
+          const baseLevel = items[startIdx]?.level ?? 0;
+          
+          while (i < items.length && items[i].level >= baseLevel) {
+            const item = items[i];
+            if (item.level === baseLevel) {
+              result.push(
+                <li key={i} className="ml-4">
+                  {renderInlineFormatting(item.content)}
+                </li>
+              );
+              i++;
+            } else {
+              // Find nested items
+              const nestedStart = i;
+              while (i < items.length && items[i].level > baseLevel) i++;
+              result.push(
+                <li key={`nested-${nestedStart}`} className="ml-4 list-none">
+                  {renderList(items.slice(nestedStart, i), 0)}
+                </li>
+              );
+            }
+          }
+          
+          const isOrdered = items[startIdx]?.ordered;
+          return isOrdered ? (
+            <ol className="list-decimal space-y-1 pl-4 text-white/80">{result}</ol>
+          ) : (
+            <ul className="list-disc space-y-1 pl-4 text-white/80">{result}</ul>
+          );
+        };
+        
+        elements.push(<div key={`list-${elements.length}`} className="my-2">{renderList(listItems)}</div>);
+        listItems = [];
+      }
+    };
+
+    const renderInlineFormatting = (text: string): React.ReactNode => {
+      // Handle inline code, bold, italic
+      const parts: React.ReactNode[] = [];
+      let remaining = text;
+      let keyIdx = 0;
+
+      while (remaining.length > 0) {
+        // Inline code `code`
+        const codeMatch = remaining.match(/^`([^`]+)`/);
+        if (codeMatch) {
+          parts.push(
+            <code key={keyIdx++} className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[13px] text-amber-300">
+              {codeMatch[1]}
+            </code>
+          );
+          remaining = remaining.slice(codeMatch[0].length);
+          continue;
+        }
+
+        // Bold **text** or __text__
+        const boldMatch = remaining.match(/^(\*\*|__)(.+?)\1/);
+        if (boldMatch) {
+          parts.push(<strong key={keyIdx++} className="font-semibold text-white">{boldMatch[2]}</strong>);
+          remaining = remaining.slice(boldMatch[0].length);
+          continue;
+        }
+
+        // Italic *text* or _text_
+        const italicMatch = remaining.match(/^(\*|_)([^*_]+)\1/);
+        if (italicMatch) {
+          parts.push(<em key={keyIdx++} className="italic text-white/90">{italicMatch[2]}</em>);
+          remaining = remaining.slice(italicMatch[0].length);
+          continue;
+        }
+
+        // Regular character
+        const nextSpecial = remaining.slice(1).search(/[`*_]/);
+        if (nextSpecial === -1) {
+          parts.push(remaining);
+          break;
+        } else {
+          parts.push(remaining.slice(0, nextSpecial + 1));
+          remaining = remaining.slice(nextSpecial + 1);
+        }
+      }
+
+      return parts.length === 1 ? parts[0] : <>{parts}</>;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Code block start/end
+      const codeBlockMatch = line.match(/^```(\w*)/);
+      if (codeBlockMatch) {
+        if (!inCodeBlock) {
+          flushList();
+          inCodeBlock = true;
+          codeBlockLang = codeBlockMatch[1] || 'text';
+          codeBlockContent = [];
+        } else {
+          // End code block
+          const langLabel = codeBlockLang.toUpperCase() || 'CODE';
+          elements.push(
+            <div key={`code-${elements.length}`} className="my-3 rounded-lg border border-white/10 bg-[#0d1117] overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/10 bg-white/5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-white/40">{langLabel}</span>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(codeBlockContent.join('\n'))}
+                  className="text-[10px] text-white/40 hover:text-white/70 transition"
+                >
+                  Copy
+                </button>
+              </div>
+              <pre className="p-3 text-sm font-mono text-emerald-400 overflow-x-auto leading-relaxed">
+                <code>{codeBlockContent.join('\n')}</code>
+              </pre>
+            </div>
+          );
+          inCodeBlock = false;
+          codeBlockLang = '';
+          codeBlockContent = [];
+        }
+        continue;
+      }
+
+      if (inCodeBlock) {
+        codeBlockContent.push(line);
+        continue;
+      }
+
+      // Headers
+      const headerMatch = line.match(/^(#{1,6})\s+(.+)/);
+      if (headerMatch) {
+        flushList();
+        const level = headerMatch[1].length;
+        const headerClasses: Record<number, string> = {
+          1: 'text-xl font-bold text-white mt-4 mb-2',
+          2: 'text-lg font-semibold text-white mt-3 mb-2',
+          3: 'text-base font-semibold text-white/90 mt-3 mb-1',
+          4: 'text-sm font-semibold text-white/80 mt-2 mb-1',
+          5: 'text-sm font-medium text-white/70 mt-2 mb-1',
+          6: 'text-xs font-medium text-white/60 mt-2 mb-1',
+        };
+        elements.push(
+          <div key={`h-${elements.length}`} className={headerClasses[level]}>
+            {renderInlineFormatting(headerMatch[2])}
+          </div>
+        );
+        continue;
+      }
+
+      // Unordered list items
+      const ulMatch = line.match(/^(\s*)[-*+]\s+(.+)/);
+      if (ulMatch) {
+        const level = Math.floor(ulMatch[1].length / 2);
+        listItems.push({ level, content: ulMatch[2], ordered: false });
+        continue;
+      }
+
+      // Ordered list items
+      const olMatch = line.match(/^(\s*)(\d+)\.\s+(.+)/);
+      if (olMatch) {
+        const level = Math.floor(olMatch[1].length / 2);
+        listItems.push({ level, content: olMatch[3], ordered: true, num: parseInt(olMatch[2]) });
+        continue;
+      }
+
+      // Blockquote
+      const quoteMatch = line.match(/^>\s*(.+)/);
+      if (quoteMatch) {
+        flushList();
+        elements.push(
+          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-white/20 pl-3 italic text-white/60">
+            {renderInlineFormatting(quoteMatch[1])}
+          </blockquote>
+        );
+        continue;
+      }
+
+      // Horizontal rule
+      if (/^[-*_]{3,}$/.test(line.trim())) {
+        flushList();
+        elements.push(<hr key={`hr-${elements.length}`} className="my-4 border-white/10" />);
+        continue;
+      }
+
+      // Empty line
+      if (line.trim() === '') {
+        flushList();
+        continue;
+      }
+
+      // Regular paragraph
+      flushList();
+      elements.push(
+        <p key={`p-${elements.length}`} className="my-1 text-white/80 leading-relaxed">
+          {renderInlineFormatting(line)}
+        </p>
+      );
+    }
+
+    flushList();
+    return elements;
+  };
+
   // Helper to render message content with clickable SQL blocks
   const renderMessageContent = (message: ChatMessage) => {
     const sql = extractSql(message.content);
@@ -69,8 +286,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       const afterSql = parts[1] || '';
       
       return (
-        <div className="flex flex-col gap-3">
-          {beforeSql && <p className="whitespace-pre-wrap">{beforeSql.trim()}</p>}
+        <div className="flex flex-col gap-2">
+          {beforeSql.trim() && <div className="prose-content">{parseFormattedContent(beforeSql.trim())}</div>}
           
           {/* SQL Block with View in Canvas button */}
           <div className="rounded-lg border border-white/10 bg-[#0d1117] overflow-hidden">
@@ -93,11 +310,17 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
             </pre>
           </div>
           
-          {afterSql && <p className="whitespace-pre-wrap">{afterSql.trim()}</p>}
+          {afterSql.trim() && <div className="prose-content">{parseFormattedContent(afterSql.trim())}</div>}
         </div>
       );
     }
     
+    // For non-SQL messages, render with full formatting
+    if (message.sender === 'assistant') {
+      return <div className="prose-content">{parseFormattedContent(message.content)}</div>;
+    }
+    
+    // User messages - simpler formatting
     return <p className="whitespace-pre-wrap">{message.content}</p>;
   };
 
@@ -236,8 +459,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                     ? 'bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white'
                     : 'bg-white/10 text-white';
                   const bubbleClasses = isUser
-                    ? 'border border-black/40 bg-[#2563eb]/20 text-white'
-                    : 'border border-black bg-white/5 text-white';
+                    ? 'border border-black/40 bg-[#2563eb]/20 text-white max-w-[85%]'
+                    : 'border border-black bg-white/5 text-white max-w-full';
                   const hasAttachments = (message.attachments?.length ?? 0) > 0;
 
                   return (
@@ -284,13 +507,13 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                         )}
                       </div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 min-w-0 flex-1">
                         <div className="flex items-center gap-2 text-xs text-white/50">
                           <span className="font-semibold text-white">{title}</span>
                           <span className="h-1 w-1 rounded-full bg-white/30" aria-hidden />
                           <span>{formatDisplayTime(message.timestamp)}</span>
                         </div>
-                        <div className={`w-fit max-w-full rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur ${bubbleClasses}`}>
+                        <div className={`w-fit rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur overflow-hidden ${bubbleClasses}`}>
                           {renderMessageContent(message)}
                           {hasAttachments && (
                             <div className="mt-3 flex flex-wrap gap-2">

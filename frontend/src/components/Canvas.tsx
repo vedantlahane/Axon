@@ -261,43 +261,77 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
 
     if (result.type === "rows") {
       return (
-        <div className="max-h-[360px] overflow-auto rounded-xl border border-white/10 bg-[#0b1220]/70">
-          <table className="min-w-full border-separate border-spacing-0 text-left text-sm text-white/80">
-            <thead className="sticky top-0 bg-white/10 text-[13px] uppercase tracking-wide text-white/60">
-              <tr>
-                {result.columns.map((column) => (
-                  <th key={column} className="px-4 py-3 font-semibold">
-                    {column}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {result.rows.length === 0 ? (
+        <div className="flex flex-col gap-3">
+          {/* Results summary header */}
+          <div className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2">
+            <span className="text-sm text-white/70">
+              <strong className="text-white">{result.rowCount}</strong> row{result.rowCount === 1 ? "" : "s"} • {result.columns.length} column{result.columns.length === 1 ? "" : "s"}
+            </span>
+            <span className="text-xs text-white/50">{result.executionTimeMs}ms</span>
+          </div>
+          
+          {/* Scrollable table container */}
+          <div className="max-h-[400px] overflow-auto rounded-xl border border-white/10 bg-[#0b1220]/70">
+            <table className="w-full border-separate border-spacing-0 text-left text-sm text-white/80">
+              <thead className="sticky top-0 z-10 bg-[#151d2e]">
                 <tr>
-                  <td
-                    className="px-4 py-3 text-white/40"
-                    colSpan={result.columns.length || 1}
-                  >
-                    No rows returned.
-                  </td>
+                  <th className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white/50">#</th>
+                  {result.columns.map((column) => (
+                    <th key={column} className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white/50 whitespace-nowrap">
+                      {column}
+                    </th>
+                  ))}
                 </tr>
-              ) : (
-                result.rows.map((row, index) => (
-                  <tr key={index} className="odd:bg-white/5">
-                    {row.map((value, cellIndex) => (
-                      <td
-                        key={`${index}-${cellIndex}`}
-                        className="px-4 py-3 align-top text-xs text-white/70"
-                      >
-                        {String(value)}
-                      </td>
-                    ))}
+              </thead>
+              <tbody>
+                {result.rows.length === 0 ? (
+                  <tr>
+                    <td
+                      className="px-4 py-6 text-center text-white/40"
+                      colSpan={(result.columns.length || 1) + 1}
+                    >
+                      No rows returned.
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  result.rows.map((row, index) => (
+                    <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-2.5 text-xs text-white/30 font-mono whitespace-nowrap">{index + 1}</td>
+                      {row.map((value, cellIndex) => (
+                        <td
+                          key={`${index}-${cellIndex}`}
+                          className="px-4 py-2.5 align-top text-xs text-white/70 max-w-[300px]"
+                        >
+                          <div className="truncate" title={String(value ?? 'NULL')}>
+                            {value === null ? (
+                              <span className="italic text-white/30">NULL</span>
+                            ) : typeof value === 'object' ? (
+                              <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-amber-300">
+                                {JSON.stringify(value)}
+                              </code>
+                            ) : String(value).length > 100 ? (
+                              <span className="cursor-help" title={String(value)}>
+                                {String(value).slice(0, 100)}…
+                              </span>
+                            ) : (
+                              String(value)
+                            )}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Pagination hint for large results */}
+          {result.rowCount > 100 && (
+            <p className="text-center text-xs text-white/40">
+              Showing {Math.min(result.rows.length, result.rowCount)} of {result.rowCount} rows. Adjust the limit in the editor to see more.
+            </p>
+          )}
         </div>
       );
     }
