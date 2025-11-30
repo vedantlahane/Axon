@@ -261,7 +261,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
 
     if (result.type === "rows") {
       return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 min-w-0 w-full">
           {/* Results summary header */}
           <div className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2">
             <span className="text-sm text-white/70">
@@ -270,15 +270,18 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             <span className="text-xs text-white/50">{result.executionTimeMs}ms</span>
           </div>
           
-          {/* Scrollable table container */}
-          <div className="max-h-[400px] overflow-auto rounded-xl border border-white/10 bg-[#0b1220]/70">
-            <table className="w-full border-separate border-spacing-0 text-left text-sm text-white/80">
+          {/* Scrollable table container - constrained width */}
+          <div className="max-h-[400px] w-full overflow-auto rounded-xl border border-white/10 bg-[#0b1220]/70">
+            <table className="w-max min-w-full border-separate border-spacing-0 text-left text-sm text-white/80 table-fixed">
               <thead className="sticky top-0 z-10 bg-[#151d2e]">
                 <tr>
-                  <th className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white/50">#</th>
+                  <th className="w-12 border-b border-white/10 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-white/50">#</th>
                   {result.columns.map((column) => (
-                    <th key={column} className="border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white/50 whitespace-nowrap">
-                      {column}
+                    <th 
+                      key={column} 
+                      className="min-w-[80px] max-w-[200px] border-b border-white/10 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-white/50"
+                    >
+                      <div className="truncate" title={column}>{column}</div>
                     </th>
                   ))}
                 </tr>
@@ -287,7 +290,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
                 {result.rows.length === 0 ? (
                   <tr>
                     <td
-                      className="px-4 py-6 text-center text-white/40"
+                      className="px-3 py-6 text-center text-white/40"
                       colSpan={(result.columns.length || 1) + 1}
                     >
                       No rows returned.
@@ -296,22 +299,22 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
                 ) : (
                   result.rows.map((row, index) => (
                     <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="px-4 py-2.5 text-xs text-white/30 font-mono whitespace-nowrap">{index + 1}</td>
+                      <td className="w-12 px-3 py-2 text-xs text-white/30 font-mono">{index + 1}</td>
                       {row.map((value, cellIndex) => (
                         <td
                           key={`${index}-${cellIndex}`}
-                          className="px-4 py-2.5 align-top text-xs text-white/70 max-w-[300px]"
+                          className="min-w-[80px] max-w-[200px] px-3 py-2 align-top text-xs text-white/70"
                         >
                           <div className="truncate" title={String(value ?? 'NULL')}>
                             {value === null ? (
                               <span className="italic text-white/30">NULL</span>
                             ) : typeof value === 'object' ? (
-                              <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-amber-300">
-                                {JSON.stringify(value)}
+                              <code className="rounded bg-white/10 px-1 py-0.5 font-mono text-[10px] text-amber-300 truncate block">
+                                {JSON.stringify(value).slice(0, 50)}
                               </code>
-                            ) : String(value).length > 100 ? (
-                              <span className="cursor-help" title={String(value)}>
-                                {String(value).slice(0, 100)}…
+                            ) : String(value).length > 50 ? (
+                              <span className="cursor-help">
+                                {String(value).slice(0, 50)}…
                               </span>
                             ) : (
                               String(value)
@@ -329,7 +332,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
           {/* Pagination hint for large results */}
           {result.rowCount > 100 && (
             <p className="text-center text-xs text-white/40">
-              Showing {Math.min(result.rows.length, result.rowCount)} of {result.rowCount} rows. Adjust the limit in the editor to see more.
+              Showing {Math.min(result.rows.length, result.rowCount)} of {result.rowCount} rows.
             </p>
           )}
         </div>
@@ -869,7 +872,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row py-5">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row py-5 overflow-hidden">
       <div
         className={`flex min-w-0 flex-1 overflow-hidden transition-[flex-basis] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isOpen ? "lg:basis-1/2 lg:max-w-[50%]" : "lg:basis-full lg:max-w-full "
@@ -885,7 +888,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[28px] border-dashed border border-white/10 px-4 text-white shadow-[0_30px_80px_-35px_rgba(37,99,235,0.75)] backdrop-blur-lg lg:basis-1/2 lg:max-w-[50%]"
+            className="flex min-w-0 w-full flex-col overflow-hidden rounded-[28px] border-dashed border border-white/10 px-4 text-white shadow-[0_30px_80px_-35px_rgba(37,99,235,0.75)] backdrop-blur-lg lg:basis-1/2 lg:max-w-[50%] lg:w-1/2"
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex flex-1 flex-col gap-1">
@@ -960,7 +963,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
 
             
 
-            <div className=" flex-1 space-y-5 overflow-y-auto pb-6">
+            <div className="flex-1 min-w-0 w-full space-y-5 overflow-y-auto overflow-x-hidden pb-6">
               {renderActiveTab()}
             </div>
           </motion.aside>

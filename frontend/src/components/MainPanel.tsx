@@ -113,7 +113,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 bg-[radial-gradient(ellipse_at_top,_rgba(30,45,85,0.25),_transparent_65%)] px-6 pb-6 pt-4 dark:bg-[radial-gradient(ellipse_at_top,_rgba(0,100,100,0.25),_transparent_65%)] lg:px-5">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden bg-[radial-gradient(ellipse_at_top,_rgba(30,45,85,0.25),_transparent_65%)] px-6 pb-6 pt-4 dark:bg-[radial-gradient(ellipse_at_top,_rgba(0,100,100,0.25),_transparent_65%)] lg:px-5">
       <header className=" backdrop-blur-xl">
         <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-4">
           <motion.button
@@ -317,11 +317,11 @@ const MainPanel: React.FC<MainPanelProps> = ({
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <Canvas sideWindow={sideWindow}>
-          <div className="flex min-h-0 flex-1">
-            <div className="flex min-w-0 flex-1 flex-col ">
-              <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
                 <ChatDisplay
                   view={currentView}
                   messages={messages}
