@@ -27,6 +27,8 @@ from .views import (
     update_user_preferences_view,
     update_user_profile_view,
     change_password_view,
+    export_conversation_docx,
+    export_sql_results_xlsx,
 )
 
 app_name = "agent"
@@ -36,6 +38,7 @@ urlpatterns = [
     path("chat/", chat_view, name="chat"),
     path("conversations/", conversations_view, name="conversation-list"),
     path("conversations/<int:conversation_id>/", conversation_detail_view, name="conversation-detail"),
+    path("conversations/<int:conversation_id>/export/", export_conversation_docx, name="conversation-export"),
     path("documents/", documents_view, name="document-list"),
     path("documents/<int:document_id>/", document_detail_view, name="document-detail"),
     path("auth/register/", register_user, name="register"),
@@ -52,6 +55,7 @@ urlpatterns = [
     path("database/query/", execute_sql_query_view, name="database-query"),
     path("database/query/suggestions/", sql_query_suggestions_view, name="database-query-suggestions"),
     path("database/schema/", database_schema_view, name="database-schema"),
+    path("database/export/", export_sql_results_xlsx, name="database-export"),
     path("models/", models_view, name="models-list"),
     path("models/set/", set_model_view, name="models-set"),
     path("messages/<int:message_id>/feedback/", message_feedback_view, name="message-feedback"),

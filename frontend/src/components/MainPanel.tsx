@@ -5,7 +5,7 @@ import InputSection from "./InputSection";
 import Canvas, { type SqlSideWindowProps } from "./Canvas";
 import type { ChatMessage, ConversationSummary } from "../App";
 import type { UserProfile, SqlQueryResult, LLMModel } from "../services/chatApi";
-import { fetchAvailableModels, setCurrentModel } from "../services/chatApi";
+import { fetchAvailableModels, setCurrentModel, exportConversationDocx } from "../services/chatApi";
 
 /**
  * Layout contract for the main chat surface. Each prop maps to a control in the surrounding shell
@@ -100,6 +100,21 @@ const MainPanel: React.FC<MainPanelProps> = ({
       console.error("Failed to switch model:", err);
     } finally {
       setIsModelSwitching(false);
+    }
+  };
+
+  // Export conversation as DOCX
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExportConversation = async () => {
+    if (!selectedHistoryId || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportConversationDocx(Number(selectedHistoryId));
+    } catch (err) {
+      console.error("Failed to export conversation:", err);
+    } finally {
+      setIsExporting(false);
+      setShowSettingsMenu(false);
     }
   };
 
@@ -390,6 +405,24 @@ const MainPanel: React.FC<MainPanelProps> = ({
                           {databaseSummary}
                         </span>
                       </button>
+                      {selectedHistoryId && messages.length > 0 && (
+                        <button
+                          type="button"
+                          disabled={isExporting}
+                          className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                          onClick={handleExportConversation}
+                        >
+                          <span className="flex items-center gap-2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Export Chat
+                          </span>
+                          <span className="text-[10px] uppercase text-white/40">
+                            {isExporting ? "..." : "DOCX"}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </motion.div>

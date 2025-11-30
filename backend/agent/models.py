@@ -169,7 +169,7 @@ class MessageFeedback(models.Model):
 		unique_together = [["user", "message"]]  # One feedback per user per message
 
 	def __str__(self) -> str:
-		return f"{self.feedback_type} on message {self.message_id} by user {self.user_id}"
+		return f"{self.feedback_type} on message {self.message.pk} by user {self.user.pk}"
 
 
 class UserPreferences(models.Model):
@@ -188,4 +188,4 @@ class UserPreferences(models.Model):
 		verbose_name_plural = "User preferences"
 
 	def __str__(self) -> str:
-		return f"Preferences for user {self.user_id}"
+		return f"Preferences for user {self.user.pk}"

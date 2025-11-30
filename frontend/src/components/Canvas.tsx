@@ -6,6 +6,7 @@ import type {
   SqlQuerySuggestion,
   SqlSchemaPayload,
 } from "../services/chatApi";
+import { exportSqlResultsXlsx } from "../services/chatApi";
 
 export interface SqlQueryHistoryEntry {
   id: string;
@@ -123,6 +124,27 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
   const [isSchemaFullscreen, setIsSchemaFullscreen] = useState(false);
   const [hideEditor, setHideEditor] = useState(false);
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<SqlQueryHistoryEntry | null>(null);
+  const [isExportingResults, setIsExportingResults] = useState(false);
+
+  // Export SQL results to XLSX
+  const handleExportResults = async () => {
+    if (!result || result.type !== "rows" || isExportingResults) return;
+    setIsExportingResults(true);
+    try {
+      const rows = result.rows.map((row) => {
+        const obj: Record<string, unknown> = {};
+        result.columns.forEach((col, idx) => {
+          obj[col] = row[idx];
+        });
+        return obj;
+      });
+      await exportSqlResultsXlsx(queryText, result.columns, rows);
+    } catch (err) {
+      console.error("Failed to export results:", err);
+    } finally {
+      setIsExportingResults(false);
+    }
+  };
 
   // Switch to pending panel when there's a pending query
   useEffect(() => {
@@ -267,7 +289,20 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             <span className="text-sm text-white/70">
               <strong className="text-white">{result.rowCount}</strong> row{result.rowCount === 1 ? "" : "s"} • {result.columns.length} column{result.columns.length === 1 ? "" : "s"}
             </span>
-            <span className="text-xs text-white/50">{result.executionTimeMs}ms</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-white/50">{result.executionTimeMs}ms</span>
+              <button
+                type="button"
+                disabled={isExportingResults}
+                onClick={handleExportResults}
+                className="flex items-center gap-1.5 rounded-lg bg-blue-500/20 px-2.5 py-1 text-xs font-medium text-blue-300 transition hover:bg-blue-500/30 disabled:opacity-50"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {isExportingResults ? "Exporting..." : "Export XLSX"}
+              </button>
+            </div>
           </div>
           
           {/* Scrollable table container - constrained width */}

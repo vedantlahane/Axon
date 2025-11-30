@@ -1,5 +1,6 @@
 import json
 import secrets
+import io
 from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
@@ -7,7 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 from django.contrib.auth import authenticate, get_user_model, login as auth_login, logout as auth_logout
 from django.core.files.uploadedfile import UploadedFile
 from django.db import connections, transaction
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.db import OperationalError
 import logging
@@ -1432,7 +1433,7 @@ def update_user_profile_view(request: HttpRequest) -> JsonResponse:
 	except json.JSONDecodeError:
 		return JsonResponse({"error": "Invalid JSON payload."}, status=400)
 
-	user = request.user
+	user = UserModel.objects.get(pk=request.user.pk)
 	updated = False
 
 	if "name" in payload:
@@ -1489,3 +1490,189 @@ def change_password_view(request: HttpRequest) -> JsonResponse:
 	return JsonResponse({"success": True, "message": "Password changed successfully."})
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Export endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@require_http_methods(["GET"])
+def export_conversation_docx(request: HttpRequest, conversation_id: int) -> HttpResponse:
+	"""Export a conversation to a DOCX file."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	conversation = get_object_or_404(Conversation, pk=conversation_id, user=request.user)
+	messages = Message.objects.filter(conversation=conversation).order_by("created_at")
+
+	try:
+		from docx import Document
+		from docx.shared import Pt, Inches, RGBColor
+		from docx.enum.text import WD_ALIGN_PARAGRAPH
+	except ImportError:
+		return JsonResponse({"error": "python-docx is not installed."}, status=500)
+
+	# Create document
+	doc = Document()
+	
+	# Add title
+	title = doc.add_heading(conversation.title or "Conversation Export", 0)
+	title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+	
+	# Add metadata
+	meta = doc.add_paragraph()
+	meta.add_run(f"Exported: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}\n").italic = True
+	meta.add_run(f"Messages: {messages.count()}").italic = True
+	
+	doc.add_paragraph()  # Spacer
+	
+	# Add messages
+	for msg in messages:
+		# Add sender header
+		sender_para = doc.add_paragraph()
+		sender_run = sender_para.add_run(f"{'You' if msg.role == 'user' else 'Axon'}")
+		sender_run.bold = True
+		sender_run.font.size = Pt(11)
+		if msg.role == 'assistant':
+			sender_run.font.color.rgb = RGBColor(37, 99, 235)  # Blue
+		
+		# Add timestamp
+		time_run = sender_para.add_run(f"  •  {msg.created_at.strftime('%I:%M %p')}")
+		time_run.font.size = Pt(9)
+		time_run.font.color.rgb = RGBColor(128, 128, 128)
+		
+		# Add message content
+		content_para = doc.add_paragraph(msg.content)
+		content_para.paragraph_format.left_indent = Inches(0.25)
+		
+		doc.add_paragraph()  # Spacer between messages
+
+	# Save to buffer
+	buffer = io.BytesIO()
+	doc.save(buffer)
+	buffer.seek(0)
+
+	# Create response
+	filename = f"conversation_{conversation_id}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.docx"
+	response = HttpResponse(
+		buffer.getvalue(),
+		content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	)
+	response["Content-Disposition"] = f'attachment; filename="{filename}"'
+	return response
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def export_sql_results_xlsx(request: HttpRequest) -> HttpResponse:
+	"""Export SQL query results to an XLSX file."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	try:
+		payload = json.loads(request.body or "{}")
+	except json.JSONDecodeError:
+		return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+	columns = payload.get("columns", [])
+	rows_data = payload.get("rows", [])
+	query = payload.get("query", "")
+	filename_prefix = payload.get("filename", "query_results")
+
+	if not columns or not rows_data:
+		return JsonResponse({"error": "Both 'columns' and 'rows' are required."}, status=400)
+
+	# Convert rows from dict format to list format if needed
+	rows = []
+	for row in rows_data:
+		if isinstance(row, dict):
+			# Row is a dict with column keys
+			rows.append([row.get(col) for col in columns])
+		elif isinstance(row, (list, tuple)):
+			# Row is already a list/tuple
+			rows.append(list(row))
+		else:
+			rows.append([row])
+
+	try:
+		from openpyxl import Workbook
+		from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+		from openpyxl.utils import get_column_letter
+	except ImportError:
+		return JsonResponse({"error": "openpyxl is not installed."}, status=500)
+
+	try:
+		# Create workbook
+		wb = Workbook()
+		ws = wb.active
+		if ws is None:
+			ws = wb.create_sheet("Query Results")
+		else:
+			ws.title = "Query Results"
+
+		# Styles
+		header_font = Font(bold=True, color="FFFFFF")
+		header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+		header_alignment = Alignment(horizontal="center", vertical="center")
+		thin_border = Border(
+			left=Side(style='thin'),
+			right=Side(style='thin'),
+			top=Side(style='thin'),
+			bottom=Side(style='thin')
+		)
+
+		# Add query as a comment in first row if provided
+		if query:
+			ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=max(len(columns), 3))
+			query_cell = ws.cell(row=1, column=1, value=f"Query: {query[:200]}{'...' if len(query) > 200 else ''}")
+			query_cell.font = Font(italic=True, color="666666")
+			ws.row_dimensions[1].height = 25
+			start_row = 3
+		else:
+			start_row = 1
+
+		# Write headers
+		for col_idx, column in enumerate(columns, 1):
+			cell = ws.cell(row=start_row, column=col_idx, value=column)
+			cell.font = header_font
+			cell.fill = header_fill
+			cell.alignment = header_alignment
+			cell.border = thin_border
+
+		# Write data rows
+		for row_idx, row in enumerate(rows, start_row + 1):
+			for col_idx, value in enumerate(row, 1):
+				cell = ws.cell(row=row_idx, column=col_idx, value=value)
+				cell.border = thin_border
+				cell.alignment = Alignment(vertical="center")
+
+		# Auto-adjust column widths
+		for col_idx, column in enumerate(columns, 1):
+			max_length = len(str(column))
+			for row in rows:
+				if col_idx <= len(row):
+					max_length = max(max_length, len(str(row[col_idx - 1] or "")))
+			adjusted_width = min(max_length + 2, 50)
+			ws.column_dimensions[get_column_letter(col_idx)].width = adjusted_width
+
+		# Freeze header row
+		ws.freeze_panes = f"A{start_row + 1}"
+
+		# Save to buffer
+		buffer = io.BytesIO()
+		wb.save(buffer)
+		buffer.seek(0)
+
+		# Create response
+		safe_prefix = "".join(c for c in filename_prefix if c.isalnum() or c in "_-")[:50] or "results"
+		filename = f"{safe_prefix}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+		response = HttpResponse(
+			buffer.getvalue(),
+			content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		)
+		response["Content-Disposition"] = f'attachment; filename="{filename}"'
+		return response
+	except Exception as e:
+		import traceback
+		traceback.print_exc()
+		return JsonResponse({"error": f"Failed to generate Excel file: {str(e)}"}, status=500)

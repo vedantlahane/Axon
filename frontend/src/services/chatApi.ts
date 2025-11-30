@@ -636,3 +636,55 @@ export async function changePassword(
   });
   return handleResponse<{ success: boolean; message: string }>(response);
 }
+
+// Export conversation to DOCX
+export async function exportConversationDocx(conversationId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/export/`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to export conversation');
+  }
+  
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `conversation_${conversationId}.docx`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+
+// Export SQL results to XLSX
+export async function exportSqlResultsXlsx(
+  query: string,
+  columns: string[],
+  rows: Record<string, unknown>[]
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/database/export/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ query, columns, rows }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to export SQL results');
+  }
+  
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sql_results_${Date.now()}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
