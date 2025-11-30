@@ -1186,8 +1186,42 @@ def conversation_detail_view(request: HttpRequest, conversation_id: int) -> Json
 	conversation = get_object_or_404(Conversation, pk=conversation_id, user=request.user)
 
 	if request.method == "DELETE":
+		# Check if we should delete associated files too
+		delete_files = request.GET.get("delete_files", "true").lower() == "true"
+		
+		if delete_files:
+			# Get all messages in this conversation
+			messages = Message.objects.filter(conversation=conversation)
+			
+			# Collect all attached documents
+			documents_to_delete = set()
+			for msg in messages:
+				attachments = MessageAttachment.objects.filter(message=msg).select_related('document')
+				for att in attachments:
+					if att.document:
+						documents_to_delete.add(att.document)
+			
+			# Delete the document files and records
+			for doc in documents_to_delete:
+				try:
+					if doc.file:
+						doc.file.delete(save=False)
+					doc.delete()
+				except Exception as e:
+					print(f"Warning: failed to delete document {doc.id}: {e}")
+			
+			# Rebuild PDF search index if we deleted any documents
+			if documents_to_delete:
+				try:
+					build_pdf_search_tool(force_rebuild=True)
+				except Exception as exc:
+					print(f"Warning: unable to rebuild PDF search index ({exc})")
+		
 		conversation.delete()
-		return JsonResponse({"status": "deleted"})
+		return JsonResponse({
+			"status": "deleted",
+			"files_deleted": len(documents_to_delete) if delete_files else 0
+		})
 
 	return JsonResponse(_serialise_conversation(conversation, include_messages=True, request=request))
 
@@ -1250,6 +1284,92 @@ def document_detail_view(request: HttpRequest, document_id: int) -> JsonResponse
 		print(f"Warning: unable to rebuild PDF search index ({exc})")
 
 	return JsonResponse({"status": "deleted"})
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def conversation_documents_view(request: HttpRequest, conversation_id: int) -> JsonResponse:
+	"""Get all documents attached to messages in a conversation."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	conversation = get_object_or_404(Conversation, pk=conversation_id, user=request.user)
+	messages = Message.objects.filter(conversation=conversation)
+	
+	# Collect all attached documents with their message context
+	documents = []
+	seen_doc_ids = set()
+	
+	for msg in messages:
+		attachments = MessageAttachment.objects.filter(message=msg).select_related('document')
+		for att in attachments:
+			if att.document and att.document.pk not in seen_doc_ids:
+				seen_doc_ids.add(att.document.pk)
+				doc = att.document
+				documents.append({
+					"id": doc.pk,
+					"original_name": doc.original_name,
+					"size": doc.size,
+					"created_at": doc.created_at.isoformat(),
+					"message_id": msg.pk,
+					"message_role": msg.role,
+					"message_preview": msg.content[:100] + "..." if len(msg.content) > 100 else msg.content,
+				})
+	
+	return JsonResponse({
+		"conversation_id": conversation_id,
+		"documents": documents,
+		"count": len(documents)
+	})
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def conversation_document_delete_view(request: HttpRequest, conversation_id: int, document_id: int) -> JsonResponse:
+	"""Remove a document from a conversation (deletes the file and all attachments)."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	conversation = get_object_or_404(Conversation, pk=conversation_id, user=request.user)
+	document = get_object_or_404(UploadedDocument, pk=document_id, user=request.user)
+	
+	# Verify the document is actually attached to this conversation
+	messages = Message.objects.filter(conversation=conversation)
+	attachment_exists = MessageAttachment.objects.filter(
+		message__in=messages,
+		document=document
+	).exists()
+	
+	if not attachment_exists:
+		return JsonResponse({"error": "Document not found in this conversation."}, status=404)
+	
+	# Delete all attachments linking this document to messages in this conversation
+	MessageAttachment.objects.filter(message__in=messages, document=document).delete()
+	
+	# Check if the document is used in any other conversation
+	other_attachments = MessageAttachment.objects.filter(document=document).exists()
+	
+	file_deleted = False
+	if not other_attachments:
+		# No other references, delete the document and file
+		file_field = document.file
+		document.delete()
+		if file_field:
+			file_field.delete(save=False)
+		file_deleted = True
+		
+		try:
+			build_pdf_search_tool(force_rebuild=True)
+		except Exception as exc:
+			print(f"Warning: unable to rebuild PDF search index ({exc})")
+	
+	return JsonResponse({
+		"status": "deleted",
+		"file_deleted": file_deleted,
+		"message": "Document removed from conversation" + (" and file deleted" if file_deleted else " (file kept, used in other conversations)")
+	})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1714,7 +1834,7 @@ def export_conversation_zip(request: HttpRequest, conversation_id: int) -> HttpR
 			if att.document and att.document.file:
 				attached_docs.append({
 					'document': att.document,
-					'message_id': msg.id,
+					'message_id': msg.pk,
 					'original_name': att.document.original_name
 				})
 
@@ -1953,7 +2073,7 @@ def export_conversation_zip(request: HttpRequest, conversation_id: int) -> HttpR
 				time_run.font.color.rgb = RGBColor(128, 128, 128)
 				
 				# Check if message has attached documents
-				msg_docs = msg_to_docs.get(msg.id, [])
+				msg_docs = msg_to_docs.get(msg.pk, [])
 				if msg_docs and msg.role == 'user':
 					attach_para = doc.add_paragraph()
 					attach_para.paragraph_format.left_indent = Inches(0.25)

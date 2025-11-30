@@ -30,6 +30,8 @@ from .views import (
     export_conversation_docx,
     export_sql_results_xlsx,
     export_conversation_zip,
+    conversation_documents_view,
+    conversation_document_delete_view,
 )
 
 app_name = "agent"
@@ -39,6 +41,8 @@ urlpatterns = [
     path("chat/", chat_view, name="chat"),
     path("conversations/", conversations_view, name="conversation-list"),
     path("conversations/<int:conversation_id>/", conversation_detail_view, name="conversation-detail"),
+    path("conversations/<int:conversation_id>/documents/", conversation_documents_view, name="conversation-documents"),
+    path("conversations/<int:conversation_id>/documents/<int:document_id>/", conversation_document_delete_view, name="conversation-document-delete"),
     path("conversations/<int:conversation_id>/export/", export_conversation_docx, name="conversation-export"),
     path("conversations/<int:conversation_id>/export/zip/", export_conversation_zip, name="conversation-export-zip"),
     path("documents/", documents_view, name="document-list"),

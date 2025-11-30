@@ -8,7 +8,7 @@ import {
   fetchConversation,
   fetchConversations,
   sendChatMessage,
-  deleteConversation,
+  deleteConversationWithFiles,
   type RawConversationDetail,
   type RawConversationSummary,
   type RawMessage,
@@ -786,7 +786,7 @@ const App: React.FC = () => {
 
   const handleDeleteConversation = async (conversationId: string) => {
     try {
-      await deleteConversation(conversationId);
+      await deleteConversationWithFiles(Number(conversationId), true);
       setHistoryConversations((prev) => prev.filter((conversation) => conversation.id !== conversationId));
 
       if (selectedHistoryId === conversationId || activeConversationId === conversationId) {

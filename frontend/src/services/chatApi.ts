@@ -723,3 +723,64 @@ export async function exportConversationZip(
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
+// Conversation document types
+export interface ConversationDocument {
+  id: number;
+  original_name: string;
+  size: number;
+  created_at: string;
+  message_id: number;
+  message_role: string;
+  message_preview: string;
+}
+
+// Get all documents attached to a conversation
+export async function getConversationDocuments(conversationId: number): Promise<{
+  conversation_id: number;
+  documents: ConversationDocument[];
+  count: number;
+}> {
+  const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/documents/`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  return handleResponse(response);
+}
+
+// Delete a document from a conversation
+export async function deleteConversationDocument(
+  conversationId: number,
+  documentId: number
+): Promise<{
+  status: string;
+  file_deleted: boolean;
+  message: string;
+}> {
+  const response = await fetch(
+    `${API_BASE_URL}/conversations/${conversationId}/documents/${documentId}/`,
+    {
+      method: 'DELETE',
+      credentials: 'include',
+    }
+  );
+  return handleResponse(response);
+}
+
+// Delete conversation with all files
+export async function deleteConversationWithFiles(
+  conversationId: number,
+  deleteFiles = true
+): Promise<{
+  status: string;
+  files_deleted: number;
+}> {
+  const response = await fetch(
+    `${API_BASE_URL}/conversations/${conversationId}/?delete_files=${deleteFiles}`,
+    {
+      method: 'DELETE',
+      credentials: 'include',
+    }
+  );
+  return handleResponse(response);
+}
