@@ -96,9 +96,9 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           
           const isOrdered = items[startIdx]?.ordered;
           return isOrdered ? (
-            <ol className="list-decimal space-y-1 pl-4 text-white/80">{result}</ol>
+            <ol className="list-decimal space-y-1 pl-4 text-white/70">{result}</ol>
           ) : (
-            <ul className="list-disc space-y-1 pl-4 text-white/80">{result}</ul>
+            <ul className="list-disc space-y-1 pl-4 text-white/70">{result}</ul>
           );
         };
         
@@ -118,7 +118,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         const codeMatch = remaining.match(/^`([^`]+)`/);
         if (codeMatch) {
           parts.push(
-            <code key={keyIdx++} className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[13px] text-amber-300">
+            <code key={keyIdx++} className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[13px] text-cyan-300">
               {codeMatch[1]}
             </code>
           );
@@ -129,7 +129,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         // Bold **text** or __text__
         const boldMatch = remaining.match(/^(\*\*|__)(.+?)\1/);
         if (boldMatch) {
-          parts.push(<strong key={keyIdx++} className="font-semibold text-white">{boldMatch[2]}</strong>);
+          parts.push(<strong key={keyIdx++} className="font-semibold text-white/90">{boldMatch[2]}</strong>);
           remaining = remaining.slice(boldMatch[0].length);
           continue;
         }
@@ -137,7 +137,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         // Italic *text* or _text_
         const italicMatch = remaining.match(/^(\*|_)([^*_]+)\1/);
         if (italicMatch) {
-          parts.push(<em key={keyIdx++} className="italic text-white/90">{italicMatch[2]}</em>);
+          parts.push(<em key={keyIdx++} className="italic text-white/80">{italicMatch[2]}</em>);
           remaining = remaining.slice(italicMatch[0].length);
           continue;
         }
@@ -171,9 +171,9 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           // End code block
           const langLabel = codeBlockLang.toUpperCase() || 'CODE';
           elements.push(
-            <div key={`code-${elements.length}`} className="my-3 rounded-lg border border-white/10 bg-[#0d1117] overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/10 bg-white/5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-white/40">{langLabel}</span>
+            <div key={`code-${elements.length}`} className="my-3 rounded-xl border border-white/10 bg-[#0b1220]/80 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-white/50">{langLabel}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(codeBlockContent.join('\n'))}
@@ -182,7 +182,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                   Copy
                 </button>
               </div>
-              <pre className="p-3 text-sm font-mono text-emerald-400 overflow-x-auto leading-relaxed">
+              <pre className="p-4 text-sm font-mono text-cyan-300/90 overflow-x-auto leading-relaxed">
                 <code>{codeBlockContent.join('\n')}</code>
               </pre>
             </div>
@@ -205,11 +205,11 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         flushList();
         const level = headerMatch[1].length;
         const headerClasses: Record<number, string> = {
-          1: 'text-xl font-bold text-white mt-4 mb-2',
-          2: 'text-lg font-semibold text-white mt-3 mb-2',
-          3: 'text-base font-semibold text-white/90 mt-3 mb-1',
-          4: 'text-sm font-semibold text-white/80 mt-2 mb-1',
-          5: 'text-sm font-medium text-white/70 mt-2 mb-1',
+          1: 'text-lg font-semibold text-white/90 mt-4 mb-2',
+          2: 'text-base font-semibold text-white/85 mt-3 mb-2',
+          3: 'text-sm font-semibold text-white/80 mt-3 mb-1',
+          4: 'text-sm font-medium text-white/75 mt-2 mb-1',
+          5: 'text-xs font-medium text-white/70 mt-2 mb-1',
           6: 'text-xs font-medium text-white/60 mt-2 mb-1',
         };
         elements.push(
@@ -241,7 +241,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       if (quoteMatch) {
         flushList();
         elements.push(
-          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-white/20 pl-3 italic text-white/60">
+          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-cyan-500/40 pl-3 italic text-white/60">
             {renderInlineFormatting(quoteMatch[1])}
           </blockquote>
         );
@@ -305,7 +305,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 {hasExecutedResults ? 'View Results' : 'Open in Canvas'}
               </button>
             </div>
-            <pre className="p-3 text-sm font-mono text-emerald-400 overflow-x-auto">
+            <pre className="p-3 text-sm font-mono text-cyan-400 overflow-x-auto">
               <code>{sql}</code>
             </pre>
           </div>

@@ -4,7 +4,8 @@ import ChatDisplay from "./ChatDisplay";
 import InputSection from "./InputSection";
 import Canvas, { type SqlSideWindowProps } from "./Canvas";
 import type { ChatMessage, ConversationSummary } from "../App";
-import type { UserProfile, SqlQueryResult } from "../services/chatApi";
+import type { UserProfile, SqlQueryResult, LLMModel } from "../services/chatApi";
+import { fetchAvailableModels, setCurrentModel } from "../services/chatApi";
 
 /**
  * Layout contract for the main chat surface. Each prop maps to a control in the surrounding shell
@@ -71,6 +72,36 @@ const MainPanel: React.FC<MainPanelProps> = ({
 }) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const settingsRef = useRef<HTMLDivElement | null>(null);
+  
+  // Model selection state
+  const [availableModels, setAvailableModels] = useState<LLMModel[]>([]);
+  const [currentModel, setCurrentModelState] = useState<string>("gemini");
+  const [isModelSwitching, setIsModelSwitching] = useState(false);
+
+  // Fetch available models on mount
+  useEffect(() => {
+    fetchAvailableModels()
+      .then((data) => {
+        setAvailableModels(data.models);
+        setCurrentModelState(data.current);
+      })
+      .catch((err) => console.error("Failed to fetch models:", err));
+  }, []);
+
+  const handleModelChange = async (modelId: string) => {
+    if (modelId === currentModel || isModelSwitching) return;
+    setIsModelSwitching(true);
+    try {
+      const result = await setCurrentModel(modelId);
+      if (result.success) {
+        setCurrentModelState(result.current);
+      }
+    } catch (err) {
+      console.error("Failed to switch model:", err);
+    } finally {
+      setIsModelSwitching(false);
+    }
+  };
 
   useEffect(() => {
     if (!showSettingsMenu) return;
@@ -114,7 +145,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden bg-[radial-gradient(ellipse_at_top,_rgba(30,45,85,0.25),_transparent_65%)] px-6 pb-6 pt-4 dark:bg-[radial-gradient(ellipse_at_top,_rgba(0,100,100,0.25),_transparent_65%)] lg:px-5">
-      <header className=" backdrop-blur-xl">
+      <header className="relative z-20 backdrop-blur-xl">
         <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-4">
           <motion.button
             type="button"
@@ -194,7 +225,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute right-0 z-30 mt-3 w-56 rounded-2xl border border-white/10 bg-[#0b1220]/95 p-3 text-sm text-white/80 shadow-lg backdrop-blur"
+                  className="absolute right-0 z-50 mt-3 w-56 rounded-2xl border border-white/10 bg-[#0b1220]/95 p-3 text-sm text-white/80 shadow-lg backdrop-blur"
                 >
                   <p className="mb-2 text-xs uppercase tracking-[0.25em] text-white/40">
                     Account
@@ -247,6 +278,57 @@ const MainPanel: React.FC<MainPanelProps> = ({
                       </button>
                     </>
                   )}
+                  <div className="mt-3 border-t border-white/10 pt-3">
+                    <p className="mb-2 text-xs uppercase tracking-[0.25em] text-white/40">
+                      AI Model
+                    </p>
+                    <div className="flex flex-col gap-1">
+                      {availableModels.map((model) => (
+                        <button
+                          key={model.id}
+                          type="button"
+                          disabled={!model.available || isModelSwitching}
+                          className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition ${
+                            currentModel === model.id
+                              ? "bg-cyan-500/20 text-cyan-300"
+                              : model.available
+                              ? "hover:bg-white/10 hover:text-white"
+                              : "cursor-not-allowed opacity-40"
+                          }`}
+                          onClick={() => handleModelChange(model.id)}
+                        >
+                          <span className="flex items-center gap-2">
+                            {model.name}
+                            {model.isDefault && (
+                              <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] uppercase text-white/50">
+                                Default
+                              </span>
+                            )}
+                          </span>
+                          {currentModel === model.id && (
+                            <svg
+                              className="h-4 w-4 text-cyan-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
+                          {!model.available && (
+                            <span className="text-[10px] uppercase text-white/40">
+                              No API Key
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="mt-3 border-t border-white/10 pt-3">
                     <p className="mb-2 text-xs uppercase tracking-[0.25em] text-white/40">
                       Appearance

@@ -285,7 +285,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       {uploadedFile && (
                         <button
                           type="button"
-                          className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                          className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
                           onClick={handleFileUpload}
                           disabled={disableInteractions}
                         >
@@ -297,7 +297,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       <div className="mt-2">
                         <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
                           <div 
-                            className="h-full bg-emerald-500 transition-all duration-300"
+                            className="h-full bg-cyan-500 transition-all duration-300"
                             style={{ width: `${uploadProgress}%` }}
                           />
                         </div>
@@ -347,7 +347,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                 <div
                   className={`rounded-2xl border px-4 py-3 text-sm ${
                     feedback.status === 'success'
-                      ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                      ? 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200'
                       : 'border-rose-400/40 bg-rose-500/10 text-rose-200'
                   }`}
                 >

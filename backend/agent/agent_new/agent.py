@@ -1,8 +1,9 @@
 import os
 import uuid
-from typing import List, Dict, Any, Optional, Sequence
+from typing import List, Dict, Any, Optional, Sequence, Literal
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.prebuilt import create_react_agent
@@ -15,9 +16,34 @@ from .tavily_search_tool import tavily_search
 load_dotenv()
 
 
-api_key = os.getenv("OPENAI_API_KEY")
-if api_key:
-    os.environ["OPENAI_API_KEY"] = api_key
+# Load API keys
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if openai_api_key:
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+if gemini_api_key:
+    os.environ["GOOGLE_API_KEY"] = gemini_api_key
+
+# Model type
+ModelType = Literal["gemini", "openai"]
+DEFAULT_MODEL: ModelType = "gemini"
+
+# Available models configuration
+AVAILABLE_MODELS = {
+    "gemini": {
+        "name": "Gemini 2.0 Flash",
+        "model_id": "gemini-2.0-flash",
+        "provider": "Google",
+        "available": bool(gemini_api_key),
+    },
+    "openai": {
+        "name": "GPT-4o",
+        "model_id": "gpt-4o", 
+        "provider": "OpenAI",
+        "available": bool(openai_api_key),
+    },
+}
 
 
 SYSTEM_PROMPT = """You are Axon Copilot, an assistant that combines retrieved document knowledge with live tools.
@@ -52,43 +78,105 @@ OTHER TOOLS:
 """
 
 
-# Create the agent using LangGraph v1.x create_react_agent
-_AGENT = None
-_MEMORY = None
+# Create agents for different models using LangGraph v1.x
+_AGENTS: Dict[str, Any] = {}
+_MEMORIES: Dict[str, MemorySaver] = {}
+_CURRENT_MODEL: ModelType = DEFAULT_MODEL
 
 
-def reset_agent():
+def get_available_models() -> List[Dict[str, Any]]:
+    """Return list of available models with their status."""
+    return [
+        {
+            "id": model_id,
+            "name": info["name"],
+            "provider": info["provider"],
+            "available": info["available"],
+            "isDefault": model_id == DEFAULT_MODEL,
+        }
+        for model_id, info in AVAILABLE_MODELS.items()
+    ]
+
+
+def get_current_model() -> str:
+    """Return the currently selected model."""
+    return _CURRENT_MODEL
+
+
+def set_current_model(model: ModelType) -> bool:
+    """Set the current model. Returns True if successful."""
+    global _CURRENT_MODEL
+    if model in AVAILABLE_MODELS and AVAILABLE_MODELS[model]["available"]:
+        _CURRENT_MODEL = model
+        return True
+    return False
+
+
+def reset_agent(model: Optional[ModelType] = None):
     """Reset the agent to pick up new configuration."""
-    global _AGENT, _MEMORY
-    _AGENT = None
-    _MEMORY = None
+    global _AGENTS, _MEMORIES
+    if model:
+        _AGENTS.pop(model, None)
+        _MEMORIES.pop(model, None)
+    else:
+        _AGENTS = {}
+        _MEMORIES = {}
 
 
-def get_agent():
+def _create_llm(model: ModelType):
+    """Create the appropriate LLM based on model type."""
+    if model == "gemini":
+        return ChatGoogleGenerativeAI(
+            model=AVAILABLE_MODELS["gemini"]["model_id"],
+            temperature=0,
+            convert_system_message_to_human=True,
+        )
+    else:  # openai
+        return ChatOpenAI(
+            model=AVAILABLE_MODELS["openai"]["model_id"],
+            temperature=0,
+        )
+
+
+def get_agent(model: Optional[ModelType] = None):
     """
     Create and cache a LangGraph ReAct agent with memory checkpointing.
     Uses the new LangGraph v1.x API with create_react_agent.
     """
-    global _AGENT, _MEMORY
-    if _AGENT is None:
+    global _AGENTS, _MEMORIES
+    
+    # Use specified model or current default
+    use_model = model or _CURRENT_MODEL
+    
+    # Validate model availability
+    if not AVAILABLE_MODELS.get(use_model, {}).get("available"):
+        # Fallback to any available model
+        for m, info in AVAILABLE_MODELS.items():
+            if info["available"]:
+                use_model = m
+                break
+        else:
+            raise ValueError("No LLM API keys configured. Please set GEMINI_API_KEY or OPENAI_API_KEY.")
+    
+    if use_model not in _AGENTS:
         # Initialize the LLM
-        llm = ChatOpenAI(model="gpt-4o", temperature=0)
+        llm = _create_llm(use_model)  # type: ignore
         
         # Initialize memory for conversation persistence
-        _MEMORY = MemorySaver()
+        _MEMORIES[use_model] = MemorySaver()
         
         # Define tools - NO run_sql_query! AI must suggest queries for user approval
         tools = [search_pdf, get_database_schema, tavily_search]
         
         # Create the ReAct agent using LangGraph v1.x
-        _AGENT = create_react_agent(
+        _AGENTS[use_model] = create_react_agent(
             model=llm,
             tools=tools,
-            checkpointer=_MEMORY,
+            checkpointer=_MEMORIES[use_model],
             prompt=SYSTEM_PROMPT,
         )
-        print("Agent created successfully using LangGraph v1.x")
-    return _AGENT
+        print(f"Agent created successfully using LangGraph v1.x with {AVAILABLE_MODELS[use_model]['name']}")
+    return _AGENTS[use_model]
 
 
 _FALLBACK_MESSAGE = "Sorry, I could not generate a response right now."
@@ -100,6 +188,7 @@ def generate_response(
     *,
     document_context: Optional[str] = None,
     external_context: Optional[str] = None,
+    model: Optional[ModelType] = None,
 ) -> str:
     """Return the assistant reply for the provided prompt and history using LangGraph v1.x."""
     if not prompt:
@@ -136,7 +225,7 @@ def generate_response(
     conversation.append(HumanMessage(content=prompt))
 
     try:
-        agent = get_agent()
+        agent = get_agent(model)
         # Use a unique thread_id per request to avoid memory conflicts between users
         # The conversation history is already passed in, so we don't need shared memory
         thread_id = str(uuid.uuid4())

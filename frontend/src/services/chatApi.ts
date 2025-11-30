@@ -484,3 +484,45 @@ export async function requestSqlSuggestions(payload: SqlSuggestionRequestPayload
 
   return handleResponse<SqlSuggestionEnvelope>(response);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Model selection API
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface LLMModel {
+  id: string;
+  name: string;
+  provider: string;
+  available: boolean;
+  isDefault: boolean;
+}
+
+export interface ModelsResponse {
+  models: LLMModel[];
+  current: string;
+}
+
+export interface SetModelResponse {
+  success: boolean;
+  current: string;
+  message: string;
+}
+
+export async function fetchAvailableModels(): Promise<ModelsResponse> {
+  const response = await fetch(`${API_BASE_URL}/models/`, {
+    credentials: 'include',
+  });
+  return handleResponse<ModelsResponse>(response);
+}
+
+export async function setCurrentModel(modelId: string): Promise<SetModelResponse> {
+  const response = await fetch(`${API_BASE_URL}/models/set/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ model: modelId }),
+  });
+  return handleResponse<SetModelResponse>(response);
+}

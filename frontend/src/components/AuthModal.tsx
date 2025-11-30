@@ -256,7 +256,7 @@ const AuthModal = ({
                 <h2 className="text-xl font-semibold text-white">{heading}</h2>
                 <p className="mt-1 text-sm text-slate-300">{subheading}</p>
                 {successMessage && (
-                  <p className="mt-2 text-xs text-emerald-300">{successMessage}</p>
+                  <p className="mt-2 text-xs text-cyan-300">{successMessage}</p>
                 )}
               </div>
               <button

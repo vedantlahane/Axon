@@ -19,6 +19,8 @@ from .views import (
     sql_query_suggestions_view,
     upload_database_view,
     health_view,
+    models_view,
+    set_model_view,
 )
 
 app_name = "agent"
@@ -42,4 +44,6 @@ urlpatterns = [
     path("database/query/", execute_sql_query_view, name="database-query"),
     path("database/query/suggestions/", sql_query_suggestions_view, name="database-query-suggestions"),
     path("database/schema/", database_schema_view, name="database-schema"),
+    path("models/", models_view, name="models-list"),
+    path("models/set/", set_model_view, name="models-set"),
 ]

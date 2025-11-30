@@ -45,7 +45,7 @@ def health_view(request: HttpRequest) -> JsonResponse:
 		status=status_code,
 	)
 
-from .agent_new.agent import generate_response
+from .agent_new.agent import generate_response, get_available_models, get_current_model, set_current_model
 from .agent_new.pdf_tool import build_pdf_search_tool
 from .agent_new.sql_tool import (
 	AVAILABLE_DATABASE_MODES,
@@ -1238,5 +1238,46 @@ def document_detail_view(request: HttpRequest, document_id: int) -> JsonResponse
 		print(f"Warning: unable to rebuild PDF search index ({exc})")
 
 	return JsonResponse({"status": "deleted"})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Model selection endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@require_http_methods(["GET"])
+def models_view(request: HttpRequest) -> JsonResponse:
+	"""Return list of available LLM models."""
+	models = get_available_models()
+	current = get_current_model()
+	return JsonResponse({
+		"models": models,
+		"current": current,
+	})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def set_model_view(request: HttpRequest) -> JsonResponse:
+	"""Set the current LLM model."""
+	try:
+		payload = json.loads(request.body or "{}")
+	except json.JSONDecodeError:
+		return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+	model_id = payload.get("model")
+	if not model_id:
+		return JsonResponse({"error": "'model' field is required."}, status=400)
+
+	if set_current_model(model_id):
+		return JsonResponse({
+			"success": True,
+			"current": get_current_model(),
+			"message": f"Switched to {model_id}",
+		})
+	else:
+		return JsonResponse({
+			"error": f"Model '{model_id}' is not available. Check API key configuration.",
+		}, status=400)
+
 
 
