@@ -1,4 +1,5 @@
 import os
+import uuid
 from typing import List, Dict, Any, Optional, Sequence
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -7,7 +8,7 @@ from langchain_core.runnables.config import RunnableConfig
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 from .pdf_tool import search_pdf       
-from .sql_tool import get_database_schema, run_sql_query      
+from .sql_tool import get_database_schema
 from .tavily_search_tool import tavily_search  
 
 
@@ -21,17 +22,28 @@ if api_key:
 
 SYSTEM_PROMPT = """You are Axon Copilot, an assistant that combines retrieved document knowledge with live tools.
 
-IMPORTANT SQL GUIDELINES:
-- When users ask about database content, structure, or want to query data, use get_database_schema to understand the schema first.
-- When you need to write a SQL query to answer the user's question, DO NOT use run_sql_query directly.
-- Instead, provide the SQL query in a markdown code block like this:
-  ```sql
-  SELECT * FROM table_name WHERE condition;
-  ```
-- The user will review and approve the query before it runs in their SQL console.
-- Only provide ONE SQL query at a time for user approval.
-- Explain what the query will do before showing it.
-- The run_sql_query tool is only for when the user explicitly asks you to execute a specific query they provide.
+CRITICAL SQL GUIDELINES - YOU MUST FOLLOW THESE:
+1. When users ask about database content or want to query/modify data, FIRST use get_database_schema to understand the structure.
+2. You CANNOT execute SQL queries directly. You do NOT have a tool to run SQL.
+3. After understanding the schema, you MUST return the SQL query in a markdown code block for user approval:
+
+```sql
+YOUR_QUERY_HERE
+```
+
+4. The user will review the query in their SQL console and decide whether to run it.
+5. ALWAYS explain what the query will do BEFORE showing the code block.
+6. Only provide ONE SQL query at a time.
+7. Wait for user confirmation before suggesting additional queries.
+
+EXAMPLE RESPONSE FOR DATABASE QUESTIONS:
+"Based on the database schema, here's a query to retrieve the data you requested:
+
+```sql
+SELECT * FROM customers WHERE country = 'USA';
+```
+
+This query will fetch all customers from the USA. Please review and approve this query in the SQL panel."
 
 OTHER TOOLS:
 - Call `tavily_search` for questions about current events, weather, general facts, or anything requiring up-to-date information.
@@ -65,8 +77,8 @@ def get_agent():
         # Initialize memory for conversation persistence
         _MEMORY = MemorySaver()
         
-        # Define tools - AI will suggest queries via markdown, run_sql_query is for explicit execution requests
-        tools = [search_pdf, get_database_schema, run_sql_query, tavily_search]
+        # Define tools - NO run_sql_query! AI must suggest queries for user approval
+        tools = [search_pdf, get_database_schema, tavily_search]
         
         # Create the ReAct agent using LangGraph v1.x
         _AGENT = create_react_agent(
@@ -125,8 +137,10 @@ def generate_response(
 
     try:
         agent = get_agent()
-        # Config with thread_id for memory/checkpointing
-        config: RunnableConfig = {"configurable": {"thread_id": "default"}}
+        # Use a unique thread_id per request to avoid memory conflicts between users
+        # The conversation history is already passed in, so we don't need shared memory
+        thread_id = str(uuid.uuid4())
+        config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
         result = agent.invoke({"messages": conversation}, config)
         
         # Extract response from LangGraph result

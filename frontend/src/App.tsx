@@ -117,10 +117,13 @@ const App: React.FC = () => {
   const [isFetchingSqlSuggestions, setIsFetchingSqlSuggestions] = useState(false);
   const [sqlSuggestionsError, setSqlSuggestionsError] = useState<string | null>(null);
   const [pendingSqlQuery, setPendingSqlQuery] = useState<PendingQuery | null>(null);
+  const [latestAutoResult, setLatestAutoResult] = useState<SqlQueryResult | null>(null);
   const [autoExecuteEnabled, setAutoExecuteEnabled] = useState<boolean>(() => {
     const stored = localStorage.getItem('axon-auto-execute');
     return stored === 'true';
   });
+  // Map from SQL query string to its execution result
+  const [executedQueries, setExecutedQueries] = useState<Map<string, SqlQueryResult>>(new Map());
 
   const lastAssistantMessageIdRef = useRef<string | null>(null);
 
@@ -146,6 +149,7 @@ const App: React.FC = () => {
     setSqlSuggestionsError(null);
     setIsFetchingSqlSuggestions(false);
     setPendingSqlQuery(null);
+    setLatestAutoResult(null);
     if (options?.close) {
       setIsSideWindowOpen(false);
     }
@@ -178,10 +182,11 @@ const App: React.FC = () => {
       throw error;
     }
 
-  setIsSideWindowOpen(true);
+    setIsSideWindowOpen(true);
     setSqlEditorValue(query);
     setIsExecutingSql(true);
     setSqlConsoleError(null);
+    setLatestAutoResult(null); // Clear previous auto result
 
     try {
       const result = await runSqlQuery({ query, limit });
@@ -197,6 +202,19 @@ const App: React.FC = () => {
       };
 
       setSqlHistory((prev) => [historyEntry, ...prev].slice(0, 25));
+      
+      // Set the latest auto result so Canvas can display it
+      if (source === 'ai') {
+        setLatestAutoResult(result);
+      }
+      
+      // Track executed query for "View in Canvas" button in chat
+      setExecutedQueries((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(query.trim(), result);
+        return newMap;
+      });
+      
       return result;
     } catch (error) {
       const message = deriveErrorMessage(error, 'Unable to execute SQL query.');
@@ -266,8 +284,24 @@ const App: React.FC = () => {
     setAutoExecuteEnabled((prev) => {
       const next = !prev;
       localStorage.setItem('axon-auto-execute', String(next));
+      
+      // If turning ON auto-execute and there's a pending query, execute it
+      if (next && pendingSqlQuery) {
+        void handleExecuteSqlQuery(pendingSqlQuery.query, 200, pendingSqlQuery.source);
+        setPendingSqlQuery(null);
+      }
+      
       return next;
     });
+  };
+
+  const handleViewSqlInCanvas = (sql: string) => {
+    const result = executedQueries.get(sql.trim());
+    if (result) {
+      setIsSideWindowOpen(true);
+      setSqlEditorValue(sql.trim());
+      setLatestAutoResult(result);
+    }
   };
 
   const refreshConversations = useCallback(async () => {
@@ -312,20 +346,42 @@ const App: React.FC = () => {
       return;
     }
 
-    lastAssistantMessageIdRef.current = latest.id;
     if (latest.sender !== 'assistant') {
       return;
     }
 
+    // Check for SQL code blocks in the assistant's message
     const match = latest.content.match(/```sql\s*([\s\S]*?)```/i);
-    if (match) {
+    if (match && canUseDatabaseTools) {
       const extracted = match[1].trim();
       if (extracted) {
-        setSqlEditorValue(extracted);
-  setIsSideWindowOpen(true);
+        lastAssistantMessageIdRef.current = latest.id;
+        
+        if (autoExecuteEnabled) {
+          // Auto-execute the query
+          void handleExecuteSqlQuery(extracted, 200, 'ai');
+        } else {
+          // Set as pending query for user approval
+          setSqlEditorValue(extracted);
+          setPendingSqlQuery({
+            id: `pending-${Date.now()}`,
+            query: extracted,
+            source: 'ai',
+            timestamp: new Date().toISOString(),
+          });
+          setIsSideWindowOpen(true);
+        }
       }
     }
-  }, [currentMessages]);
+  }, [currentMessages, canUseDatabaseTools, autoExecuteEnabled]);
+
+  // Auto-execute pending query when toggle is enabled
+  useEffect(() => {
+    if (autoExecuteEnabled && pendingSqlQuery) {
+      void handleExecuteSqlQuery(pendingSqlQuery.query, 200, pendingSqlQuery.source);
+      setPendingSqlQuery(null);
+    }
+  }, [autoExecuteEnabled]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -775,6 +831,7 @@ const App: React.FC = () => {
     onRejectPendingQuery: handleRejectPendingQuery,
     autoExecuteEnabled,
     onToggleAutoExecute: handleToggleAutoExecute,
+    latestAutoResult,
   };
 
   return (
@@ -812,6 +869,8 @@ const App: React.FC = () => {
         isSideWindowOpen={isSideWindowOpen}
         canUseDatabaseTools={canUseDatabaseTools}
         sideWindow={sideWindowProps}
+        onViewSqlInCanvas={handleViewSqlInCanvas}
+        executedQueries={executedQueries}
       />
       <AuthModal
         isOpen={authModalState.open}

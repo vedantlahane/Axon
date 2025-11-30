@@ -4,7 +4,7 @@ import ChatDisplay from "./ChatDisplay";
 import InputSection from "./InputSection";
 import Canvas, { type SqlSideWindowProps } from "./Canvas";
 import type { ChatMessage, ConversationSummary } from "../App";
-import type { UserProfile } from "../services/chatApi";
+import type { UserProfile, SqlQueryResult } from "../services/chatApi";
 
 /**
  * Layout contract for the main chat surface. Each prop maps to a control in the surrounding shell
@@ -35,6 +35,8 @@ interface MainPanelProps {
   isSideWindowOpen: boolean;
   canUseDatabaseTools: boolean;
   sideWindow: SqlSideWindowProps;
+  onViewSqlInCanvas?: (sql: string) => void;
+  executedQueries?: Map<string, SqlQueryResult>;
 }
 
 /**
@@ -64,6 +66,8 @@ const MainPanel: React.FC<MainPanelProps> = ({
   isSideWindowOpen,
   canUseDatabaseTools,
   sideWindow,
+  onViewSqlInCanvas,
+  executedQueries,
 }) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const settingsRef = useRef<HTMLDivElement | null>(null);
@@ -327,6 +331,8 @@ const MainPanel: React.FC<MainPanelProps> = ({
                   onViewChange={onViewChange}
                   onDeleteConversation={onDeleteConversation}
                   isChatLoading={isChatLoading}
+                  onViewSqlInCanvas={onViewSqlInCanvas}
+                  executedQueries={executedQueries}
                 />
               </div>
               <InputSection

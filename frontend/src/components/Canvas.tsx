@@ -51,6 +51,8 @@ export interface SqlSideWindowProps {
   onRejectPendingQuery: () => void;
   autoExecuteEnabled: boolean;
   onToggleAutoExecute: () => void;
+  // Latest auto-executed result
+  latestAutoResult: SqlQueryResult | null;
 }
 
 interface CanvasProps {
@@ -110,6 +112,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
     onRejectPendingQuery,
     autoExecuteEnabled,
     onToggleAutoExecute,
+    latestAutoResult,
   } = sideWindow;
 
   const [queryLimit, setQueryLimit] = useState<number>(DEFAULT_QUERY_LIMIT);
@@ -128,6 +131,14 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
       setActiveTab("editor");
     }
   }, [pendingQuery, autoExecuteEnabled]);
+
+  // Display auto-executed results
+  useEffect(() => {
+    if (latestAutoResult) {
+      setResult(latestAutoResult);
+      setActiveTab("results");
+    }
+  }, [latestAutoResult]);
 
   useEffect(() => {
     if (!isOpen) {

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import type { ChatMessage, ConversationSummary } from '../App';
+import type { SqlQueryResult } from '../services/chatApi';
 
 interface ChatDisplayProps {
   view: 'chat' | 'history';
@@ -11,6 +12,8 @@ interface ChatDisplayProps {
   onViewChange: (view: 'chat' | 'history') => void;
   onDeleteConversation: (conversationId: string) => Promise<void> | void;
   isChatLoading: boolean;
+  onViewSqlInCanvas?: (sql: string) => void;
+  executedQueries?: Map<string, SqlQueryResult>; // sql -> result
 }
 
 const suggestions = [
@@ -42,9 +45,61 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   onViewChange,
   onDeleteConversation,
   isChatLoading,
+  onViewSqlInCanvas,
+  executedQueries,
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const showLanding = view === 'chat' && messages.length === 0;
+
+  // Helper to extract SQL from message content
+  const extractSql = (content: string): string | null => {
+    const match = content.match(/```sql\s*([\s\S]*?)```/i);
+    return match ? match[1].trim() : null;
+  };
+
+  // Helper to render message content with clickable SQL blocks
+  const renderMessageContent = (message: ChatMessage) => {
+    const sql = extractSql(message.content);
+    const hasExecutedResults = sql ? executedQueries?.has(sql.trim()) : false;
+    
+    if (sql && onViewSqlInCanvas) {
+      // Split content around the SQL block
+      const parts = message.content.split(/```sql[\s\S]*?```/i);
+      const beforeSql = parts[0] || '';
+      const afterSql = parts[1] || '';
+      
+      return (
+        <div className="flex flex-col gap-3">
+          {beforeSql && <p className="whitespace-pre-wrap">{beforeSql.trim()}</p>}
+          
+          {/* SQL Block with View in Canvas button */}
+          <div className="rounded-lg border border-white/10 bg-[#0d1117] overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
+              <span className="text-xs text-white/50 font-mono">SQL Query</span>
+              <button
+                type="button"
+                onClick={() => onViewSqlInCanvas(sql)}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white/80 bg-[#2563eb]/80 hover:bg-[#2563eb] rounded-md transition"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <line x1="9" y1="3" x2="9" y2="21" />
+                </svg>
+                {hasExecutedResults ? 'View Results' : 'Open in Canvas'}
+              </button>
+            </div>
+            <pre className="p-3 text-sm font-mono text-emerald-400 overflow-x-auto">
+              <code>{sql}</code>
+            </pre>
+          </div>
+          
+          {afterSql && <p className="whitespace-pre-wrap">{afterSql.trim()}</p>}
+        </div>
+      );
+    }
+    
+    return <p className="whitespace-pre-wrap">{message.content}</p>;
+  };
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -235,8 +290,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                           <span className="h-1 w-1 rounded-full bg-white/30" aria-hidden />
                           <span>{formatDisplayTime(message.timestamp)}</span>
                         </div>
-                        <div className={`w-fit rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur ${bubbleClasses}`}>
-                          <p className="whitespace-pre-wrap">{message.content}</p>
+                        <div className={`w-fit max-w-full rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur ${bubbleClasses}`}>
+                          {renderMessageContent(message)}
                           {hasAttachments && (
                             <div className="mt-3 flex flex-wrap gap-2">
                               {message.attachments!.map((attachment) => (
