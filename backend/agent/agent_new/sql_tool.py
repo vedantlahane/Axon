@@ -197,7 +197,8 @@ def run_sql_query(query: str) -> str:
     """
     Execute a SQL query against the connected database and return formatted results.
     Use this tool when the user asks questions about data in the database or wants 
-    to query the database tables.
+    to query the database tables. You can use this to list tables, describe schema,
+    or run SELECT/INSERT/UPDATE/DELETE queries.
     
     Args:
         query (str): The SQL query to execute (e.g., SELECT, INSERT, UPDATE, DELETE).
@@ -205,24 +206,149 @@ def run_sql_query(query: str) -> str:
     Returns:
         str: Formatted query results or error message.
     """
-    toolkit = get_sql_toolkit()
-    if not toolkit:
+    connection = _CURRENT_CONNECTION.get()
+    if connection is None:
         return (
             "SQL database is not configured. Please ensure a database connection "
             "has been established before attempting queries."
         )
 
-    tools = toolkit.get_tools()
-    if not tools:
-        return "SQL toolkit initialized but no query tool is available."
-
-    query_tool = tools[0]
     try:
-        # v1.0: Use invoke instead of run - FIX #2
-        result = query_tool.invoke(query)
-        return result if result else "Query executed successfully but returned no results."
+        engine = create_engine(connection.uri)
+        with engine.connect() as conn:
+            # Execute the query
+            result = conn.execute(text(query))
+            
+            # Check if it's a SELECT query that returns rows
+            if result.returns_rows:
+                rows = result.fetchall()
+                columns = list(result.keys())
+                
+                if not rows:
+                    return "Query executed successfully. No rows returned."
+                
+                # Format results as a readable table
+                output_lines = []
+                output_lines.append(f"Columns: {', '.join(columns)}")
+                output_lines.append(f"Rows returned: {len(rows)}")
+                output_lines.append("-" * 50)
+                
+                # Show up to 50 rows
+                for i, row in enumerate(rows[:50]):
+                    row_data = {col: _serialise_sql_value(val) for col, val in zip(columns, row)}
+                    output_lines.append(str(row_data))
+                
+                if len(rows) > 50:
+                    output_lines.append(f"... and {len(rows) - 50} more rows")
+                
+                return "\n".join(output_lines)
+            else:
+                # For INSERT, UPDATE, DELETE
+                conn.commit()
+                return f"Query executed successfully. Rows affected: {result.rowcount}"
+                
     except Exception as exc:
         return f"SQL query failed: {type(exc).__name__}: {exc}"
+
+
+@tool
+def get_database_schema() -> str:
+    """
+    Get the database schema including all tables and their columns.
+    Use this tool when the user asks about the database structure, what tables exist,
+    or wants to know what's in the database.
+    
+    Returns:
+        str: Formatted database schema with tables and columns.
+    """
+    connection = _CURRENT_CONNECTION.get()
+    if connection is None:
+        return (
+            "SQL database is not configured. Please ensure a database connection "
+            "has been established before attempting to get schema."
+        )
+
+    try:
+        engine = create_engine(connection.uri)
+        inspector = inspect(engine)
+        
+        tables = inspector.get_table_names()
+        if not tables:
+            return "The database has no tables."
+        
+        output_lines = []
+        output_lines.append(f"Database: {connection.label}")
+        output_lines.append(f"Tables found: {len(tables)}")
+        output_lines.append("=" * 50)
+        
+        for table_name in tables:
+            columns = inspector.get_columns(table_name)
+            pk_constraint = inspector.get_pk_constraint(table_name)
+            pk_columns = pk_constraint.get('constrained_columns', []) if pk_constraint else []
+            
+            output_lines.append(f"\n📋 Table: {table_name}")
+            output_lines.append("-" * 30)
+            
+            for col in columns:
+                col_name = col['name']
+                col_type = str(col['type'])
+                nullable = "NULL" if col.get('nullable', True) else "NOT NULL"
+                pk_marker = " 🔑 PRIMARY KEY" if col_name in pk_columns else ""
+                output_lines.append(f"  • {col_name}: {col_type} {nullable}{pk_marker}")
+        
+        return "\n".join(output_lines)
+        
+    except Exception as exc:
+        return f"Failed to get database schema: {type(exc).__name__}: {exc}"
+
+
+@tool
+def suggest_sql_query(query: str, explanation: str = "") -> str:
+    """
+    Suggest a SQL query for user review before execution.
+    Use this tool when the user asks questions about data that require a SQL query.
+    This allows the user to review, edit, and approve the query before it runs.
+    
+    IMPORTANT: Use this tool INSTEAD of run_sql_query when:
+    - The user asks a question that needs database data
+    - You want to query the database for information
+    - You're fetching data to answer a user's question
+    
+    Args:
+        query (str): The SQL query to suggest (e.g., SELECT, INSERT, UPDATE, DELETE).
+        explanation (str): Brief explanation of what the query does.
+    
+    Returns:
+        str: A formatted message with the SQL query for user approval.
+    """
+    connection = _CURRENT_CONNECTION.get()
+    if connection is None:
+        return (
+            "SQL database is not configured. Please ensure a database connection "
+            "has been established before suggesting queries."
+        )
+    
+    # Format the query nicely
+    cleaned_query = query.strip()
+    
+    # Build response with SQL in a code block so frontend can detect it
+    response_parts = []
+    
+    if explanation:
+        response_parts.append(f"**Suggested Query:** {explanation}")
+        response_parts.append("")
+    else:
+        response_parts.append("**I've prepared a SQL query for you to review:**")
+        response_parts.append("")
+    
+    # The SQL code block - this is what the frontend detects
+    response_parts.append("```sql")
+    response_parts.append(cleaned_query)
+    response_parts.append("```")
+    response_parts.append("")
+    response_parts.append("Please review the query above. You can approve it, edit it, or reject it in the SQL panel.")
+    
+    return "\n".join(response_parts)
 
 
 def _create_engine(connection: SQLConnectionDetails) -> Engine:

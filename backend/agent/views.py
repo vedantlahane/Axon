@@ -45,9 +45,9 @@ def health_view(request: HttpRequest) -> JsonResponse:
 		status=status_code,
 	)
 
-from .graph.agent_backend import generate_response
-from .graph.pdf_tool import build_pdf_search_tool
-from .graph.sql_tool import (
+from .agent_new.agent import generate_response
+from .agent_new.pdf_tool import build_pdf_search_tool
+from .agent_new.sql_tool import (
 	AVAILABLE_DATABASE_MODES,
 	SQLConnectionDetails,
 	clear_sql_toolkit_cache,
@@ -59,13 +59,14 @@ from .graph.sql_tool import (
 	test_sql_connection,
 	use_sql_connection,
 )
-from .graph.tavily_search_tool import get_tavily_search_tool
+from .agent_new.tavily_search_tool import get_tavily_search_tool
 from .models import (
 	Conversation,
 	DatabaseConnection,
 	Message,
 	MessageAttachment,
 	PasswordResetToken,
+	UploadedDatabase,
 	UploadedDocument,
 )
 RESET_TOKEN_TTL = timedelta(hours=1)
@@ -797,6 +798,85 @@ def database_schema_view(request: HttpRequest) -> JsonResponse:
 		}
 	)
 	return JsonResponse(schema_payload)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def upload_database_view(request: HttpRequest) -> JsonResponse:
+	"""
+	Upload a SQLite database file from local machine to the server.
+	This allows users to connect their local databases to the production website.
+	"""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	if "database" not in request.FILES:
+		return JsonResponse({"error": "No database file provided."}, status=400)
+
+	uploaded_file = request.FILES["database"]
+	
+	# Validate file extension
+	file_name = uploaded_file.name.lower()
+	if not (file_name.endswith('.db') or file_name.endswith('.sqlite') or file_name.endswith('.sqlite3')):
+		return JsonResponse(
+			{"error": "Invalid file type. Only .db, .sqlite, and .sqlite3 files are allowed."},
+			status=400
+		)
+
+	# Validate file size (max 50MB for SQLite databases)
+	max_size = 50 * 1024 * 1024  # 50MB
+	if uploaded_file.size > max_size:
+		return JsonResponse(
+			{"error": f"File too large. Maximum size is {max_size / (1024 * 1024)}MB."},
+			status=400
+		)
+
+	# Validate it's actually a SQLite file by checking the header
+	try:
+		uploaded_file.seek(0)
+		header = uploaded_file.read(16)
+		uploaded_file.seek(0)
+		
+		# SQLite files start with "SQLite format 3\x00"
+		if not header.startswith(b'SQLite format 3'):
+			return JsonResponse(
+				{"error": "Invalid SQLite database file. File header verification failed."},
+				status=400
+			)
+	except Exception as exc:
+		return JsonResponse(
+			{"error": f"Unable to validate file: {exc}"},
+			status=400
+		)
+
+	try:
+		# Save the uploaded database
+		db_instance = UploadedDatabase.objects.create(
+			user=request.user,
+			file=uploaded_file,
+			original_name=uploaded_file.name,
+			size=uploaded_file.size,
+		)
+
+		# Get the file path relative to MEDIA_ROOT
+		file_path = db_instance.file.path
+
+		return JsonResponse({
+			"success": True,
+			"message": "Database uploaded successfully.",
+			"path": file_path,
+			"filename": uploaded_file.name,
+			"size": uploaded_file.size,
+			"id": db_instance.pk,
+		}, status=201)
+
+	except Exception as exc:
+		return JsonResponse(
+			{"error": f"Failed to save database: {exc}"},
+			status=500
+		)
+
 
 def _resolve_user_database_details(user: Any) -> Optional[SQLConnectionDetails]:
 	instance = _get_user_database_connection(user)

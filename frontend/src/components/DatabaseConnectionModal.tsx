@@ -43,6 +43,8 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
   const [displayName, setDisplayName] = useState('');
   const [sqlitePath, setSqlitePath] = useState('');
   const [connectionString, setConnectionString] = useState('');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (!isOpen) {
@@ -106,6 +108,51 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
   const handleDisconnect = async () => {
     await Promise.resolve(onDisconnect());
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate it's a SQLite file
+      if (!file.name.endsWith('.db') && !file.name.endsWith('.sqlite') && !file.name.endsWith('.sqlite3')) {
+        alert('Please select a valid SQLite database file (.db, .sqlite, or .sqlite3)');
+        return;
+      }
+      setUploadedFile(file);
+      // Auto-fill the path with the uploaded filename
+      setSqlitePath(`uploaded_databases/${file.name}`);
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!uploadedFile) return;
+
+    const formData = new FormData();
+    formData.append('database', uploadedFile);
+
+    try {
+      setUploadProgress(0);
+      const response = await fetch('/api/database/upload/', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      setUploadProgress(100);
+      setSqlitePath(data.path);
+      
+      // Show success feedback
+      alert('Database uploaded successfully! Click "Save connection" to use it.');
+    } catch (error) {
+      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -210,22 +257,73 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
               {!isRemote && (
                 <div className="space-y-3">
-                  <label className="block text-xs uppercase tracking-[0.25em] text-white/40" htmlFor="db-sqlite-path">
-                    SQLite file path
+                  <label className="block text-xs uppercase tracking-[0.25em] text-white/40">
+                    SQLite Database
                   </label>
-                  <input
-                    id="db-sqlite-path"
-                    type="text"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/40 disabled:opacity-60"
-                    placeholder="backend/db.sqlite3"
-                    value={sqlitePath}
-                    onChange={(event) => setSqlitePath(event.target.value)}
-                    disabled={disableInteractions}
-                    autoComplete="off"
-                  />
-                  {config?.resolvedSqlitePath && (
-                    <p className="text-xs text-white/40">Resolved path: {config.resolvedSqlitePath}</p>
-                  )}
+                  
+                  {/* File Upload Option */}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-xs text-white/60 mb-3">Upload from your computer:</p>
+                    <div className="flex gap-2">
+                      <label className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:border-white/40 hover:bg-white/10">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                          </svg>
+                          <span>{uploadedFile ? uploadedFile.name : 'Choose file...'}</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept=".db,.sqlite,.sqlite3"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                          disabled={disableInteractions}
+                        />
+                      </label>
+                      {uploadedFile && (
+                        <button
+                          type="button"
+                          className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                          onClick={handleFileUpload}
+                          disabled={disableInteractions}
+                        >
+                          Upload
+                        </button>
+                      )}
+                    </div>
+                    {uploadProgress > 0 && uploadProgress < 100 && (
+                      <div className="mt-2">
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                          <div 
+                            className="h-full bg-emerald-500 transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Manual Path Option */}
+                  <div>
+                    <label className="block text-xs text-white/60 mb-2" htmlFor="db-sqlite-path">
+                      Or enter server path manually:
+                    </label>
+                    <input
+                      id="db-sqlite-path"
+                      type="text"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/40 disabled:opacity-60"
+                      placeholder="backend/db.sqlite3"
+                      value={sqlitePath}
+                      onChange={(event) => setSqlitePath(event.target.value)}
+                      disabled={disableInteractions}
+                      autoComplete="off"
+                    />
+                    {config?.resolvedSqlitePath && (
+                      <p className="text-xs text-white/40 mt-2">Resolved path: {config.resolvedSqlitePath}</p>
+                    )}
+                  </div>
                 </div>
               )}
 

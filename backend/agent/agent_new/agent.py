@@ -1,11 +1,13 @@
 import os
-from typing import List, Dict, Any, Optional, Sequence, cast
+from typing import List, Dict, Any, Optional, Sequence
 from dotenv import load_dotenv
-from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_core.runnables.config import RunnableConfig  # Import for type hints
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
+from langchain_core.runnables.config import RunnableConfig
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
 from .pdf_tool import search_pdf       
-from .sql_tool import run_sql_query      
+from .sql_tool import get_database_schema, run_sql_query      
 from .tavily_search_tool import tavily_search  
 
 
@@ -17,28 +19,63 @@ if api_key:
     os.environ["OPENAI_API_KEY"] = api_key
 
 
-SYSTEM_PROMPT = (
-    "You are Axon Copilot, an assistant that combines retrieved document knowledge with live tools. "
-    "Always use the available tools when they can improve your answer. "
-    "Call `tavily_search` for questions about current events, weather, general facts, or anything that "
-    "requires up-to-date or external information. Only answer from prior knowledge when tools are "
-    "clearly unnecessary."
-)
+SYSTEM_PROMPT = """You are Axon Copilot, an assistant that combines retrieved document knowledge with live tools.
+
+IMPORTANT SQL GUIDELINES:
+- When users ask about database content, structure, or want to query data, use get_database_schema to understand the schema first.
+- When you need to write a SQL query to answer the user's question, DO NOT use run_sql_query directly.
+- Instead, provide the SQL query in a markdown code block like this:
+  ```sql
+  SELECT * FROM table_name WHERE condition;
+  ```
+- The user will review and approve the query before it runs in their SQL console.
+- Only provide ONE SQL query at a time for user approval.
+- Explain what the query will do before showing it.
+- The run_sql_query tool is only for when the user explicitly asks you to execute a specific query they provide.
+
+OTHER TOOLS:
+- Call `tavily_search` for questions about current events, weather, general facts, or anything requiring up-to-date information.
+- Use `search_pdf` for questions about uploaded documents.
+- Only answer from prior knowledge when tools are clearly unnecessary.
+"""
 
 
-# Create the agent - that's it!
+# Create the agent using LangGraph v1.x create_react_agent
 _AGENT = None
+_MEMORY = None
+
+
+def reset_agent():
+    """Reset the agent to pick up new configuration."""
+    global _AGENT, _MEMORY
+    _AGENT = None
+    _MEMORY = None
 
 
 def get_agent():
-    global _AGENT
+    """
+    Create and cache a LangGraph ReAct agent with memory checkpointing.
+    Uses the new LangGraph v1.x API with create_react_agent.
+    """
+    global _AGENT, _MEMORY
     if _AGENT is None:
-        _AGENT = create_agent(
-            model="gpt-4o",
-            tools=[search_pdf, run_sql_query, tavily_search],
-            system_prompt=SYSTEM_PROMPT
+        # Initialize the LLM
+        llm = ChatOpenAI(model="gpt-4o", temperature=0)
+        
+        # Initialize memory for conversation persistence
+        _MEMORY = MemorySaver()
+        
+        # Define tools - AI will suggest queries via markdown, run_sql_query is for explicit execution requests
+        tools = [search_pdf, get_database_schema, run_sql_query, tavily_search]
+        
+        # Create the ReAct agent using LangGraph v1.x
+        _AGENT = create_react_agent(
+            model=llm,
+            tools=tools,
+            checkpointer=_MEMORY,
+            prompt=SYSTEM_PROMPT,
         )
-        print("Agent created successfully")
+        print("Agent created successfully using LangGraph v1.x")
     return _AGENT
 
 
@@ -52,13 +89,14 @@ def generate_response(
     document_context: Optional[str] = None,
     external_context: Optional[str] = None,
 ) -> str:
-    """Return the assistant reply for the provided prompt and history."""
+    """Return the assistant reply for the provided prompt and history using LangGraph v1.x."""
     if not prompt:
         return _FALLBACK_MESSAGE
 
-    # Build conversation
-    conversation = []
+    # Build conversation messages
+    conversation: List[BaseMessage] = []
     
+    # Add history
     if history:
         for item in history:
             role = item.get("role")
@@ -68,7 +106,7 @@ def generate_response(
             elif role == "assistant":
                 conversation.append(AIMessage(content=content))
 
-    # Add context via system messages
+    # Add context via system messages (before the user's prompt)
     context_parts = []
     if document_context:
         context_parts.append(
@@ -82,48 +120,77 @@ def generate_response(
     if context_parts:
         conversation.append(SystemMessage(content="\n\n---\n\n".join(context_parts)))
 
+    # Add the user's prompt
     conversation.append(HumanMessage(content=prompt))
 
     try:
         agent = get_agent()
-        # Properly typed config for RunnableConfig
+        # Config with thread_id for memory/checkpointing
         config: RunnableConfig = {"configurable": {"thread_id": "default"}}
         result = agent.invoke({"messages": conversation}, config)
         
-        # Extract response
+        # Extract response from LangGraph result
         messages = result.get("messages", [])
         if messages:
+            # Get the last AI message
             last_message = messages[-1]
-            if hasattr(last_message, 'content'):
-                return last_message.content or _FALLBACK_MESSAGE
-            return last_message.get("content", _FALLBACK_MESSAGE)
+            
+            # Handle BaseMessage objects
+            if isinstance(last_message, BaseMessage):
+                content = last_message.content
+                if isinstance(content, str) and content.strip():
+                    return content
+                elif isinstance(content, list):
+                    # Handle content blocks (v1.x feature)
+                    text_parts = []
+                    for block in content:
+                        if isinstance(block, dict) and "text" in block:
+                            text_parts.append(block["text"])
+                        elif isinstance(block, str):
+                            text_parts.append(block)
+                    if text_parts:
+                        return "\n".join(text_parts)
+            
+            # Handle dict-style messages
+            elif isinstance(last_message, dict):
+                content = last_message.get("content", "")
+                if content:
+                    return str(content)
         
     except Exception as exc:
         print(f"Assistant backend error: {exc}")
+        import traceback
+        traceback.print_exc()
+        
+        # Provide fallback context if available
         fallback_chunks = []
         if document_context:
-            fallback_chunks.append(f"Excerpts from your documents:\n\n{document_context}")
+            fallback_chunks.append(f"I couldn't process your request, but here are excerpts from your documents:\n\n{document_context}")
         if external_context:
-            fallback_chunks.append(f"Insights from web search:\n\n{external_context}")
+            fallback_chunks.append(f"I couldn't process your request, but here are insights from web search:\n\n{external_context}")
         if fallback_chunks:
             return "\n\n---\n\n".join(fallback_chunks)
 
     return _FALLBACK_MESSAGE
 
 
-def stream_response(messages: List):
-    """Stream agent responses."""
+def stream_response(messages: List[BaseMessage]):
+    """Stream agent responses using LangGraph v1.x stream."""
     agent = get_agent()
-    # Properly typed config
     config: RunnableConfig = {"configurable": {"thread_id": "default"}}
     
     for event in agent.stream({"messages": messages}, config, stream_mode="values"):
         msgs = event.get("messages", [])
         if msgs:
             last_msg = msgs[-1]
-            content = getattr(last_msg, 'content', '') or last_msg.get("content", "")
-            if content:
-                yield content
+            if isinstance(last_msg, BaseMessage):
+                content = last_msg.content
+                if isinstance(content, str) and content:
+                    yield content
+            elif isinstance(last_msg, dict):
+                content = last_msg.get("content", "")
+                if content:
+                    yield str(content)
 
 
 if __name__ == "__main__":

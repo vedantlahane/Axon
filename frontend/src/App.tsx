@@ -3,7 +3,7 @@ import Sidebar from './components/Sidebar';
 import MainPanel from './components/MainPanel';
 import AuthModal from './components/AuthModal';
 import DatabaseConnectionModal from './components/DatabaseConnectionModal';
-import { type SqlSideWindowProps, type SqlQueryHistoryEntry } from './components/Canvas';
+import { type SqlSideWindowProps, type SqlQueryHistoryEntry, type PendingQuery } from './components/Canvas';
 import {
   fetchConversation,
   fetchConversations,
@@ -116,6 +116,11 @@ const App: React.FC = () => {
   const [sqlSuggestionAnalysis, setSqlSuggestionAnalysis] = useState<string | null>(null);
   const [isFetchingSqlSuggestions, setIsFetchingSqlSuggestions] = useState(false);
   const [sqlSuggestionsError, setSqlSuggestionsError] = useState<string | null>(null);
+  const [pendingSqlQuery, setPendingSqlQuery] = useState<PendingQuery | null>(null);
+  const [autoExecuteEnabled, setAutoExecuteEnabled] = useState<boolean>(() => {
+    const stored = localStorage.getItem('axon-auto-execute');
+    return stored === 'true';
+  });
 
   const lastAssistantMessageIdRef = useRef<string | null>(null);
 
@@ -140,6 +145,7 @@ const App: React.FC = () => {
     setSqlSuggestionAnalysis(null);
     setSqlSuggestionsError(null);
     setIsFetchingSqlSuggestions(false);
+    setPendingSqlQuery(null);
     if (options?.close) {
       setIsSideWindowOpen(false);
     }
@@ -165,7 +171,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleExecuteSqlQuery = async (query: string, limit = 200): Promise<SqlQueryResult> => {
+  const handleExecuteSqlQuery = async (query: string, limit = 200, source: 'ai' | 'user' = 'user'): Promise<SqlQueryResult> => {
     if (!canUseDatabaseTools) {
       const error = new Error('Configure a database connection before running SQL queries.');
       setSqlConsoleError(error.message);
@@ -186,6 +192,8 @@ const App: React.FC = () => {
         executedAt: new Date().toISOString(),
         type: result.type,
         rowCount: result.rowCount,
+        result, // Store full result for viewing later
+        source, // Track if AI generated
       };
 
       setSqlHistory((prev) => [historyEntry, ...prev].slice(0, 25));
@@ -236,6 +244,30 @@ const App: React.FC = () => {
     } finally {
       setIsFetchingSqlSuggestions(false);
     }
+  };
+
+  const handleApprovePendingQuery = async () => {
+    if (!pendingSqlQuery) return;
+    const query = pendingSqlQuery.query;
+    const source = pendingSqlQuery.source;
+    setPendingSqlQuery(null);
+    try {
+      await handleExecuteSqlQuery(query, 200, source);
+    } catch {
+      // Error already handled in handleExecuteSqlQuery
+    }
+  };
+
+  const handleRejectPendingQuery = () => {
+    setPendingSqlQuery(null);
+  };
+
+  const handleToggleAutoExecute = () => {
+    setAutoExecuteEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('axon-auto-execute', String(next));
+      return next;
+    });
   };
 
   const refreshConversations = useCallback(async () => {
@@ -579,12 +611,44 @@ const App: React.FC = () => {
     });
   };
 
+  // Extract SQL query from message content (looks for ```sql blocks)
+  const extractSqlFromMessage = (content: string): string | null => {
+    const sqlBlockMatch = content.match(/```sql\s*([\s\S]*?)```/i);
+    if (sqlBlockMatch && sqlBlockMatch[1]) {
+      return sqlBlockMatch[1].trim();
+    }
+    return null;
+  };
+
   const updateMessagesFromDetail = (detail: RawConversationDetail) => {
     const mappedMessages = detail.messages.map(mapMessage);
     setCurrentMessages(mappedMessages);
     setSelectedHistoryId(detail.id);
     setActiveConversationId(detail.id);
     setInputSessionKey(detail.id);
+
+    // Check if the latest assistant message contains SQL
+    const latestMessage = mappedMessages[mappedMessages.length - 1];
+    if (latestMessage && latestMessage.sender === 'assistant' && canUseDatabaseTools) {
+      const sqlQuery = extractSqlFromMessage(latestMessage.content);
+      if (sqlQuery && latestMessage.id !== lastAssistantMessageIdRef.current) {
+        lastAssistantMessageIdRef.current = latestMessage.id;
+        
+        if (autoExecuteEnabled) {
+          // Auto-execute the query with 'ai' source
+          void handleExecuteSqlQuery(sqlQuery, 200, 'ai');
+        } else {
+          // Set as pending query for user approval
+          setPendingSqlQuery({
+            id: `pending-${Date.now()}`,
+            query: sqlQuery,
+            source: 'ai',
+            timestamp: new Date().toISOString(),
+          });
+          setIsSideWindowOpen(true);
+        }
+      }
+    }
   };
 
   const handleSendMessage = async (
@@ -706,6 +770,11 @@ const App: React.FC = () => {
     suggestionAnalysis: sqlSuggestionAnalysis,
     queryText: sqlEditorValue,
     onChangeQuery: setSqlEditorValue,
+    pendingQuery: pendingSqlQuery,
+    onApprovePendingQuery: handleApprovePendingQuery,
+    onRejectPendingQuery: handleRejectPendingQuery,
+    autoExecuteEnabled,
+    onToggleAutoExecute: handleToggleAutoExecute,
   };
 
   return (

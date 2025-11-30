@@ -1,132 +1,153 @@
-from langchain.tools import tool
-from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader
 import os
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
-DEFAULT_PDF_PATH = "media/uploaded_docs/"
-VECTOR_DB_PATH = "media/vector_db/"  # Persistent storage
+from dotenv import load_dotenv
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_core.documents import Document
+from langchain_core.tools import tool
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_openai.embeddings import OpenAIEmbeddings
+
+load_dotenv()
+
+# Path relative to backend root
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_PDF_PATH = _BACKEND_ROOT / "media" / "uploaded_docs"
+
+
+def _require_openai_api_key() -> None:
+    """Validate that OpenAI API key is set."""
+    if not os.getenv("OPENAI_API_KEY"):
+        raise EnvironmentError("OPENAI_API_KEY environment variable is not set")
+
+
+def _load_documents(pdf_path: Path) -> List[Document]:
+    """Load documents from a PDF file."""
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"PDF document not found at {pdf_path}")
+    loader = PyPDFLoader(str(pdf_path))
+    return loader.load()
+
+
+def _collect_pdf_paths() -> List[Path]:
+    """Collect all PDF file paths from upload directories."""
+    paths: List[Path] = []
+    
+    # Try Django settings first
+    try:
+        from django.conf import settings
+        media_root = getattr(settings, "MEDIA_ROOT", None)
+        if media_root:
+            uploads_dir = Path(media_root) / "uploaded_docs"
+            if uploads_dir.exists():
+                paths.extend(sorted(uploads_dir.glob("*.pdf")))
+    except Exception:
+        pass
+    
+    # Fallback to default path
+    if not paths and DEFAULT_PDF_PATH.exists():
+        paths.extend(sorted(DEFAULT_PDF_PATH.glob("*.pdf")))
+    
+    return paths
+
+
+def _build_vector_store(paths: List[Path]) -> InMemoryVectorStore:
+    """Build an in-memory vector store from PDF documents."""
+    _require_openai_api_key()
+    documents: List[Document] = []
+    
+    for path in paths:
+        try:
+            documents.extend(_load_documents(path))
+            print(f"Loaded: {path.name}")
+        except FileNotFoundError:
+            print(f"Warning: Could not load {path.name}")
+            continue
+        except Exception as e:
+            print(f"Warning: Error loading {path.name}: {e}")
+            continue
+
+    if not documents:
+        raise FileNotFoundError("No PDF documents available for search.")
+
+    embeddings = OpenAIEmbeddings()
+    return InMemoryVectorStore.from_documents(documents, embedding=embeddings)
+
+
+# Global cache for vector store
+_vector_store: Optional[InMemoryVectorStore] = None
 
 
 def build_pdf_search_tool(
-    pdf_path: str = DEFAULT_PDF_PATH,
-    persist_directory: str = VECTOR_DB_PATH,
+    pdf_path: Optional[Path] = None, 
+    *, 
     force_rebuild: bool = False
-) -> Chroma:
+) -> InMemoryVectorStore:
     """
-    Builds or loads a Chroma vector store from PDF files.
+    Build or retrieve the cached PDF vector store.
     
     Args:
-        pdf_path (str): Path to the directory containing PDF files.
-        persist_directory (str): Path to persist the vector database.
-        force_rebuild (bool): If True, rebuild the vector store even if it exists.
+        pdf_path: Optional specific PDF path to use
+        force_rebuild: If True, rebuild the vector store even if cached
     
     Returns:
-        Chroma: A Chroma vector store containing embedded PDF content.
+        InMemoryVectorStore: Vector store for PDF search
     """
-    embeddings = OpenAIEmbeddings()
-    persist_path = Path(persist_directory)
+    global _vector_store
     
-    # Load existing vector store if available and not forcing rebuild
-    if persist_path.exists() and not force_rebuild:
-        try:
-            vector_store = Chroma(
-                persist_directory=str(persist_path),
-                embedding_function=embeddings,
-                collection_name="pdf_collection",
-            )
-            print(f"Loaded existing vector store from {persist_directory}")
-            return vector_store
-        except Exception as e:
-            print(f"Warning: Could not load existing vector store: {e}")
-            print("Rebuilding vector store...")
-    
-    # Build new vector store
-    pdf_dir = Path(pdf_path)
-    if not pdf_dir.exists():
-        raise FileNotFoundError(f"PDF directory not found: {pdf_path}")
-    
-    pdf_files = list(pdf_dir.glob("*.pdf"))
-    if not pdf_files:
-        raise FileNotFoundError(f"No PDF files found in: {pdf_path}")
-    
-    # Load all PDFs
-    all_documents = []
-    for pdf_file in pdf_files:
-        try:
-            loader = PyPDFLoader(str(pdf_file))
-            documents = loader.load()
-            all_documents.extend(documents)
-            print(f"Loaded: {pdf_file.name}")
-        except Exception as e:
-            print(f"Warning: Failed to load {pdf_file.name}: {e}")
-    
-    if not all_documents:
-        raise FileNotFoundError("No documents could be loaded from PDFs")
-    
-    # Split documents
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
-        length_function=len,
-        separators=["\n\n", "\n", " ", ""],
-    )
-    splits = text_splitter.split_documents(all_documents)
-    
-    # Create and persist vector store
-    persist_path.mkdir(parents=True, exist_ok=True)
-    vector_store = Chroma.from_documents(
-        documents=splits,
-        embedding=embeddings,
-        collection_name="pdf_collection",
-        persist_directory=str(persist_path),
-    )
-    
-    print(f"Built vector store: {len(pdf_files)} PDFs, {len(splits)} chunks")
-    return vector_store
+    if force_rebuild:
+        _vector_store = None
+
+    if _vector_store is None:
+        if pdf_path:
+            paths = [pdf_path] if pdf_path.is_file() else list(pdf_path.glob("*.pdf"))
+        else:
+            paths = _collect_pdf_paths()
+
+        if not paths:
+            raise FileNotFoundError("No PDF documents have been uploaded yet.")
+
+        _vector_store = _build_vector_store(paths)
+        print(f"Built vector store with {len(paths)} PDF files")
+
+    return _vector_store
 
 
 @tool
 def search_pdf(query: str) -> str:
     """
-    Searches uploaded PDF documents for information related to the query.
+    Search uploaded PDF documents for relevant information matching the query.
     Use this when users ask about content in their uploaded PDFs or documents.
     
     Args:
-        query (str): The search query to find relevant information.
-
+        query (str): The search query string to find relevant information.
+    
     Returns:
-        str: Relevant text excerpts from the PDF documents.
+        str: Relevant text excerpts from the PDF documents or an error message.
     """
     try:
         vector_store = build_pdf_search_tool()
-    except FileNotFoundError as e:
-        return f"No PDF documents available: {str(e)}"
-    except Exception as e:
-        return f"Error loading PDFs: {str(e)}"
+    except (EnvironmentError, FileNotFoundError) as exc:
+        return f"PDF search is unavailable: {exc}"
+    except Exception as exc:
+        return f"Error initializing PDF search: {exc}"
     
     try:
-        # Search with relevance scores
-        results = vector_store.similarity_search_with_score(query, k=3)
+        docs = vector_store.similarity_search(query, k=3)
         
-        if not results:
-            return "No relevant information found in the PDF documents."
+        if not docs:
+            return "No relevant content found in the uploaded PDF documents."
         
-        # Format results
-        formatted_results = []
-        for i, (doc, score) in enumerate(results, 1):
-            source = Path(doc.metadata.get("source", "Unknown")).name
-            page = doc.metadata.get("page", "?")
+        # Format results with source info
+        results = []
+        for i, doc in enumerate(docs, 1):
+            source = Path(doc.metadata.get("source", "Unknown")).name if doc.metadata else "Unknown"
+            page = doc.metadata.get("page", "?") if doc.metadata else "?"
             content = doc.page_content.strip()[:500]  # Limit excerpt length
-            
-            formatted_results.append(
-                f"**Match {i}** (Source: {source}, Page: {page}, Relevance: {1-score:.2f}):\n{content}"
-            )
+            results.append(f"**Match {i}** (Source: {source}, Page: {page}):\n{content}")
         
-        return "\n\n".join(formatted_results)
+        return "\n\n---\n\n".join(results)
     
-    except Exception as e:
-        return f"Search error: {str(e)}"
+    except Exception as exc:
+        return f"Search error: {exc}"

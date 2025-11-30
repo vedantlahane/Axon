@@ -13,6 +13,15 @@ export interface SqlQueryHistoryEntry {
   executedAt: string;
   type: SqlQueryResult["type"];
   rowCount: number;
+  result?: SqlQueryResult; // Store full result for viewing later
+  source?: 'ai' | 'user'; // Track if AI generated
+}
+
+export interface PendingQuery {
+  id: string;
+  query: string;
+  source: 'ai' | 'user';
+  timestamp: string;
 }
 
 export interface SqlSideWindowProps {
@@ -36,6 +45,12 @@ export interface SqlSideWindowProps {
   suggestionAnalysis: string | null;
   queryText: string;
   onChangeQuery: (value: string) => void;
+  // New props for human-in-the-loop
+  pendingQuery: PendingQuery | null;
+  onApprovePendingQuery: () => void;
+  onRejectPendingQuery: () => void;
+  autoExecuteEnabled: boolean;
+  onToggleAutoExecute: () => void;
 }
 
 interface CanvasProps {
@@ -44,7 +59,7 @@ interface CanvasProps {
 }
 
 type CanvasTab = "editor" | "results" | "schema";
-type EditorPanel = "suggestions" | "history";
+type EditorPanel = "suggestions" | "history" | "pending";
 
 const DEFAULT_QUERY_LIMIT = 200;
 const QUERY_LIMIT_MIN = 1;
@@ -90,6 +105,11 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
     suggestionAnalysis,
     queryText,
     onChangeQuery,
+    pendingQuery,
+    onApprovePendingQuery,
+    onRejectPendingQuery,
+    autoExecuteEnabled,
+    onToggleAutoExecute,
   } = sideWindow;
 
   const [queryLimit, setQueryLimit] = useState<number>(DEFAULT_QUERY_LIMIT);
@@ -97,6 +117,17 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CanvasTab>("editor");
   const [editorPanel, setEditorPanel] = useState<EditorPanel>("suggestions");
+  const [isSchemaFullscreen, setIsSchemaFullscreen] = useState(false);
+  const [hideEditor, setHideEditor] = useState(false);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<SqlQueryHistoryEntry | null>(null);
+
+  // Switch to pending panel when there's a pending query
+  useEffect(() => {
+    if (pendingQuery && !autoExecuteEnabled) {
+      setEditorPanel("pending");
+      setActiveTab("editor");
+    }
+  }, [pendingQuery, autoExecuteEnabled]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -105,6 +136,9 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
       setActiveTab("editor");
       setEditorPanel("suggestions");
       setQueryLimit(DEFAULT_QUERY_LIMIT);
+      setIsSchemaFullscreen(false);
+      setHideEditor(false);
+      setSelectedHistoryEntry(null);
       return;
     }
   }, [isOpen]);
@@ -156,10 +190,27 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
   const handleHistorySelect = useCallback(
     (entry: SqlQueryHistoryEntry) => {
       onChangeQuery(entry.query);
-      setEditorPanel("history");
-      setActiveTab("editor");
+      setSelectedHistoryEntry(entry);
+      if (entry.result) {
+        setResult(entry.result);
+        setActiveTab("results");
+      } else {
+        setEditorPanel("history");
+        setActiveTab("editor");
+      }
     },
     [onChangeQuery]
+  );
+
+  const handleViewHistoryResult = useCallback(
+    (entry: SqlQueryHistoryEntry) => {
+      if (entry.result) {
+        setSelectedHistoryEntry(entry);
+        setResult(entry.result);
+        setActiveTab("results");
+      }
+    },
+    []
   );
 
   const handleSuggestionSelect = useCallback(
@@ -253,6 +304,83 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
   };
 
   const renderEditorSupportingPanel = () => {
+    // Pending query panel - Human in the loop
+    if (editorPanel === "pending") {
+      return (
+        <section className="flex flex-col gap-3">
+          <header className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-xs text-amber-400">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span className="uppercase tracking-[0.2em]">Query Pending Approval</span>
+            </span>
+          </header>
+          {pendingQuery ? (
+            <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
+              <div className="mb-3 flex items-center justify-between text-xs text-amber-200/70">
+                <span>Source: {pendingQuery.source === 'ai' ? 'AI Generated' : 'User Input'}</span>
+                <span>{new Date(pendingQuery.timestamp).toLocaleTimeString()}</span>
+              </div>
+              <pre className="mb-4 overflow-x-auto rounded-lg border border-white/10 bg-[#060a18] p-3 font-mono text-sm text-white/80">
+                {pendingQuery.query}
+              </pre>
+              <p className="mb-4 text-xs text-amber-200/60">
+                Review the SQL query above before it runs on your database. You can edit the query in the editor if needed.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChangeQuery(pendingQuery.query);
+                    onApprovePendingQuery();
+                  }}
+                  disabled={isExecuting}
+                  className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Approve & Run
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChangeQuery(pendingQuery.query);
+                    setEditorPanel("suggestions");
+                  }}
+                  className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Edit First
+                </button>
+                <button
+                  type="button"
+                  onClick={onRejectPendingQuery}
+                  className="flex items-center gap-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/20 hover:text-rose-200"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  Reject
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/50">
+              No queries pending approval.
+            </p>
+          )}
+        </section>
+      );
+    }
+
     if (editorPanel === "history") {
       return (
         <section className="flex flex-col gap-3">
@@ -266,23 +394,57 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
               Run queries to build your history.
             </p>
           ) : (
-            <div className="flex max-h-48 flex-col gap-2 overflow-y-auto">
+            <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
               {history.map((entry) => (
-                <button
+                <div
                   key={entry.id}
-                  type="button"
-                  onClick={() => handleHistorySelect(entry)}
-                  className="flex flex-col gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-xs text-white/70 transition hover:border-[#2563eb]/40 hover:bg-[#1d4ed8]/10 hover:text-white"
+                  className="flex flex-col gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70"
                 >
-                  <span className="font-mono text-[11px] text-white/60">
-                    {entry.query.slice(0, 120)}
-                  </span>
-                  <span className="flex items-center justify-between text-[10px] text-white/40">
-                    <span>{entry.type.toUpperCase()}</span>
-                    <span>{entry.rowCount} rows</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-mono text-[11px] text-white/60 flex-1">
+                      {entry.query.slice(0, 120)}
+                      {entry.query.length > 120 && '...'}
+                    </span>
+                    {entry.source === 'ai' && (
+                      <span className="shrink-0 rounded bg-[#2563eb]/20 px-1.5 py-0.5 text-[9px] font-medium text-[#60a5fa]">
+                        AI
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-white/40">
+                    <span className="flex items-center gap-2">
+                      <span className="rounded bg-white/10 px-1.5 py-0.5">{entry.type.toUpperCase()}</span>
+                      <span>{entry.rowCount} rows</span>
+                    </span>
                     <span>{formatExecutionTimestamp(entry.executedAt)}</span>
-                  </span>
-                </button>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleHistorySelect(entry)}
+                      className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/60 transition hover:bg-white/10 hover:text-white"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      Load Query
+                    </button>
+                    {entry.result && (
+                      <button
+                        type="button"
+                        onClick={() => handleViewHistoryResult(entry)}
+                        className="flex items-center gap-1 rounded-md border border-[#2563eb]/30 bg-[#2563eb]/10 px-2 py-1 text-[10px] text-[#60a5fa] transition hover:bg-[#2563eb]/20"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        View Results
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -363,13 +525,30 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             <span className="text-xs uppercase tracking-[0.3em] text-white/40">
               Schema
             </span>
-            <span className="text-xs text-white/40">
-              {schema
-                ? schema.connection.label
-                : isSchemaLoading
-                ? "Loading…"
-                : "Unavailable"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/40">
+                {schema
+                  ? schema.connection.label
+                  : isSchemaLoading
+                  ? "Loading…"
+                  : "Unavailable"}
+              </span>
+              {schema && (
+                <button
+                  type="button"
+                  onClick={() => setIsSchemaFullscreen(true)}
+                  className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/50 transition hover:bg-white/10 hover:text-white"
+                  aria-label="View schema fullscreen"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </header>
           {isSchemaLoading ? (
             <div className="grid h-32 place-items-center rounded-xl border border-white/10 bg-white/5 text-sm text-white/60">
@@ -386,11 +565,41 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
       return (
         <section className="flex flex-col gap-3">
           <header className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-[0.3em] text-white/40">
-              Results
-            </span>
-            <span className="text-xs text-white/50">{resultSummary}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-[0.3em] text-white/40">
+                Results
+              </span>
+              {selectedHistoryEntry && (
+                <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-300">
+                  Historical
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/50">{resultSummary}</span>
+              {selectedHistoryEntry && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedHistoryEntry(null);
+                    setResult(null);
+                  }}
+                  className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-white/50 transition hover:bg-white/10 hover:text-white"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </header>
+          {selectedHistoryEntry && (
+            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-2 text-xs text-amber-200/80">
+              <span className="font-medium">Query: </span>
+              <span className="font-mono text-[11px]">{selectedHistoryEntry.query.slice(0, 80)}{selectedHistoryEntry.query.length > 80 && '...'}</span>
+              <span className="ml-2 text-[10px] text-amber-200/60">
+                ({formatExecutionTimestamp(selectedHistoryEntry.executedAt)})
+              </span>
+            </div>
+          )}
           {isExecuting ? (
             <div className="grid h-32 place-items-center rounded-xl border border-white/10 bg-white/5 text-sm text-white/60">
               Running query…
@@ -404,7 +613,59 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
 
     return (
       <>
-        <section className="flex flex-col gap-3">
+        {/* Auto-execute toggle and editor visibility control */}
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-xs text-white/60 cursor-pointer">
+              <div 
+                className={`relative w-10 h-5 rounded-full transition-colors ${
+                  autoExecuteEnabled ? 'bg-[#2563eb]' : 'bg-white/20'
+                }`}
+                onClick={onToggleAutoExecute}
+              >
+                <div 
+                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                    autoExecuteEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </div>
+              <span>Auto-execute AI queries</span>
+            </label>
+          </div>
+          <button
+            type="button"
+            onClick={() => setHideEditor(!hideEditor)}
+            className="flex items-center gap-1.5 px-2 py-1 text-xs text-white/50 hover:text-white/80 rounded-md hover:bg-white/5 transition"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {hideEditor ? (
+                <>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </>
+              ) : (
+                <>
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </>
+              )}
+            </svg>
+            {hideEditor ? 'Show editor' : 'Hide editor'}
+          </button>
+        </div>
+
+        {/* Editor section - conditionally hidden */}
+        {!hideEditor && (
+          <section className="flex flex-col gap-3">
           <label
             htmlFor="sql-editor"
             className="text-xs uppercase tracking-[0.3em] text-white/40"
@@ -524,11 +785,12 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             </button>
           </div>
           {combinedQueryError && (
-            <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 text-xs text-rose-200">
-              {combinedQueryError}
-            </div>
-          )}
-        </section>
+              <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 text-xs text-rose-200">
+                {combinedQueryError}
+              </div>
+            )}
+          </section>
+        )}
         <div className="flex items-center gap-2">
           
           <div className="flex gap-1 rounded-lg border border-white/10 bg-white/5 p-1 text-xs text-white/60">
@@ -583,7 +845,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             <div className="flex items-center justify-between gap-4">
               <div className="flex flex-1 flex-col gap-1">
                 <nav className="mt-4 flex gap-2 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
-                {CANVAS_TABS.map((tab) => {
+                {(hideEditor ? CANVAS_TABS.filter(t => t !== 'editor') : CANVAS_TABS).map((tab) => {
                     const isActive = activeTab === tab;
                     return (
                       <button
@@ -600,6 +862,32 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
                       </button>
                     );
                   })}
+                  {/* Toggle editor visibility */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHideEditor(!hideEditor);
+                      if (!hideEditor && activeTab === 'editor') {
+                        setActiveTab('results');
+                      }
+                    }}
+                    className="rounded-lg px-2 py-2 text-white/40 hover:bg-white/10 hover:text-white transition"
+                    title={hideEditor ? "Show Editor" : "Hide Editor"}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {hideEditor ? (
+                        <>
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </>
+                      ) : (
+                        <>
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </>
+                      )}
+                    </svg>
+                  </button>
                 </nav>
                 <p className="text-[11px] text-white/40">{connectionSummary}</p>
               </div>
@@ -632,6 +920,71 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             </div>
           </motion.aside>
         ) : null}
+      </AnimatePresence>
+
+      {/* Fullscreen Schema Modal */}
+      <AnimatePresence>
+        {isSchemaFullscreen && schema && (
+          <motion.div
+            key="schema-fullscreen-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+            onClick={() => setIsSchemaFullscreen(false)}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isSchemaFullscreen && schema && (
+          <motion.div
+            key="schema-fullscreen-modal"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f1a] shadow-2xl"
+          >
+            <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-white">Database Schema</h2>
+                <span className="rounded bg-white/10 px-2 py-0.5 text-xs text-white/60">
+                  {schema.connection.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void onRefreshSchema()}
+                  disabled={isSchemaLoading}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="1 4 1 10 7 10" />
+                    <polyline points="23 20 23 14 17 14" />
+                    <path d="M20.49 9A9 9 0 0 0 4.51 15M3.51 9A9 9 0 0 1 19.49 15" />
+                  </svg>
+                  {isSchemaLoading ? 'Refreshing...' : 'Refresh'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSchemaFullscreen(false)}
+                  className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 transition hover:bg-white/10 hover:text-white"
+                  aria-label="Close fullscreen"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+            <div className="flex-1 overflow-auto p-6">
+              <SchemaDiagram schema={schema} />
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

@@ -60,6 +60,25 @@ class UploadedDocument(models.Model):
 		return self.original_name
 
 
+class UploadedDatabase(models.Model):
+	"""Model for user-uploaded SQLite database files"""
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name="uploaded_databases",
+	)
+	file = models.FileField(upload_to="uploaded_databases/")
+	original_name = models.CharField(max_length=255)
+	size = models.PositiveBigIntegerField(default=0)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["-created_at"]
+
+	def __str__(self) -> str:  # pragma: no cover - debug helper
+		return f"{self.original_name} ({self.user})"
+
+
 class MessageAttachment(models.Model):
 	message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="attachments")
 	document = models.ForeignKey(UploadedDocument, on_delete=models.CASCADE, related_name="message_links")
