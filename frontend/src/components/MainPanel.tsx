@@ -5,7 +5,7 @@ import InputSection from "./InputSection";
 import Canvas, { type SqlSideWindowProps } from "./Canvas";
 import type { ChatMessage, ConversationSummary } from "../App";
 import type { UserProfile, SqlQueryResult, LLMModel } from "../services/chatApi";
-import { fetchAvailableModels, setCurrentModel, exportConversationDocx } from "../services/chatApi";
+import { fetchAvailableModels, setCurrentModel, exportConversationZip } from "../services/chatApi";
 
 /**
  * Layout contract for the main chat surface. Each prop maps to a control in the surrounding shell
@@ -103,13 +103,36 @@ const MainPanel: React.FC<MainPanelProps> = ({
     }
   };
 
-  // Export conversation as DOCX
+  // Export conversation as ZIP with all SQL results
   const [isExporting, setIsExporting] = useState(false);
   const handleExportConversation = async () => {
     if (!selectedHistoryId || isExporting) return;
     setIsExporting(true);
     try {
-      await exportConversationDocx(Number(selectedHistoryId));
+      // Gather SQL results from executed queries
+      const sqlResults: { query: string; columns: string[]; rows: Record<string, unknown>[] }[] = [];
+      
+      if (executedQueries) {
+        executedQueries.forEach((result, query) => {
+          if (result.type === 'rows' && result.columns && result.rows) {
+            // Convert rows array to array of objects
+            const rowObjects = result.rows.map((row) => {
+              const obj: Record<string, unknown> = {};
+              result.columns.forEach((col, idx) => {
+                obj[col] = row[idx];
+              });
+              return obj;
+            });
+            sqlResults.push({
+              query,
+              columns: result.columns,
+              rows: rowObjects,
+            });
+          }
+        });
+      }
+      
+      await exportConversationZip(Number(selectedHistoryId), sqlResults);
     } catch (err) {
       console.error("Failed to export conversation:", err);
     } finally {
@@ -416,10 +439,10 @@ const MainPanel: React.FC<MainPanelProps> = ({
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Export Chat
+                            Export All
                           </span>
                           <span className="text-[10px] uppercase text-white/40">
-                            {isExporting ? "..." : "DOCX"}
+                            {isExporting ? "..." : "ZIP"}
                           </span>
                         </button>
                       )}

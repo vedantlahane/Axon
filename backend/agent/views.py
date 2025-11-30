@@ -1676,3 +1676,384 @@ def export_sql_results_xlsx(request: HttpRequest) -> HttpResponse:
 		import traceback
 		traceback.print_exc()
 		return JsonResponse({"error": f"Failed to generate Excel file: {str(e)}"}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def export_conversation_zip(request: HttpRequest, conversation_id: int) -> HttpResponse:
+	"""
+	Export a complete conversation as a ZIP file containing:
+	- conversation.docx: The chat with hyperlinks to result files
+	- results/: Folder with XLSX files for each SQL result
+	- documents/: Folder with attached PDF files
+	"""
+	import zipfile
+	import re
+	import os
+	
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	conversation = get_object_or_404(Conversation, pk=conversation_id, user=request.user)
+	messages = Message.objects.filter(conversation=conversation).order_by("created_at")
+
+	# Parse request body for SQL results data
+	try:
+		payload = json.loads(request.body or "{}")
+	except json.JSONDecodeError:
+		payload = {}
+	
+	sql_results = payload.get("sqlResults", [])  # List of {query, columns, rows}
+
+	# Collect all attached documents from messages in this conversation
+	attached_docs = []
+	for msg in messages:
+		attachments = MessageAttachment.objects.filter(message=msg).select_related('document')
+		for att in attachments:
+			if att.document and att.document.file:
+				attached_docs.append({
+					'document': att.document,
+					'message_id': msg.id,
+					'original_name': att.document.original_name
+				})
+
+	try:
+		from docx import Document
+		from docx.shared import Pt, Inches, RGBColor
+		from docx.enum.text import WD_ALIGN_PARAGRAPH
+		from docx.oxml.ns import qn
+		from docx.oxml import OxmlElement
+		from openpyxl import Workbook
+		from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+		from openpyxl.utils import get_column_letter
+	except ImportError as e:
+		return JsonResponse({"error": f"Required library not installed: {e}"}, status=500)
+
+	try:
+		# Create ZIP buffer
+		zip_buffer = io.BytesIO()
+		
+		with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+			# Track generated result files
+			result_files = []
+			
+			# Generate XLSX files for each SQL result
+			for idx, result_data in enumerate(sql_results):
+				query = result_data.get("query", "")
+				columns = result_data.get("columns", [])
+				rows_data = result_data.get("rows", [])
+				
+				if not columns or not rows_data:
+					continue
+				
+				# Convert rows from dict format to list format if needed
+				rows = []
+				for row in rows_data:
+					if isinstance(row, dict):
+						rows.append([row.get(col) for col in columns])
+					elif isinstance(row, (list, tuple)):
+						rows.append(list(row))
+					else:
+						rows.append([row])
+				
+				# Create workbook
+				wb = Workbook()
+				ws = wb.active
+				if ws is None:
+					ws = wb.create_sheet("Results")
+				else:
+					ws.title = "Results"
+				
+				# Styles
+				header_font = Font(bold=True, color="FFFFFF")
+				header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+				header_alignment = Alignment(horizontal="center", vertical="center")
+				thin_border = Border(
+					left=Side(style='thin'),
+					right=Side(style='thin'),
+					top=Side(style='thin'),
+					bottom=Side(style='thin')
+				)
+				
+				# Add query info
+				ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=max(len(columns), 3))
+				query_cell = ws.cell(row=1, column=1, value=f"Query: {query[:300]}{'...' if len(query) > 300 else ''}")
+				query_cell.font = Font(italic=True, color="666666")
+				ws.row_dimensions[1].height = 30
+				start_row = 3
+				
+				# Write headers
+				for col_idx, column in enumerate(columns, 1):
+					cell = ws.cell(row=start_row, column=col_idx, value=column)
+					cell.font = header_font
+					cell.fill = header_fill
+					cell.alignment = header_alignment
+					cell.border = thin_border
+				
+				# Write data rows
+				for row_idx, row in enumerate(rows, start_row + 1):
+					for col_idx, value in enumerate(row, 1):
+						cell = ws.cell(row=row_idx, column=col_idx, value=value)
+						cell.border = thin_border
+						cell.alignment = Alignment(vertical="center")
+				
+				# Auto-adjust column widths
+				for col_idx, column in enumerate(columns, 1):
+					max_length = len(str(column))
+					for row in rows:
+						if col_idx <= len(row):
+							max_length = max(max_length, len(str(row[col_idx - 1] or "")))
+					adjusted_width = min(max_length + 2, 50)
+					ws.column_dimensions[get_column_letter(col_idx)].width = adjusted_width
+				
+				# Freeze header row
+				ws.freeze_panes = f"A{start_row + 1}"
+				
+				# Save to buffer
+				xlsx_buffer = io.BytesIO()
+				wb.save(xlsx_buffer)
+				xlsx_buffer.seek(0)
+				
+				# Add to ZIP
+				filename = f"results/query_{idx + 1}.xlsx"
+				zf.writestr(filename, xlsx_buffer.getvalue())
+				result_files.append({
+					"filename": filename,
+					"query": query[:100],
+					"row_count": len(rows)
+				})
+			
+			# Add PDF documents to ZIP
+			document_files = []
+			added_doc_ids = set()  # Track to avoid duplicates
+			for doc_info in attached_docs:
+				doc_obj = doc_info['document']
+				if doc_obj.id in added_doc_ids:
+					continue
+				added_doc_ids.add(doc_obj.id)
+				
+				try:
+					# Read the file content
+					if doc_obj.file and hasattr(doc_obj.file, 'path') and os.path.exists(doc_obj.file.path):
+						with open(doc_obj.file.path, 'rb') as f:
+							file_content = f.read()
+						
+						# Sanitize filename
+						safe_name = "".join(c for c in doc_info['original_name'] if c.isalnum() or c in "._- ")[:100]
+						if not safe_name:
+							safe_name = f"document_{doc_obj.id}"
+						
+						# Ensure unique filenames
+						base_name, ext = os.path.splitext(safe_name)
+						final_name = safe_name
+						counter = 1
+						existing_names = [df['filename'] for df in document_files]
+						while f"documents/{final_name}" in existing_names:
+							final_name = f"{base_name}_{counter}{ext}"
+							counter += 1
+						
+						zip_path = f"documents/{final_name}"
+						zf.writestr(zip_path, file_content)
+						document_files.append({
+							"filename": zip_path,
+							"original_name": doc_info['original_name'],
+							"size": len(file_content)
+						})
+				except Exception as e:
+					print(f"Failed to add document {doc_obj.id}: {e}")
+					continue
+			
+			# Create the DOCX document
+			doc = Document()
+			
+			# Add title
+			title = doc.add_heading(conversation.title or "Conversation Export", 0)
+			title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+			
+			# Add metadata
+			meta = doc.add_paragraph()
+			meta.add_run(f"Exported: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}\n").italic = True
+			meta.add_run(f"Messages: {messages.count()}\n").italic = True
+			if result_files:
+				meta.add_run(f"SQL Results: {len(result_files)} file(s)\n").italic = True
+			if document_files:
+				meta.add_run(f"Documents: {len(document_files)} file(s)").italic = True
+			
+			doc.add_paragraph()  # Spacer
+			
+			# Add table of contents for attached documents if any
+			if document_files:
+				doc.add_heading("Attached Documents", level=1)
+				doc_toc = doc.add_paragraph()
+				doc_toc.add_run("This export includes the following attached documents:\n\n")
+				
+				for df in document_files:
+					run = doc_toc.add_run(f"📄 {df['filename']}")
+					run.bold = True
+					run.font.color.rgb = RGBColor(37, 99, 235)
+					size_kb = df['size'] / 1024
+					if size_kb >= 1024:
+						size_str = f"{size_kb / 1024:.1f} MB"
+					else:
+						size_str = f"{size_kb:.1f} KB"
+					doc_toc.add_run(f" ({size_str})\n")
+					doc_toc.add_run(f"   Original: {df['original_name']}\n\n").italic = True
+				
+				doc.add_paragraph()  # Spacer
+			
+			# Add table of contents for SQL results if any
+			if result_files:
+				doc.add_heading("SQL Query Results", level=1)
+				toc_para = doc.add_paragraph()
+				toc_para.add_run("This export includes the following SQL query result files:\n\n")
+				
+				for rf in result_files:
+					# Add clickable reference (relative path)
+					run = toc_para.add_run(f"📊 {rf['filename']}")
+					run.bold = True
+					run.font.color.rgb = RGBColor(37, 99, 235)
+					toc_para.add_run(f" ({rf['row_count']} rows)\n")
+					toc_para.add_run(f"   Query: {rf['query']}{'...' if len(rf['query']) >= 100 else ''}\n\n").italic = True
+				
+				doc.add_paragraph()  # Spacer
+			
+			# Add conversation heading
+			doc.add_heading("Conversation", level=1)
+			
+			# Helper to detect SQL blocks in messages
+			sql_pattern = re.compile(r'```sql\s*([\s\S]*?)```', re.IGNORECASE)
+			result_file_index = 0
+			
+			# Create a map of message_id to attached document filenames
+			msg_to_docs = {}
+			for doc_info in attached_docs:
+				msg_id = doc_info['message_id']
+				if msg_id not in msg_to_docs:
+					msg_to_docs[msg_id] = []
+				# Find the corresponding document_file entry
+				for df in document_files:
+					if doc_info['original_name'] in df['original_name'] or df['original_name'] in doc_info['original_name']:
+						msg_to_docs[msg_id].append(df)
+						break
+			
+			# Add messages
+			for msg in messages:
+				# Add sender header
+				sender_para = doc.add_paragraph()
+				sender_run = sender_para.add_run(f"{'You' if msg.role == 'user' else 'Axon'}")
+				sender_run.bold = True
+				sender_run.font.size = Pt(11)
+				if msg.role == 'assistant':
+					sender_run.font.color.rgb = RGBColor(37, 99, 235)  # Blue
+				
+				# Add timestamp
+				time_run = sender_para.add_run(f"  •  {msg.created_at.strftime('%I:%M %p')}")
+				time_run.font.size = Pt(9)
+				time_run.font.color.rgb = RGBColor(128, 128, 128)
+				
+				# Check if message has attached documents
+				msg_docs = msg_to_docs.get(msg.id, [])
+				if msg_docs and msg.role == 'user':
+					attach_para = doc.add_paragraph()
+					attach_para.paragraph_format.left_indent = Inches(0.25)
+					attach_para.add_run("📎 Attachments: ").bold = True
+					for idx, mdf in enumerate(msg_docs):
+						if idx > 0:
+							attach_para.add_run(", ")
+						doc_run = attach_para.add_run(mdf['filename'])
+						doc_run.font.color.rgb = RGBColor(37, 99, 235)
+						doc_run.italic = True
+				
+				# Check if message contains SQL and link to results
+				content = msg.content
+				sql_matches = sql_pattern.findall(content)
+				
+				# Add message content
+				content_para = doc.add_paragraph()
+				content_para.paragraph_format.left_indent = Inches(0.25)
+				
+				# If there are SQL blocks, add content with result references
+				if sql_matches and msg.role == 'assistant' and result_file_index < len(result_files):
+					# Split content by SQL blocks and add references
+					parts = sql_pattern.split(content)
+					for i, part in enumerate(parts):
+						if i % 2 == 0:
+							# Regular text
+							if part.strip():
+								content_para.add_run(part)
+						else:
+							# SQL block
+							sql_run = content_para.add_run(f"\n[SQL Query]\n{part.strip()}\n")
+							sql_run.font.name = "Consolas"
+							sql_run.font.size = Pt(9)
+							
+							# Add reference to result file
+							if result_file_index < len(result_files):
+								rf = result_files[result_file_index]
+								ref_run = content_para.add_run(f"\n📊 See results: {rf['filename']}\n")
+								ref_run.font.color.rgb = RGBColor(37, 99, 235)
+								ref_run.bold = True
+								result_file_index += 1
+				else:
+					content_para.add_run(content)
+				
+				doc.add_paragraph()  # Spacer between messages
+			
+			# Save DOCX to buffer
+			docx_buffer = io.BytesIO()
+			doc.save(docx_buffer)
+			docx_buffer.seek(0)
+			
+			# Add DOCX to ZIP
+			zf.writestr("conversation.docx", docx_buffer.getvalue())
+			
+			# Add a README.txt
+			docs_section = ""
+			if document_files:
+				docs_section = f"\nDocuments: {len(document_files)} file(s)"
+				docs_list = "\n".join([f"  - {df['filename']}" for df in document_files])
+				docs_section += f"\n{docs_list}"
+			
+			results_section = ""
+			if result_files:
+				results_list = "\n".join([f"  - {rf['filename']} ({rf['row_count']} rows)" for rf in result_files])
+				results_section = f"\nSQL Results: {len(result_files)} file(s)\n{results_list}"
+			
+			readme_content = f"""Conversation Export
+==================
+
+Title: {conversation.title or 'Untitled Conversation'}
+Exported: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}
+Messages: {messages.count()}{docs_section}{results_section}
+
+Contents:
+---------
+- conversation.docx: The full conversation with formatting and references
+- documents/: Folder containing attached PDF files
+- results/: Folder containing SQL query result spreadsheets
+
+The conversation document includes references to all attached files.
+Open the documents folder to view the original PDFs.
+Open the XLSX files to view the complete query results.
+"""
+			zf.writestr("README.txt", readme_content)
+		
+		zip_buffer.seek(0)
+		
+		# Create response
+		safe_title = "".join(c for c in (conversation.title or "conversation") if c.isalnum() or c in "_- ")[:30]
+		safe_title = safe_title.replace(" ", "_")
+		filename = f"{safe_title}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.zip"
+		
+		response = HttpResponse(
+			zip_buffer.getvalue(),
+			content_type="application/zip"
+		)
+		response["Content-Disposition"] = f'attachment; filename="{filename}"'
+		return response
+		
+	except Exception as e:
+		import traceback
+		traceback.print_exc()
+		return JsonResponse({"error": f"Failed to generate export: {str(e)}"}, status=500)

@@ -29,6 +29,7 @@ from .views import (
     change_password_view,
     export_conversation_docx,
     export_sql_results_xlsx,
+    export_conversation_zip,
 )
 
 app_name = "agent"
@@ -39,6 +40,7 @@ urlpatterns = [
     path("conversations/", conversations_view, name="conversation-list"),
     path("conversations/<int:conversation_id>/", conversation_detail_view, name="conversation-detail"),
     path("conversations/<int:conversation_id>/export/", export_conversation_docx, name="conversation-export"),
+    path("conversations/<int:conversation_id>/export/zip/", export_conversation_zip, name="conversation-export-zip"),
     path("documents/", documents_view, name="document-list"),
     path("documents/<int:document_id>/", document_detail_view, name="document-detail"),
     path("auth/register/", register_user, name="register"),

@@ -688,3 +688,38 @@ export async function exportSqlResultsXlsx(
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
+// Export complete conversation as ZIP (with DOCX + all SQL results as XLSX)
+export interface SqlResultExport {
+  query: string;
+  columns: string[];
+  rows: Record<string, unknown>[];
+}
+
+export async function exportConversationZip(
+  conversationId: number,
+  sqlResults: SqlResultExport[] = []
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/export/zip/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ sqlResults }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to export conversation');
+  }
+  
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `conversation_${conversationId}_${Date.now()}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
