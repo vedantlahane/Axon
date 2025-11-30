@@ -353,7 +353,7 @@ const InputSection: React.FC<InputSectionProps> = ({
                     ? 'text-red-400'
                     : status === 'uploading'
                       ? 'text-amber-300'
-                      : 'text-cyan-300';
+                      : 'text-blue-300';
 
                 return (
                   <motion.div

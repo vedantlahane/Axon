@@ -290,7 +290,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                           disabled={!model.available || isModelSwitching}
                           className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition ${
                             currentModel === model.id
-                              ? "bg-cyan-500/20 text-cyan-300"
+                              ? "bg-blue-500/20 text-blue-300"
                               : model.available
                               ? "hover:bg-white/10 hover:text-white"
                               : "cursor-not-allowed opacity-40"
@@ -307,7 +307,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                           </span>
                           {currentModel === model.id && (
                             <svg
-                              className="h-4 w-4 text-cyan-400"
+                              className="h-4 w-4 text-blue-400"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"

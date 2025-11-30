@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import type { ChatMessage, ConversationSummary } from '../App';
 import type { SqlQueryResult } from '../services/chatApi';
@@ -15,6 +15,37 @@ interface ChatDisplayProps {
   onViewSqlInCanvas?: (sql: string) => void;
   executedQueries?: Map<string, SqlQueryResult>; // sql -> result
 }
+
+// Detect sources used in a message based on content patterns
+const detectSources = (content: string): string[] => {
+  const sources: string[] = [];
+  
+  // Check for tavily/web search usage
+  if (content.includes('tavily_search') || 
+      content.includes('searched the web') || 
+      content.includes('search results') ||
+      content.includes('According to') ||
+      content.includes('Based on the search')) {
+    sources.push('Web Search');
+  }
+  
+  // Check for PDF/document usage
+  if (content.includes('Document excerpts') || 
+      content.includes('search_pdf') ||
+      content.includes('uploaded document') ||
+      content.includes('PDF')) {
+    sources.push('Uploaded Documents');
+  }
+  
+  // Check for database/SQL usage
+  if (content.includes('database schema') || 
+      content.includes('```sql') ||
+      content.includes('get_database_schema')) {
+    sources.push('Database');
+  }
+  
+  return sources;
+};
 
 const suggestions = [
   'What is artificial intelligence?',
@@ -50,6 +81,14 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const showLanding = view === 'chat' && messages.length === 0;
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+  // Handle copy with feedback
+  const handleCopy = (messageId: string, content: string) => {
+    navigator.clipboard.writeText(content);
+    setCopiedMessageId(messageId);
+    setTimeout(() => setCopiedMessageId(null), 2000);
+  };
 
   // Helper to extract SQL from message content
   const extractSql = (content: string): string | null => {
@@ -118,7 +157,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         const codeMatch = remaining.match(/^`([^`]+)`/);
         if (codeMatch) {
           parts.push(
-            <code key={keyIdx++} className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[13px] text-cyan-300">
+            <code key={keyIdx++} className="rounded bg-blue-500/15 px-1.5 py-0.5 font-mono text-[13px] text-blue-200">
               {codeMatch[1]}
             </code>
           );
@@ -182,7 +221,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                   Copy
                 </button>
               </div>
-              <pre className="p-4 text-sm font-mono text-cyan-300/90 overflow-x-auto leading-relaxed">
+              <pre className="p-4 text-sm font-mono text-sky-200/90 overflow-x-auto leading-relaxed">
                 <code>{codeBlockContent.join('\n')}</code>
               </pre>
             </div>
@@ -241,7 +280,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       if (quoteMatch) {
         flushList();
         elements.push(
-          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-cyan-500/40 pl-3 italic text-white/60">
+          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-blue-400/40 pl-3 italic text-white/60">
             {renderInlineFormatting(quoteMatch[1])}
           </blockquote>
         );
@@ -305,7 +344,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 {hasExecutedResults ? 'View Results' : 'Open in Canvas'}
               </button>
             </div>
-            <pre className="p-3 text-sm font-mono text-cyan-400 overflow-x-auto">
+            <pre className="p-3 text-sm font-mono text-sky-300 overflow-x-auto">
               <code>{sql}</code>
             </pre>
           </div>
@@ -459,26 +498,28 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                     ? 'bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white'
                     : 'bg-white/10 text-white';
                   const bubbleClasses = isUser
-                    ? 'border border-black/40 bg-[#2563eb]/20 text-white max-w-[85%]'
-                    : 'border border-black bg-white/5 text-white max-w-full';
+                    ? 'border border-white/10 bg-[#2563eb]/20 text-white'
+                    : 'border border-white/5 bg-white/5 text-white';
                   const hasAttachments = (message.attachments?.length ?? 0) > 0;
+                  const sources = !isUser ? detectSources(message.content) : [];
 
                   return (
                     <motion.div
                       key={message.id}
-                      className="flex w-full items-start gap-4"
+                      className={`flex w-full items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
                       initial={{ opacity: 0, y: 24 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, ease: [0.22, 0.61, 0.36, 1] }}
                     >
+                      {/* Avatar */}
                       <div
-                        className={`grid h-10 w-10 place-items-center rounded-xl border border-white/10 shadow-inner ${avatarClasses}`}
+                        className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-white/10 shadow-inner ${avatarClasses}`}
                         aria-hidden
                       >
                         {isUser ? (
                           <svg
-                            width="18"
-                            height="18"
+                            width="16"
+                            height="16"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -491,29 +532,33 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                           </svg>
                         ) : (
                           <svg
-                              width="26"
-                              height="26"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="text-sky-200"
-                            >
-                              <path d="M4 4h9l7 8-7 8H4l7-8z" />
-                              <path d="M11 4 7 12l4 8" />
-                            </svg>
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-sky-200"
+                          >
+                            <path d="M4 4h9l7 8-7 8H4l7-8z" />
+                            <path d="M11 4 7 12l4 8" />
+                          </svg>
                         )}
                       </div>
 
-                        <div className="flex flex-col gap-2 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 text-xs text-white/50">
-                          <span className="font-semibold text-white">{title}</span>
-                          <span className="h-1 w-1 rounded-full bg-white/30" aria-hidden />
+                      {/* Message Content */}
+                      <div className={`flex flex-col gap-1.5 min-w-0 ${isUser ? 'items-end max-w-[75%]' : 'flex-1 max-w-full'}`}>
+                        {/* Header */}
+                        <div className={`flex items-center gap-2 text-xs text-white/50 ${isUser ? 'flex-row-reverse' : ''}`}>
+                          <span className="font-medium text-white/70">{title}</span>
+                          <span className="h-1 w-1 rounded-full bg-white/20" aria-hidden />
                           <span>{formatDisplayTime(message.timestamp)}</span>
                         </div>
-                        <div className={`w-fit rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur overflow-hidden ${bubbleClasses}`}>
+
+                        {/* Message Bubble */}
+                        <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur overflow-hidden ${bubbleClasses}`}>
                           {renderMessageContent(message)}
                           {hasAttachments && (
                             <div className="mt-3 flex flex-wrap gap-2">
@@ -548,7 +593,88 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                             </div>
                           )}
                         </div>
-                        </div>
+
+                        {/* Sources & Actions - Only for assistant messages */}
+                        {!isUser && (
+                          <div className="flex items-center gap-3 mt-1">
+                            {/* Sources */}
+                            {sources.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 16v-4M12 8h.01" />
+                                </svg>
+                                <span className="text-[10px] text-white/40">Sources:</span>
+                                {sources.map((source) => (
+                                  <span key={source} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/50 border border-white/10">
+                                    {source}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-0.5 ml-auto">
+                              {/* Copy */}
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(message.id, message.content)}
+                                className={`p-1.5 rounded-lg transition ${
+                                  copiedMessageId === message.id
+                                    ? 'text-green-400 bg-green-500/10'
+                                    : 'text-white/30 hover:text-white/70 hover:bg-white/5'
+                                }`}
+                                title={copiedMessageId === message.id ? 'Copied!' : 'Copy message'}
+                              >
+                                {copiedMessageId === message.id ? (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                ) : (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                  </svg>
+                                )}
+                              </button>
+
+                              {/* Like */}
+                              <button
+                                type="button"
+                                className="p-1.5 rounded-lg text-white/30 hover:text-green-400 hover:bg-green-500/10 transition"
+                                title="Good response"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                                </svg>
+                              </button>
+
+                              {/* Dislike */}
+                              <button
+                                type="button"
+                                className="p-1.5 rounded-lg text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                title="Bad response"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+                                </svg>
+                              </button>
+
+                              {/* Report */}
+                              <button
+                                type="button"
+                                className="p-1.5 rounded-lg text-white/30 hover:text-amber-400 hover:bg-amber-500/10 transition"
+                                title="Report issue"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                                  <line x1="4" y1="22" x2="4" y2="15" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </motion.div>
                   );
                 })}
