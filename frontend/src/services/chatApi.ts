@@ -526,3 +526,113 @@ export async function setCurrentModel(modelId: string): Promise<SetModelResponse
   });
   return handleResponse<SetModelResponse>(response);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Message feedback API
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type FeedbackType = 'like' | 'dislike' | 'report';
+
+export interface MessageFeedback {
+  id: number;
+  type: FeedbackType;
+  messageId: string;
+  createdAt: string;
+}
+
+export interface FeedbackResponse {
+  success: boolean;
+  feedback: MessageFeedback;
+}
+
+export async function submitMessageFeedback(
+  messageId: string,
+  type: FeedbackType,
+  reason?: string,
+): Promise<FeedbackResponse> {
+  const response = await fetch(`${API_BASE_URL}/messages/${messageId}/feedback/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ type, reason }),
+  });
+  return handleResponse<FeedbackResponse>(response);
+}
+
+export async function deleteMessageFeedback(messageId: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/messages/${messageId}/feedback/delete/`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  return handleResponse<{ success: boolean }>(response);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User preferences API
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface UserPreferences {
+  preferredModel: string;
+  theme: string;
+  updatedAt: string;
+}
+
+export interface PreferencesResponse {
+  preferences: UserPreferences;
+}
+
+export async function fetchUserPreferences(): Promise<PreferencesResponse> {
+  const response = await fetch(`${API_BASE_URL}/preferences/`, {
+    credentials: 'include',
+  });
+  return handleResponse<PreferencesResponse>(response);
+}
+
+export async function updateUserPreferences(
+  prefs: Partial<Pick<UserPreferences, 'preferredModel' | 'theme'>>,
+): Promise<PreferencesResponse> {
+  const response = await fetch(`${API_BASE_URL}/preferences/update/`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(prefs),
+  });
+  return handleResponse<PreferencesResponse>(response);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User profile API
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function updateUserProfile(
+  data: { name?: string; email?: string },
+): Promise<{ user: UserProfile }> {
+  const response = await fetch(`${API_BASE_URL}/auth/profile/`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  return handleResponse<{ user: UserProfile }>(response);
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/auth/password/change/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  return handleResponse<{ success: boolean; message: string }>(response);
+}

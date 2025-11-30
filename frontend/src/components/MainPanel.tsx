@@ -415,6 +415,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                   isChatLoading={isChatLoading}
                   onViewSqlInCanvas={onViewSqlInCanvas}
                   executedQueries={executedQueries}
+                  isAuthenticated={isAuthenticated}
                 />
               </div>
               <InputSection
@@ -429,6 +430,10 @@ const MainPanel: React.FC<MainPanelProps> = ({
                 onToggleSideWindow={onToggleSideWindow}
                 isSideWindowOpen={isSideWindowOpen}
                 canUseDatabaseTools={canUseDatabaseTools}
+                availableModels={availableModels}
+                currentModel={currentModel}
+                onModelChange={handleModelChange}
+                isModelSwitching={isModelSwitching}
               />
             </div>
           </div>

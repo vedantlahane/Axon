@@ -216,6 +216,7 @@ def generate_response(
     # Add context via system messages (before the user's prompt)
     context_parts = []
     if document_context:
+        print(f"[AGENT] Document context received: {len(document_context)} chars")
         context_parts.append(
             f"IMPORTANT: The user has uploaded documents. Use the following excerpts to answer their question. DO NOT ask them to upload again.\n\n{document_context}"
         )
@@ -225,6 +226,7 @@ def generate_response(
         )
     
     if context_parts:
+        print(f"[AGENT] Adding {len(context_parts)} context parts as system message")
         conversation.append(SystemMessage(content="\n\n---\n\n".join(context_parts)))
 
     # Add the user's prompt

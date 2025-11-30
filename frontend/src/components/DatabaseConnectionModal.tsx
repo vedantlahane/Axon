@@ -21,10 +21,6 @@ interface DatabaseConnectionModalProps {
 }
 
 const DEFAULT_MODES: DatabaseMode[] = ['sqlite', 'url'];
-const MODE_LABELS: Record<DatabaseMode, string> = {
-  sqlite: 'Local SQLite file',
-  url: 'Remote connection string',
-};
 
 const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
   isOpen,
@@ -160,66 +156,98 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
       {isOpen && (
         <motion.div
           key="database-modal"
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-[#0b1220]/95 p-6 text-white shadow-xl"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.2 }}
+            className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-gradient-to-b from-[#0f1829] to-[#0b1220] text-white shadow-2xl overflow-hidden"
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/5 text-white/60 transition hover:text-white"
-              onClick={onClose}
-              disabled={isBusy}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.02] px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2563eb]/20 text-[#2563eb]">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold">Database Connection</h2>
+                  <p className="text-xs text-white/50">Configure your SQL database</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="grid h-8 w-8 place-items-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
+                onClick={onClose}
+                disabled={isBusy}
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
 
-            <h2 className="text-lg font-semibold">Database connection</h2>
-            <p className="mt-1 text-sm text-white/60">
-              Choose how Axon connects to your SQL database. Use a local SQLite file or a hosted connection string.
-            </p>
-
-            {guidanceMessage && (
-              <div className="mt-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/70">
-                {guidanceMessage}
+            {/* Connection Status */}
+            {hasCustomConfig && (
+              <div className="flex items-center gap-2 border-b border-white/10 bg-emerald-500/5 px-6 py-2.5">
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs text-emerald-300/80">
+                  Connected{config?.label ? ` — ${config.label}` : config?.displayName ? ` — ${config.displayName}` : ''}
+                </span>
               </div>
             )}
 
-            <form className="mt-6 space-y-5" onSubmit={handleSave}>
+            {guidanceMessage && (
+              <div className="mx-6 mt-4 flex items-start gap-3 rounded-xl border border-amber-400/20 bg-amber-500/5 px-4 py-3">
+                <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p className="text-xs leading-relaxed text-amber-200/80">{guidanceMessage}</p>
+              </div>
+            )}
+
+            <form className="p-6 space-y-5" onSubmit={handleSave}>
+              {/* Mode Selection - Tab Style */}
               <div className="space-y-2">
-                <span className="text-xs uppercase tracking-[0.25em] text-white/40">Mode</span>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <span className="text-xs font-medium text-white/50">Connection Type</span>
+                <div className="flex gap-1 rounded-xl bg-white/5 p-1">
                   {modes.map((option) => {
                     const active = mode === option;
+                    const icons: Record<DatabaseMode, React.ReactNode> = {
+                      sqlite: (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                      ),
+                      url: (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                      ),
+                    };
                     return (
                       <button
                         key={option}
                         type="button"
-                        className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${
+                        className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
                           active
-                            ? 'border-[#2563eb] bg-[#2563eb]/20 text-white'
-                            : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white'
+                            ? 'bg-[#2563eb] text-white shadow-md'
+                            : 'text-white/60 hover:text-white hover:bg-white/5'
                         }`}
                         onClick={() => {
                           if (!disableInteractions) {
@@ -228,27 +256,24 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                         }}
                         disabled={disableInteractions}
                       >
-                        <span className="block font-medium">{MODE_LABELS[option]}</span>
-                        <span className="mt-1 block text-xs text-white/40">
-                          {option === 'sqlite'
-                            ? 'Provide a path to a SQLite database file.'
-                            : 'Paste a full SQLAlchemy-compatible connection string.'}
-                        </span>
+                        {icons[option]}
+                        <span>{option === 'sqlite' ? 'SQLite File' : 'Remote URL'}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="block text-xs uppercase tracking-[0.25em] text-white/40" htmlFor="db-display-name">
-                  Display name (optional)
+              {/* Display Name */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-white/50" htmlFor="db-display-name">
+                  Display Name <span className="text-white/30">(optional)</span>
                 </label>
                 <input
                   id="db-display-name"
                   type="text"
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/40 disabled:opacity-60"
-                  placeholder="e.g. Production Postgres"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-60"
+                  placeholder="e.g. Production Database"
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
                   disabled={disableInteractions}
@@ -257,35 +282,39 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
               {!isRemote && (
                 <div className="space-y-3">
-                  <label className="block text-xs uppercase tracking-[0.25em] text-white/40">
-                    SQLite Database
-                  </label>
+                  <span className="text-xs font-medium text-white/50">SQLite Database</span>
                   
-                  {/* File Upload Option */}
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs text-white/60 mb-3">Upload from your computer:</p>
-                    <div className="flex gap-2">
-                      <label className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:border-white/40 hover:bg-white/10">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                          </svg>
-                          <span>{uploadedFile ? uploadedFile.name : 'Choose file...'}</span>
-                        </div>
-                        <input
-                          type="file"
-                          accept=".db,.sqlite,.sqlite3"
-                          className="hidden"
-                          onChange={handleFileSelect}
-                          disabled={disableInteractions}
-                        />
-                      </label>
+                  {/* File Upload Card */}
+                  <div className="rounded-xl border border-dashed border-white/20 bg-white/[0.02] p-4 transition hover:border-white/30">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/50">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <label className="cursor-pointer">
+                          <p className="text-sm font-medium text-white/80 truncate">
+                            {uploadedFile ? uploadedFile.name : 'Upload database file'}
+                          </p>
+                          <p className="text-xs text-white/40">
+                            {uploadedFile ? `${(uploadedFile.size / 1024).toFixed(1)} KB` : '.db, .sqlite, or .sqlite3'}
+                          </p>
+                          <input
+                            type="file"
+                            accept=".db,.sqlite,.sqlite3"
+                            className="hidden"
+                            onChange={handleFileSelect}
+                            disabled={disableInteractions}
+                          />
+                        </label>
+                      </div>
                       {uploadedFile && (
                         <button
                           type="button"
-                          className="rounded-xl bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1d4ed8] disabled:opacity-50"
+                          className="flex-shrink-0 rounded-lg bg-[#2563eb] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#1d4ed8] disabled:opacity-50"
                           onClick={handleFileUpload}
                           disabled={disableInteractions}
                         >
@@ -294,26 +323,31 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       )}
                     </div>
                     {uploadProgress > 0 && uploadProgress < 100 && (
-                      <div className="mt-2">
-                        <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
-                          <div 
-                            className="h-full bg-[#2563eb] transition-all duration-300"
-                            style={{ width: `${uploadProgress}%` }}
-                          />
-                        </div>
+                      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
+                        <div 
+                          className="h-full bg-[#2563eb] transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
                       </div>
                     )}
                   </div>
 
-                  {/* Manual Path Option */}
-                  <div>
-                    <label className="block text-xs text-white/60 mb-2" htmlFor="db-sqlite-path">
-                      Or enter server path manually:
+                  {/* Divider */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <span className="text-xs text-white/30">or</span>
+                    <div className="h-px flex-1 bg-white/10" />
+                  </div>
+
+                  {/* Manual Path */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-white/50" htmlFor="db-sqlite-path">
+                      Server file path
                     </label>
                     <input
                       id="db-sqlite-path"
                       type="text"
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/40 disabled:opacity-60"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-60 font-mono"
                       placeholder="backend/db.sqlite3"
                       value={sqlitePath}
                       onChange={(event) => setSqlitePath(event.target.value)}
@@ -321,70 +355,108 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       autoComplete="off"
                     />
                     {config?.resolvedSqlitePath && (
-                      <p className="text-xs text-white/40 mt-2">Resolved path: {config.resolvedSqlitePath}</p>
+                      <p className="flex items-center gap-1.5 text-xs text-white/40">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="9 11 12 14 22 4"/>
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        </svg>
+                        Resolved: <span className="font-mono">{config.resolvedSqlitePath}</span>
+                      </p>
                     )}
                   </div>
                 </div>
               )}
 
               {isRemote && (
-                <div className="space-y-3">
-                  <label className="block text-xs uppercase tracking-[0.25em] text-white/40" htmlFor="db-connection-string">
-                    Connection string
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-white/50" htmlFor="db-connection-string">
+                    Connection String
                   </label>
                   <textarea
                     id="db-connection-string"
-                    className="h-28 w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/40 disabled:opacity-60"
+                    className="h-24 w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-60 font-mono"
                     placeholder="postgresql+psycopg2://user:password@host:5432/database"
                     value={connectionString}
                     onChange={(event) => setConnectionString(event.target.value)}
                     disabled={disableInteractions}
                   />
+                  <p className="text-xs text-white/40">
+                    SQLAlchemy-compatible connection string for PostgreSQL, MySQL, or other databases.
+                  </p>
                 </div>
               )}
 
               {feedback && (
-                <div
-                  className={`rounded-2xl border px-4 py-3 text-sm ${
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${
                     feedback.status === 'success'
-                      ? 'border-blue-400/40 bg-blue-500/10 text-blue-200'
-                      : 'border-rose-400/40 bg-rose-500/10 text-rose-200'
+                      ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
+                      : 'border-rose-400/30 bg-rose-500/10 text-rose-300'
                   }`}
                 >
+                  {feedback.status === 'success' ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="15" y1="9" x2="9" y2="15"/>
+                      <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                  )}
                   {feedback.message}
-                </div>
+                </motion.div>
               )}
 
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                <div className="flex gap-2">
+              {/* Footer Actions */}
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10">
+                {hasCustomConfig ? (
                   <button
                     type="button"
-                    className="rounded-xl border border-white/10 px-4 py-2 text-sm text-white/80 transition hover:border-white/30 hover:text-white disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-40"
+                    onClick={handleDisconnect}
+                    disabled={disableInteractions}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+                      <line x1="12" y1="2" x2="12" y2="12"/>
+                    </svg>
+                    Disconnect
+                  </button>
+                ) : (
+                  <div />
+                )}
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
                     onClick={handleTest}
                     disabled={!canSubmit || disableInteractions}
                   >
-                    Test connection
+                    Test
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1d4ed8] disabled:opacity-50"
+                    className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[#2563eb]/25 transition hover:bg-[#1d4ed8] disabled:opacity-50 disabled:shadow-none"
                     disabled={!canSubmit || disableInteractions}
                   >
-                    Save connection
+                    Save Connection
                   </button>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-xl border border-white/10 px-3 py-2 text-xs uppercase tracking-[0.2em] text-rose-300 transition hover:border-rose-400/60 hover:text-rose-200 disabled:opacity-40"
-                  onClick={handleDisconnect}
-                  disabled={disableInteractions || !hasCustomConfig}
-                >
-                  Disconnect
-                </button>
               </div>
 
               {isLoading && (
-                <p className="text-xs text-white/40">Loading current configuration…</p>
+                <div className="flex items-center justify-center gap-2 pt-2 text-xs text-white/40">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  </svg>
+                  Loading configuration…
+                </div>
               )}
             </form>
           </motion.div>

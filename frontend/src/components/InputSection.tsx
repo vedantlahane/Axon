@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { deleteDocument, uploadDocument, type UploadedDocument } from '../services/chatApi';
+import { deleteDocument, uploadDocument, type UploadedDocument, type LLMModel } from '../services/chatApi';
 
 interface FileTile {
   id: string;
@@ -22,6 +22,11 @@ interface InputSectionProps {
   onToggleSideWindow: () => void;
   isSideWindowOpen: boolean;
   canUseDatabaseTools: boolean;
+  // Model selection
+  availableModels?: LLMModel[];
+  currentModel?: string;
+  onModelChange?: (modelId: string) => void;
+  isModelSwitching?: boolean;
 }
 
 const formatFileSize = (size: number) => {
@@ -41,13 +46,19 @@ const InputSection: React.FC<InputSectionProps> = ({
   onToggleSideWindow,
   isSideWindowOpen,
   canUseDatabaseTools,
+  availableModels = [],
+  currentModel,
+  onModelChange,
+  isModelSwitching = false,
 }) => {
   const [message, setMessage] = useState('');
   const [files, setFiles] = useState<FileTile[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [showModelSelector, setShowModelSelector] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const modelSelectorRef = useRef<HTMLDivElement | null>(null);
   const previewsRef = useRef(new Map<string, string>());
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
@@ -151,6 +162,23 @@ const InputSection: React.FC<InputSectionProps> = ({
     recognitionRef.current = recognition;
     setIsSpeechSupported(true);
   }, []);
+
+  // Click outside handler for model selector
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        modelSelectorRef.current &&
+        !modelSelectorRef.current.contains(event.target as Node)
+      ) {
+        setShowModelSelector(false);
+      }
+    };
+
+    if (showModelSelector) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showModelSelector]);
 
   const uploadedFileIds = useMemo(
     () => files.filter((tile) => tile.status === 'uploaded' && tile.document).map((tile) => tile.document!.id),
@@ -523,6 +551,86 @@ const InputSection: React.FC<InputSectionProps> = ({
               <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
             </svg>
           </motion.button>
+
+          {/* Model Selector */}
+          <div className="relative" ref={modelSelectorRef}>
+            <motion.button
+              type="button"
+              className={`flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 text-xs text-white/70 transition hover:border-white/20 hover:bg-white/10 hover:text-white ${isModelSwitching ? 'opacity-50' : ''}`}
+              aria-label="Select AI model"
+              title="Change AI model"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowModelSelector(!showModelSelector)}
+              disabled={isModelSwitching}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" />
+                <path d="M16 14v1a4 4 0 0 1-8 0v-1" />
+                <circle cx="12" cy="19" r="2" />
+                <path d="M12 17v-3" />
+              </svg>
+              <span className="hidden sm:inline max-w-[80px] truncate">
+                {availableModels.find((m) => m.id === currentModel)?.name?.split(' ')[0] || 'Model'}
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </motion.button>
+
+            <AnimatePresence>
+              {showModelSelector && (
+                <motion.div
+                  className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-white/10 bg-[#0d1117] p-2 shadow-xl"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <div className="text-[10px] uppercase tracking-wider text-white/40 px-2 py-1 mb-1">
+                    AI Model
+                  </div>
+                  {availableModels.map((model) => (
+                    <button
+                      key={model.id}
+                      type="button"
+                      className={`w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition ${
+                        currentModel === model.id
+                          ? 'bg-blue-500/20 text-blue-300'
+                          : model.available
+                            ? 'text-white/70 hover:bg-white/10 hover:text-white'
+                            : 'text-white/30 cursor-not-allowed'
+                      }`}
+                      onClick={() => {
+                        if (model.available && onModelChange) {
+                          onModelChange(model.id);
+                          setShowModelSelector(false);
+                        }
+                      }}
+                      disabled={!model.available || isModelSwitching}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{model.name}</span>
+                        {model.isDefault && (
+                          <span className="text-[9px] uppercase bg-white/10 px-1 py-0.5 rounded text-white/50">
+                            Default
+                          </span>
+                        )}
+                      </span>
+                      {currentModel === model.id && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                      {!model.available && (
+                        <span className="text-[9px] text-white/30">No API Key</span>
+                      )}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <motion.button
             type="button"

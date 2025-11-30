@@ -21,6 +21,12 @@ from .views import (
     health_view,
     models_view,
     set_model_view,
+    message_feedback_view,
+    delete_message_feedback_view,
+    user_preferences_view,
+    update_user_preferences_view,
+    update_user_profile_view,
+    change_password_view,
 )
 
 app_name = "agent"
@@ -38,6 +44,8 @@ urlpatterns = [
     path("auth/me/", current_user, name="current-user"),
     path("auth/password/reset/", request_password_reset, name="password-reset-request"),
     path("auth/password/reset/confirm/", confirm_password_reset, name="password-reset-confirm"),
+    path("auth/password/change/", change_password_view, name="password-change"),
+    path("auth/profile/", update_user_profile_view, name="profile-update"),
     path("database/connection/", database_connection_view, name="database-connection"),
     path("database/connection/test/", test_database_connection_view, name="database-connection-test"),
     path("database/upload/", upload_database_view, name="database-upload"),
@@ -46,4 +54,8 @@ urlpatterns = [
     path("database/schema/", database_schema_view, name="database-schema"),
     path("models/", models_view, name="models-list"),
     path("models/set/", set_model_view, name="models-set"),
+    path("messages/<int:message_id>/feedback/", message_feedback_view, name="message-feedback"),
+    path("messages/<int:message_id>/feedback/delete/", delete_message_feedback_view, name="message-feedback-delete"),
+    path("preferences/", user_preferences_view, name="preferences"),
+    path("preferences/update/", update_user_preferences_view, name="preferences-update"),
 ]

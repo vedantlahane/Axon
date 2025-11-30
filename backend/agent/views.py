@@ -65,9 +65,11 @@ from .models import (
 	DatabaseConnection,
 	Message,
 	MessageAttachment,
+	MessageFeedback,
 	PasswordResetToken,
 	UploadedDatabase,
 	UploadedDocument,
+	UserPreferences,
 )
 RESET_TOKEN_TTL = timedelta(hours=1)
 
@@ -1096,6 +1098,8 @@ def chat_view(request: HttpRequest) -> JsonResponse:
 			else []
 		)
 		context_documents: List[UploadedDocument] = list(selected_documents)
+		logger.info(f"[CHAT] document_ids from payload: {document_ids}")
+		logger.info(f"[CHAT] selected_documents: {len(selected_documents)}")
 
 		if not context_documents:
 			attached_document_ids = (
@@ -1103,16 +1107,23 @@ def chat_view(request: HttpRequest) -> JsonResponse:
 				.values_list("document_id", flat=True)
 				.distinct()
 			)
+			logger.info(f"[CHAT] Fallback - attached_document_ids: {list(attached_document_ids)}")
 			if attached_document_ids:
 				context_documents = list(
 					UploadedDocument.objects.filter(pk__in=attached_document_ids, user=request.user)
 				)
+				logger.info(f"[CHAT] Fallback - context_documents: {len(context_documents)}")
 
 		user_message = Message.objects.create(conversation=conversation, role="user", content=user_content)
 		if selected_documents:
 			_attach_documents_to_message(user_message, selected_documents)
 
 		document_context = _gather_document_context(context_documents, user_content)
+		
+		# Debug logging
+		logger.info(f"Chat context: {len(context_documents)} docs, context={'yes' if document_context else 'no'}")
+		if document_context:
+			logger.info(f"Document context preview: {document_context[:200]}...")
 
 		external_context: Optional[str] = None
 		if (not document_context) and _should_query_tavily(user_content):
@@ -1269,6 +1280,11 @@ def set_model_view(request: HttpRequest) -> JsonResponse:
 		return JsonResponse({"error": "'model' field is required."}, status=400)
 
 	if set_current_model(model_id):
+		# Also save to user preferences if authenticated
+		if request.user.is_authenticated:
+			prefs, _ = UserPreferences.objects.get_or_create(user=request.user)
+			prefs.preferred_model = model_id
+			prefs.save()
 		return JsonResponse({
 			"success": True,
 			"current": get_current_model(),
@@ -1279,5 +1295,197 @@ def set_model_view(request: HttpRequest) -> JsonResponse:
 			"error": f"Model '{model_id}' is not available. Check API key configuration.",
 		}, status=400)
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Message feedback endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def message_feedback_view(request: HttpRequest, message_id: int) -> JsonResponse:
+	"""Submit feedback (like/dislike/report) for a message."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	try:
+		message = Message.objects.get(pk=message_id)
+	except Message.DoesNotExist:
+		return JsonResponse({"error": "Message not found."}, status=404)
+
+	# Verify user has access to this conversation
+	if message.conversation.user != request.user:
+		return JsonResponse({"error": "Access denied."}, status=403)
+
+	try:
+		payload = json.loads(request.body or "{}")
+	except json.JSONDecodeError:
+		return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+	feedback_type = payload.get("type")
+	if feedback_type not in ["like", "dislike", "report"]:
+		return JsonResponse({"error": "Invalid feedback type. Must be 'like', 'dislike', or 'report'."}, status=400)
+
+	report_reason = payload.get("reason", "")
+
+	# Create or update feedback
+	feedback, created = MessageFeedback.objects.update_or_create(
+		user=request.user,
+		message=message,
+		defaults={
+			"feedback_type": feedback_type,
+			"report_reason": report_reason if feedback_type == "report" else "",
+		}
+	)
+
+	return JsonResponse({
+		"success": True,
+		"feedback": {
+			"id": feedback.pk,
+			"type": feedback.feedback_type,
+			"messageId": message_id,
+			"createdAt": feedback.created_at.isoformat(),
+		}
+	})
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_message_feedback_view(request: HttpRequest, message_id: int) -> JsonResponse:
+	"""Remove feedback from a message."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	deleted_count, _ = MessageFeedback.objects.filter(
+		user=request.user,
+		message_id=message_id,
+	).delete()
+
+	if deleted_count == 0:
+		return JsonResponse({"error": "No feedback found."}, status=404)
+
+	return JsonResponse({"success": True, "deleted": True})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# User preferences endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _serialize_preferences(prefs: UserPreferences) -> Dict[str, Any]:
+	return {
+		"preferredModel": prefs.preferred_model,
+		"theme": prefs.theme,
+		"updatedAt": prefs.updated_at.isoformat(),
+	}
+
+
+@require_http_methods(["GET"])
+def user_preferences_view(request: HttpRequest) -> JsonResponse:
+	"""Get user preferences."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	prefs, _ = UserPreferences.objects.get_or_create(user=request.user)
+	return JsonResponse({"preferences": _serialize_preferences(prefs)})
+
+
+@csrf_exempt
+@require_http_methods(["PUT", "PATCH"])
+def update_user_preferences_view(request: HttpRequest) -> JsonResponse:
+	"""Update user preferences."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	try:
+		payload = json.loads(request.body or "{}")
+	except json.JSONDecodeError:
+		return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+	prefs, _ = UserPreferences.objects.get_or_create(user=request.user)
+
+	if "preferredModel" in payload:
+		prefs.preferred_model = payload["preferredModel"]
+	if "theme" in payload:
+		prefs.theme = payload["theme"]
+
+	prefs.save()
+	return JsonResponse({"preferences": _serialize_preferences(prefs)})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# User profile endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@csrf_exempt
+@require_http_methods(["PUT", "PATCH"])
+def update_user_profile_view(request: HttpRequest) -> JsonResponse:
+	"""Update user profile information."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	try:
+		payload = json.loads(request.body or "{}")
+	except json.JSONDecodeError:
+		return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+	user = request.user
+	updated = False
+
+	if "name" in payload:
+		name = payload["name"].strip()
+		if name:
+			parts = name.split(maxsplit=1)
+			user.first_name = parts[0]
+			user.last_name = parts[1] if len(parts) > 1 else ""
+			updated = True
+
+	if "email" in payload:
+		email = payload["email"].strip().lower()
+		if email and email != user.email:
+			# Check if email is already taken
+			if UserModel.objects.filter(email=email).exclude(pk=user.pk).exists():
+				return JsonResponse({"error": "Email is already in use."}, status=400)
+			user.email = email
+			updated = True
+
+	if updated:
+		user.save()
+
+	return JsonResponse({"user": _serialise_user(user)})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def change_password_view(request: HttpRequest) -> JsonResponse:
+	"""Change user password."""
+	auth_response = _ensure_authenticated(request)
+	if auth_response is not None:
+		return auth_response
+
+	try:
+		payload = json.loads(request.body or "{}")
+	except json.JSONDecodeError:
+		return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+	current_password = payload.get("currentPassword", "")
+	new_password = payload.get("newPassword", "")
+
+	if not current_password or not new_password:
+		return JsonResponse({"error": "Both currentPassword and newPassword are required."}, status=400)
+
+	if len(new_password) < 6:
+		return JsonResponse({"error": "New password must be at least 6 characters."}, status=400)
+
+	if not request.user.check_password(current_password):
+		return JsonResponse({"error": "Current password is incorrect."}, status=400)
+
+	request.user.set_password(new_password)
+	request.user.save()
+
+	return JsonResponse({"success": True, "message": "Password changed successfully."})
 
 

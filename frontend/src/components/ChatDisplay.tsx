@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import type { ChatMessage, ConversationSummary } from '../App';
-import type { SqlQueryResult } from '../services/chatApi';
+import type { SqlQueryResult, FeedbackType } from '../services/chatApi';
+import { submitMessageFeedback, deleteMessageFeedback } from '../services/chatApi';
 
 interface ChatDisplayProps {
   view: 'chat' | 'history';
@@ -13,6 +14,7 @@ interface ChatDisplayProps {
   onDeleteConversation: (conversationId: string) => Promise<void> | void;
   isChatLoading: boolean;
   onViewSqlInCanvas?: (sql: string) => void;
+  isAuthenticated?: boolean;
   executedQueries?: Map<string, SqlQueryResult>; // sql -> result
 }
 
@@ -78,10 +80,13 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   isChatLoading,
   onViewSqlInCanvas,
   executedQueries,
+  isAuthenticated = false,
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const showLanding = view === 'chat' && messages.length === 0;
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [messageFeedback, setMessageFeedback] = useState<Map<string, FeedbackType>>(new Map());
+  const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
 
   // Handle copy with feedback
   const handleCopy = (messageId: string, content: string) => {
@@ -89,6 +94,34 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     setCopiedMessageId(messageId);
     setTimeout(() => setCopiedMessageId(null), 2000);
   };
+
+  // Handle message feedback
+  const handleFeedback = useCallback(async (messageId: string, type: FeedbackType) => {
+    if (!isAuthenticated) return;
+    
+    const currentFeedback = messageFeedback.get(messageId);
+    setFeedbackLoading(messageId);
+    
+    try {
+      if (currentFeedback === type) {
+        // Remove feedback if clicking same type
+        await deleteMessageFeedback(messageId);
+        setMessageFeedback((prev) => {
+          const next = new Map(prev);
+          next.delete(messageId);
+          return next;
+        });
+      } else {
+        // Set new feedback
+        await submitMessageFeedback(messageId, type);
+        setMessageFeedback((prev) => new Map(prev).set(messageId, type));
+      }
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+    } finally {
+      setFeedbackLoading(null);
+    }
+  }, [isAuthenticated, messageFeedback]);
 
   // Helper to extract SQL from message content
   const extractSql = (content: string): string | null => {
@@ -641,7 +674,13 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                               {/* Like */}
                               <button
                                 type="button"
-                                className="p-1.5 rounded-lg text-white/30 hover:text-green-400 hover:bg-green-500/10 transition"
+                                onClick={() => handleFeedback(message.id, 'like')}
+                                disabled={feedbackLoading === message.id}
+                                className={`p-1.5 rounded-lg transition ${
+                                  messageFeedback.get(message.id) === 'like'
+                                    ? 'text-green-400 bg-green-500/15'
+                                    : 'text-white/30 hover:text-green-400 hover:bg-green-500/10'
+                                } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
                                 title="Good response"
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -652,7 +691,13 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                               {/* Dislike */}
                               <button
                                 type="button"
-                                className="p-1.5 rounded-lg text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                onClick={() => handleFeedback(message.id, 'dislike')}
+                                disabled={feedbackLoading === message.id}
+                                className={`p-1.5 rounded-lg transition ${
+                                  messageFeedback.get(message.id) === 'dislike'
+                                    ? 'text-rose-400 bg-rose-500/15'
+                                    : 'text-white/30 hover:text-rose-400 hover:bg-rose-500/10'
+                                } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
                                 title="Bad response"
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -663,7 +708,13 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                               {/* Report */}
                               <button
                                 type="button"
-                                className="p-1.5 rounded-lg text-white/30 hover:text-amber-400 hover:bg-amber-500/10 transition"
+                                onClick={() => handleFeedback(message.id, 'report')}
+                                disabled={feedbackLoading === message.id}
+                                className={`p-1.5 rounded-lg transition ${
+                                  messageFeedback.get(message.id) === 'report'
+                                    ? 'text-amber-400 bg-amber-500/15'
+                                    : 'text-white/30 hover:text-amber-400 hover:bg-amber-500/10'
+                                } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
                                 title="Report issue"
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

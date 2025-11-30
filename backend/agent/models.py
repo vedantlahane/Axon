@@ -136,3 +136,56 @@ class PasswordResetToken(models.Model):
 		status = "used" if self.used else "active"
 		user_ref = getattr(self.user, "pk", None)
 		return f"Reset token for {user_ref} ({status})"
+
+
+class MessageFeedback(models.Model):
+	"""Store user feedback (like/dislike/report) on assistant messages."""
+	FEEDBACK_LIKE = "like"
+	FEEDBACK_DISLIKE = "dislike"
+	FEEDBACK_REPORT = "report"
+	FEEDBACK_CHOICES = [
+		(FEEDBACK_LIKE, "Like"),
+		(FEEDBACK_DISLIKE, "Dislike"),
+		(FEEDBACK_REPORT, "Report"),
+	]
+
+	user = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name="message_feedbacks",
+	)
+	message = models.ForeignKey(
+		Message,
+		on_delete=models.CASCADE,
+		related_name="feedbacks",
+	)
+	feedback_type = models.CharField(max_length=20, choices=FEEDBACK_CHOICES)
+	report_reason = models.TextField(blank=True)  # Optional reason for reports
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["-created_at"]
+		unique_together = [["user", "message"]]  # One feedback per user per message
+
+	def __str__(self) -> str:
+		return f"{self.feedback_type} on message {self.message_id} by user {self.user_id}"
+
+
+class UserPreferences(models.Model):
+	"""Store user preferences including preferred AI model."""
+	user = models.OneToOneField(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name="preferences",
+	)
+	preferred_model = models.CharField(max_length=50, default="gemini")
+	theme = models.CharField(max_length=20, default="dark")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		verbose_name_plural = "User preferences"
+
+	def __str__(self) -> str:
+		return f"Preferences for user {self.user_id}"
