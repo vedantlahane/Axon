@@ -287,28 +287,47 @@ npm run build
 
 ## ⚙️ Deployment
 
-### Using Ansible
+### Production Deployment with Ansible
 
-\`\`\`bash
-# Setup backend server
-ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup_backend.yml
+Axon uses Ansible for automated infrastructure provisioning and deployment.
 
-# Deploy backend
-ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/deploy_backend.yml
+**Quick Deploy:**
+```bash
+cd ansible
+ansible-playbook -i inventory/hosts.ini playbooks/deploy_backend.yml --vault-password-file .vault_password
+```
 
-# Setup monitoring
-ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/provision_ngaios.yml
-\`\`\`
+**Complete Documentation:**
+- 📘 **[Deployment Guide](docs/DEPLOYMENT.md)** - Comprehensive deployment instructions
+- 🔐 **[Ansible README](ansible/README.md)** - Infrastructure automation & secrets management
+- 🗝️ **[Vault Setup](ansible/VAULT_SETUP.md)** - Secure API key management
 
 ### Frontend (Vercel)
 
-The frontend is configured for Vercel deployment. Set \`VITE_API_BASE_URL\` in Vercel environment variables.
+The frontend is configured for Vercel deployment. Set `VITE_API_BASE_URL` in Vercel environment variables.
+
+**Frontend Setup:**
+- See [frontend/README.md](frontend/README.md) for development and build instructions
+- Automatic deployments from main branch
+- Environment variables managed in Vercel dashboard
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Deployment Guide](docs/DEPLOYMENT.md) | Complete production deployment instructions |
+| [Ansible README](ansible/README.md) | Infrastructure automation & secrets management |
+| [Vault Setup](ansible/VAULT_SETUP.md) | Secure API key encryption with Ansible Vault |
+| [Frontend README](frontend/README.md) | Frontend development and deployment |
+| [Presentation Materials](docs/presentation/) | Slides and scripts for project presentations |
 
 ---
 
 ## 📝 License
 
-Distributed under the MIT License. See \`LICENSE\` for more information.
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
