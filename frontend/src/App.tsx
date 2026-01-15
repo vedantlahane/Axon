@@ -4,6 +4,7 @@ import MainPanel from './components/MainPanel';
 import AuthModal from './components/AuthModal';
 import DatabaseConnectionModal from './components/DatabaseConnectionModal';
 import { type SqlSideWindowProps, type SqlQueryHistoryEntry, type PendingQuery } from './components/Canvas';
+import { normalizeSql } from './utils/sqlUtils';
 import {
   fetchConversation,
   fetchConversations,
@@ -117,6 +118,7 @@ const App: React.FC = () => {
   const [isFetchingSqlSuggestions, setIsFetchingSqlSuggestions] = useState(false);
   const [sqlSuggestionsError, setSqlSuggestionsError] = useState<string | null>(null);
   const [pendingSqlQuery, setPendingSqlQuery] = useState<PendingQuery | null>(null);
+  const [hiddenAssistantMessage, setHiddenAssistantMessage] = useState<ChatMessage | null>(null);
   const [latestAutoResult, setLatestAutoResult] = useState<SqlQueryResult | null>(null);
   const [autoExecuteEnabled, setAutoExecuteEnabled] = useState<boolean>(() => {
     const stored = localStorage.getItem('axon-auto-execute');
@@ -149,6 +151,7 @@ const App: React.FC = () => {
     setSqlSuggestionsError(null);
     setIsFetchingSqlSuggestions(false);
     setPendingSqlQuery(null);
+      setHiddenAssistantMessage(null);
     setLatestAutoResult(null);
     if (options?.close) {
       setIsSideWindowOpen(false);
@@ -209,9 +212,10 @@ const App: React.FC = () => {
       }
       
       // Track executed query for "View in Canvas" button in chat
+      // Use normalized SQL as key for consistent lookups
       setExecutedQueries((prev) => {
         const newMap = new Map(prev);
-        newMap.set(query.trim(), result);
+        newMap.set(normalizeSql(query), result);
         return newMap;
       });
       
@@ -271,6 +275,11 @@ const App: React.FC = () => {
     setPendingSqlQuery(null);
     try {
       await handleExecuteSqlQuery(query, 200, source);
+      // After successful execution, show the hidden assistant message in chat
+      if (hiddenAssistantMessage) {
+        setCurrentMessages((prev) => [...prev, hiddenAssistantMessage]);
+        setHiddenAssistantMessage(null);
+      }
     } catch {
       // Error already handled in handleExecuteSqlQuery
     }
@@ -278,6 +287,7 @@ const App: React.FC = () => {
 
   const handleRejectPendingQuery = () => {
     setPendingSqlQuery(null);
+    setHiddenAssistantMessage(null);
   };
 
   const handleToggleAutoExecute = () => {
@@ -288,6 +298,7 @@ const App: React.FC = () => {
       // If turning ON auto-execute and there's a pending query, execute it
       if (next && pendingSqlQuery) {
         void handleExecuteSqlQuery(pendingSqlQuery.query, 200, pendingSqlQuery.source);
+          setHiddenAssistantMessage(null);
         setPendingSqlQuery(null);
       }
       
@@ -296,11 +307,19 @@ const App: React.FC = () => {
   };
 
   const handleViewSqlInCanvas = (sql: string) => {
-    const result = executedQueries.get(sql.trim());
+    const normalizedSql = normalizeSql(sql);
+    const result = executedQueries.get(normalizedSql);
+    
+    // Always open canvas with the SQL query, even if not yet executed
+    setIsSideWindowOpen(true);
+    setSqlEditorValue(sql.trim()); // Keep original formatting for display
+    
+    // If we have a result, show it; otherwise canvas shows editor only
     if (result) {
-      setIsSideWindowOpen(true);
-      setSqlEditorValue(sql.trim());
       setLatestAutoResult(result);
+    } else {
+      // Clear previous auto result to avoid showing stale data
+      setLatestAutoResult(null);
     }
   };
 
@@ -678,13 +697,14 @@ const App: React.FC = () => {
 
   const updateMessagesFromDetail = (detail: RawConversationDetail) => {
     const mappedMessages = detail.messages.map(mapMessage);
-    setCurrentMessages(mappedMessages);
     setSelectedHistoryId(detail.id);
     setActiveConversationId(detail.id);
     setInputSessionKey(detail.id);
 
     // Check if the latest assistant message contains SQL
     const latestMessage = mappedMessages[mappedMessages.length - 1];
+    let hasPendingSql = false;
+    
     if (latestMessage && latestMessage.sender === 'assistant' && canUseDatabaseTools) {
       const sqlQuery = extractSqlFromMessage(latestMessage.content);
       if (sqlQuery && latestMessage.id !== lastAssistantMessageIdRef.current) {
@@ -695,16 +715,27 @@ const App: React.FC = () => {
           void handleExecuteSqlQuery(sqlQuery, 200, 'ai');
         } else {
           // Set as pending query for user approval
+          hasPendingSql = true;
           setPendingSqlQuery({
             id: `pending-${Date.now()}`,
             query: sqlQuery,
             source: 'ai',
             timestamp: new Date().toISOString(),
           });
+          setHiddenAssistantMessage(latestMessage);
           setIsSideWindowOpen(true);
         }
       }
     }
+
+    // If there's a pending SQL query waiting for user approval (autorun OFF),
+    // don't show the assistant message with SQL in chat - it will be shown
+    // in the Canvas approval panel instead
+    const messagesToDisplay = hasPendingSql
+      ? mappedMessages.slice(0, -1) // Exclude the latest assistant message with SQL
+      : mappedMessages;
+
+    setCurrentMessages(messagesToDisplay);
   };
 
   const handleSendMessage = async (

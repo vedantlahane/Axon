@@ -151,6 +151,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
     if (pendingQuery && !autoExecuteEnabled) {
       setEditorPanel("pending");
       setActiveTab("editor");
+      setHideEditor(false); // Ensure editor is visible so user can see the query
     }
   }, [pendingQuery, autoExecuteEnabled]);
 

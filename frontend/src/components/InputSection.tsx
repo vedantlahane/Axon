@@ -141,8 +141,9 @@ const InputSection: React.FC<InputSectionProps> = ({
       setIsRecording(false);
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       setIsRecording(false);
+      console.warn('Speech recognition error:', event.error);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -198,7 +199,11 @@ const InputSection: React.FC<InputSectionProps> = ({
     const currentFiles = [...files];
     setMessage('');
     try {
-      await onSend(trimmed, { documentIds: uploadedFileIds });
+      const result = onSend(trimmed, { documentIds: uploadedFileIds });
+      // Handle both Promise and void returns
+      if (result instanceof Promise) {
+        await result;
+      }
     } catch (error) {
       console.error('Failed to send message', error);
       setMessage(trimmed);
@@ -222,6 +227,14 @@ const InputSection: React.FC<InputSectionProps> = ({
     if (!isAuthenticated) {
       event.target.value = '';
       onRequireAuth('signup');
+      return;
+    }
+
+    // Validate file count (max 10 files per message)
+    const totalFiles = files.length + selectedFiles.length;
+    if (totalFiles > 10) {
+      console.warn('Maximum 10 files per message');
+      event.target.value = '';
       return;
     }
 
@@ -488,6 +501,7 @@ const InputSection: React.FC<InputSectionProps> = ({
             type="button"
             className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
             aria-label="Attach files"
+            title="Attach PDF files"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleUploadTrigger}
@@ -506,7 +520,7 @@ const InputSection: React.FC<InputSectionProps> = ({
             </svg>
           </motion.button>
 
-          <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="sr-only" />
+          <input ref={fileInputRef} type="file" multiple accept=".pdf,application/pdf" onChange={handleFileUpload} className="sr-only" />
 
           <textarea
             ref={messageInputRef}
@@ -516,9 +530,13 @@ const InputSection: React.FC<InputSectionProps> = ({
             placeholder={
               isHistoryActive
                 ? 'Switch back to Chat to send a message'
-                : isAuthenticated
-                  ? 'Ask Axon anything…'
-                  : 'Sign in to start chatting'
+                : isSending
+                  ? 'Sending…'
+                  : hasUploadingFiles
+                    ? 'Waiting for files to upload…'
+                    : isAuthenticated
+                      ? 'Ask Axon anything…'
+                      : 'Sign in to start chatting'
             }
             className="flex-1 resize-none bg-transparent py-2 text-sm text-white placeholder:text-white/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
             onKeyDown={handleKeyDown}
@@ -581,7 +599,7 @@ const InputSection: React.FC<InputSectionProps> = ({
             <AnimatePresence>
               {showModelSelector && (
                 <motion.div
-                  className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-white/10 bg-[#0d1117] p-2 shadow-xl"
+                  className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-white/10 bg-[#0d1117] p-2 shadow-xl z-50"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}

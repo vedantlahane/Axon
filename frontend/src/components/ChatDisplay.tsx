@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import type { ChatMessage, ConversationSummary } from '../App';
 import type { SqlQueryResult, FeedbackType } from '../services/chatApi';
 import { submitMessageFeedback, deleteMessageFeedback } from '../services/chatApi';
+import { normalizeSql } from '../utils/sqlUtils';
 
 interface ChatDisplayProps {
   view: 'chat' | 'history';
@@ -127,6 +128,60 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   const extractSql = (content: string): string | null => {
     const match = content.match(/```sql\s*([\s\S]*?)```/i);
     return match ? match[1].trim() : null;
+  };
+
+  // Helper to render SQL query results inline
+  const renderSqlResults = (result: SqlQueryResult) => {
+    if (result.type === 'rows' && result.columns && result.rows) {
+      const maxRows = 10; // Show max 10 rows in chat
+      const displayRows = result.rows.slice(0, maxRows);
+      const hasMore = result.rows.length > maxRows;
+
+      return (
+        <div className="rounded-lg border border-white/10 bg-white/5 overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="border-b border-white/10 bg-white/5">
+              <tr>
+                {result.columns.map((col, colIdx) => (
+                  <th key={colIdx} className="px-3 py-2 text-left text-white/70 font-mono font-medium">
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {displayRows.map((row, idx) => (
+                <tr key={idx} className="hover:bg-white/5">
+                  {result.columns.map((_, colIdx) => (
+                    <td key={`${idx}-${colIdx}`} className="px-3 py-2 text-white/80 font-mono truncate max-w-[200px]">
+                      {String(row[colIdx] ?? 'NULL')}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {hasMore && (
+            <div className="px-3 py-2 border-t border-white/10 text-xs text-white/50 bg-white/5">
+              Showing {displayRows.length} of {result.rows.length} rows. <span className="text-white/40">View all in Canvas</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // For ACK results (INSERT, UPDATE, DELETE)
+    if (result.type === 'ack') {
+      return (
+        <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3">
+          <p className="text-xs text-emerald-300">
+            ✓ {result.message} ({result.rowCount} {result.rowCount === 1 ? 'row' : 'rows'} affected)
+          </p>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   // Parse markdown-like content into formatted elements
@@ -349,7 +404,9 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   // Helper to render message content with clickable SQL blocks
   const renderMessageContent = (message: ChatMessage) => {
     const sql = extractSql(message.content);
-    const hasExecutedResults = sql ? executedQueries?.has(sql.trim()) : false;
+    const normalizedSql = sql ? normalizeSql(sql) : null;
+    const queryResult = normalizedSql && executedQueries ? executedQueries.get(normalizedSql) : null;
+    const hasExecutedResults = !!queryResult;
     
     if (sql && onViewSqlInCanvas) {
       // Split content around the SQL block
@@ -374,13 +431,21 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                   <line x1="9" y1="3" x2="9" y2="21" />
                 </svg>
-                {hasExecutedResults ? 'View Results' : 'Open in Canvas'}
+                {hasExecutedResults ? 'View in Canvas' : 'Open in Canvas'}
               </button>
             </div>
             <pre className="p-3 text-sm font-mono text-sky-300 overflow-x-auto">
               <code>{sql}</code>
             </pre>
           </div>
+
+          {/* Display results if query has been executed */}
+          {hasExecutedResults && queryResult && (
+            <div className="flex flex-col gap-2">
+              <div className="text-xs text-white/40 px-1">Query Results:</div>
+              {renderSqlResults(queryResult)}
+            </div>
+          )}
           
           {afterSql.trim() && <div className="prose-content">{parseFormattedContent(afterSql.trim())}</div>}
         </div>
