@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import ChatDisplay from "./ChatDisplay";
 import InputSection from "./InputSection";
 import Canvas, { type SqlSideWindowProps } from "./Canvas";
-import type { ChatMessage, ConversationSummary } from "../App";
+import type { ChatMessage, ConversationSummary } from "../types/chat";
 import type { UserProfile, SqlQueryResult, LLMModel } from "../services/chatApi";
 import { fetchAvailableModels, setCurrentModel, exportConversationZip } from "../services/chatApi";
 

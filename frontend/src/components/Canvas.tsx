@@ -1,93 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import SchemaDiagram from "./SchemaDiagram";
-import type {
-  SqlQueryResult,
-  SqlQuerySuggestion,
-  SqlSchemaPayload,
-} from "../services/chatApi";
-import { exportSqlResultsXlsx } from "../services/chatApi";
+import type { SqlQueryResult, SqlQuerySuggestion } from "../services/chatApi";
+import {
+  type SqlSideWindowProps,
+  type SqlQueryHistoryEntry,
+  type CanvasTab,
+  type EditorPanel,
+  DEFAULT_QUERY_LIMIT,
+  QUERY_LIMIT_MIN,
+  QUERY_LIMIT_MAX,
+  CANVAS_TABS,
+  TAB_LABELS,
+  SqlResultsView,
+  SqlHistoryPanel,
+  SqlSuggestionsPanel,
+  SqlPendingApprovalPanel,
+} from "./Canvas";
 
-export interface SqlQueryHistoryEntry {
-  id: string;
-  query: string;
-  executedAt: string;
-  type: SqlQueryResult["type"];
-  rowCount: number;
-  result?: SqlQueryResult; // Store full result for viewing later
-  source?: 'ai' | 'user'; // Track if AI generated
-}
-
-export interface PendingQuery {
-  id: string;
-  query: string;
-  source: 'ai' | 'user';
-  timestamp: string;
-}
-
-export interface SqlSideWindowProps {
-  isOpen: boolean;
-  onCollapse: () => void;
-  connectionSummary: string;
-  schema: SqlSchemaPayload | null;
-  isSchemaLoading: boolean;
-  onRefreshSchema: () => Promise<void> | void;
-  onExecuteQuery: (query: string, limit?: number) => Promise<SqlQueryResult>;
-  isExecuting: boolean;
-  history: SqlQueryHistoryEntry[];
-  errorMessage: string | null;
-  onRequestSuggestions: (
-    query: string,
-    options?: { includeSchema?: boolean; maxSuggestions?: number }
-  ) => Promise<void>;
-  isSuggesting: boolean;
-  suggestions: SqlQuerySuggestion[];
-  suggestionsError: string | null;
-  suggestionAnalysis: string | null;
-  queryText: string;
-  onChangeQuery: (value: string) => void;
-  // New props for human-in-the-loop
-  pendingQuery: PendingQuery | null;
-  onApprovePendingQuery: () => void;
-  onRejectPendingQuery: () => void;
-  autoExecuteEnabled: boolean;
-  onToggleAutoExecute: () => void;
-  // Latest auto-executed result
-  latestAutoResult: SqlQueryResult | null;
-}
+// Re-export types for backward compatibility
+export type { SqlQueryHistoryEntry, PendingQuery, SqlSideWindowProps } from "./Canvas";
 
 interface CanvasProps {
   children: React.ReactNode;
   sideWindow: SqlSideWindowProps;
 }
-
-type CanvasTab = "editor" | "results" | "schema";
-type EditorPanel = "suggestions" | "history" | "pending";
-
-const DEFAULT_QUERY_LIMIT = 200;
-const QUERY_LIMIT_MIN = 1;
-const QUERY_LIMIT_MAX = 10000;
-const CANVAS_TABS: CanvasTab[] = ["editor", "results", "schema"];
-
-const TAB_LABELS: Record<CanvasTab, string> = {
-  editor: "Editor",
-  results: "Results",
-  schema: "Schema",
-};
-
-const DATE_UNITS: Intl.DateTimeFormatOptions = {
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-};
-
-const formatExecutionTimestamp = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown time";
-  }
-  return date.toLocaleString(undefined, DATE_UNITS);
-};
 
 const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
   const {
@@ -124,27 +61,6 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
   const [isSchemaFullscreen, setIsSchemaFullscreen] = useState(false);
   const [hideEditor, setHideEditor] = useState(false);
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<SqlQueryHistoryEntry | null>(null);
-  const [isExportingResults, setIsExportingResults] = useState(false);
-
-  // Export SQL results to XLSX
-  const handleExportResults = async () => {
-    if (!result || result.type !== "rows" || isExportingResults) return;
-    setIsExportingResults(true);
-    try {
-      const rows = result.rows.map((row) => {
-        const obj: Record<string, unknown> = {};
-        result.columns.forEach((col, idx) => {
-          obj[col] = row[idx];
-        });
-        return obj;
-      });
-      await exportSqlResultsXlsx(queryText, result.columns, rows);
-    } catch (err) {
-      console.error("Failed to export results:", err);
-    } finally {
-      setIsExportingResults(false);
-    }
-  };
 
   // Switch to pending panel when there's a pending query
   useEffect(() => {
@@ -273,331 +189,44 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
     return `${base} • ${result.executionTimeMs}ms`;
   }, [result]);
 
-  const renderResultContent = () => {
-    if (!result) {
-      return (
-        <div className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/50">
-          Run a query to view results.
-        </div>
-      );
-    }
-
-    if (result.type === "rows") {
-      return (
-        <div className="flex flex-col gap-3 min-w-0 w-full">
-          {/* Results summary header */}
-          <div className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2">
-            <span className="text-sm text-white/70">
-              <strong className="text-white">{result.rowCount}</strong> row{result.rowCount === 1 ? "" : "s"} • {result.columns.length} column{result.columns.length === 1 ? "" : "s"}
-            </span>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-white/50">{result.executionTimeMs}ms</span>
-              <button
-                type="button"
-                disabled={isExportingResults}
-                onClick={handleExportResults}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-500/20 px-2.5 py-1 text-xs font-medium text-blue-300 transition hover:bg-blue-500/30 disabled:opacity-50"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {isExportingResults ? "Exporting..." : "Export XLSX"}
-              </button>
-            </div>
-          </div>
-          
-          {/* Scrollable table container - constrained width */}
-          <div className="max-h-[400px] w-full overflow-auto rounded-xl border border-white/10 bg-[#0b1220]/70">
-            <table className="w-max min-w-full border-separate border-spacing-0 text-left text-sm text-white/80 table-fixed">
-              <thead className="sticky top-0 z-10 bg-[#151d2e]">
-                <tr>
-                  <th className="w-12 border-b border-white/10 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-white/50">#</th>
-                  {result.columns.map((column) => (
-                    <th 
-                      key={column} 
-                      className="min-w-[80px] max-w-[200px] border-b border-white/10 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-white/50"
-                    >
-                      <div className="truncate" title={column}>{column}</div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {result.rows.length === 0 ? (
-                  <tr>
-                    <td
-                      className="px-3 py-6 text-center text-white/40"
-                      colSpan={(result.columns.length || 1) + 1}
-                    >
-                      No rows returned.
-                    </td>
-                  </tr>
-                ) : (
-                  result.rows.map((row, index) => (
-                    <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="w-12 px-3 py-2 text-xs text-white/30 font-mono">{index + 1}</td>
-                      {row.map((value, cellIndex) => (
-                        <td
-                          key={`${index}-${cellIndex}`}
-                          className="min-w-[80px] max-w-[200px] px-3 py-2 align-top text-xs text-white/70"
-                        >
-                          <div className="truncate" title={String(value ?? 'NULL')}>
-                            {value === null ? (
-                              <span className="italic text-white/30">NULL</span>
-                            ) : typeof value === 'object' ? (
-                              <code className="rounded bg-white/10 px-1 py-0.5 font-mono text-[10px] text-amber-300 truncate block">
-                                {JSON.stringify(value).slice(0, 50)}
-                              </code>
-                            ) : String(value).length > 50 ? (
-                              <span className="cursor-help">
-                                {String(value).slice(0, 50)}…
-                              </span>
-                            ) : (
-                              String(value)
-                            )}
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Pagination hint for large results */}
-          {result.rowCount > 100 && (
-            <p className="text-center text-xs text-white/40">
-              Showing {Math.min(result.rows.length, result.rowCount)} of {result.rowCount} rows.
-            </p>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-        <p className="font-medium">Statement acknowledged</p>
-        <p className="text-xs text-emerald-100/70">{result.message}</p>
-        <p className="mt-2 text-xs text-emerald-100/50">
-          {result.rowCount} row{result.rowCount === 1 ? "" : "s"} affected •{" "}
-          {result.executionTimeMs}ms
-        </p>
-      </div>
-    );
-  };
-
   const renderEditorSupportingPanel = () => {
-    // Pending query panel - Human in the loop
     if (editorPanel === "pending") {
       return (
-        <section className="flex flex-col gap-3">
-          <header className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-xs text-amber-400">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span className="uppercase tracking-[0.2em]">Query Pending Approval</span>
-            </span>
-          </header>
-          {pendingQuery ? (
-            <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
-              <div className="mb-3 flex items-center justify-between text-xs text-amber-200/70">
-                <span>Source: {pendingQuery.source === 'ai' ? 'AI Generated' : 'User Input'}</span>
-                <span>{new Date(pendingQuery.timestamp).toLocaleTimeString()}</span>
-              </div>
-              <pre className="mb-4 overflow-x-auto rounded-lg border border-white/10 bg-[#060a18] p-3 font-mono text-sm text-white/80">
-                {pendingQuery.query}
-              </pre>
-              <p className="mb-4 text-xs text-amber-200/60">
-                Review the SQL query above before it runs on your database. You can edit the query in the editor if needed.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChangeQuery(pendingQuery.query);
-                    onApprovePendingQuery();
-                  }}
-                  disabled={isExecuting}
-                  className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Approve & Run
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChangeQuery(pendingQuery.query);
-                    setEditorPanel("suggestions");
-                  }}
-                  className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                  Edit First
-                </button>
-                <button
-                  type="button"
-                  onClick={onRejectPendingQuery}
-                  className="flex items-center gap-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/20 hover:text-rose-200"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                  Reject
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/50">
-              No queries pending approval.
-            </p>
-          )}
-        </section>
+        <SqlPendingApprovalPanel
+          pendingQuery={pendingQuery}
+          isExecuting={isExecuting}
+          onApprove={() => {
+            if (pendingQuery) {
+              onChangeQuery(pendingQuery.query);
+              onApprovePendingQuery();
+            }
+          }}
+          onEdit={(query) => {
+            onChangeQuery(query);
+            setEditorPanel("suggestions");
+          }}
+          onReject={onRejectPendingQuery}
+        />
       );
     }
 
     if (editorPanel === "history") {
       return (
-        <section className="flex flex-col gap-3">
-          <header className="flex items-center justify-between">
-            <span className="text-xs text-white/40">
-              {history.length} saved
-            </span>
-          </header>
-          {history.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/50">
-              Run queries to build your history.
-            </p>
-          ) : (
-            <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
-              {history.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex flex-col gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="font-mono text-[11px] text-white/60 flex-1">
-                      {entry.query.slice(0, 120)}
-                      {entry.query.length > 120 && '...'}
-                    </span>
-                    {entry.source === 'ai' && (
-                      <span className="shrink-0 rounded bg-[#2563eb]/20 px-1.5 py-0.5 text-[9px] font-medium text-[#60a5fa]">
-                        AI
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-white/40">
-                    <span className="flex items-center gap-2">
-                      <span className="rounded bg-white/10 px-1.5 py-0.5">{entry.type.toUpperCase()}</span>
-                      <span>{entry.rowCount} rows</span>
-                    </span>
-                    <span>{formatExecutionTimestamp(entry.executedAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleHistorySelect(entry)}
-                      className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/60 transition hover:bg-white/10 hover:text-white"
-                    >
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                      Load Query
-                    </button>
-                    {entry.result && (
-                      <button
-                        type="button"
-                        onClick={() => handleViewHistoryResult(entry)}
-                        className="flex items-center gap-1 rounded-md border border-[#2563eb]/30 bg-[#2563eb]/10 px-2 py-1 text-[10px] text-[#60a5fa] transition hover:bg-[#2563eb]/20"
-                      >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        View Results
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <SqlHistoryPanel
+          history={history}
+          onSelectHistory={handleHistorySelect}
+          onViewResult={handleViewHistoryResult}
+        />
       );
     }
 
     return (
-      <section className="flex flex-col gap-3">
-        <header className="flex items-center justify-between">
-          
-          {suggestionAnalysis && (
-            <span className="text-[10px] text-white/40">Updated just now</span>
-          )}
-        </header>
-        {suggestionAnalysis && (
-          <p className="rounded-xl border border-blue-400/30 bg-blue-500/10 p-3 text-xs text-blue-200">
-            {suggestionAnalysis}
-          </p>
-        )}
-        {suggestionsError && (
-          <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 text-xs text-rose-200">
-            {suggestionsError}
-          </div>
-        )}
-        {suggestions.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/50">
-            Request suggestions to see AI-assisted improvements.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {suggestions.map((suggestion) => (
-              <div
-                key={suggestion.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white/70 shadow-inner"
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-                    {suggestion.title}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => handleSuggestionSelect(suggestion)}
-                    className="rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-semibold text-white/70 transition hover:border-[#2563eb]/40 hover:bg-[#1d4ed8]/10 hover:text-white"
-                  >
-                    Load query
-                  </button>
-                </div>
-                <p className="text-xs text-white/60">{suggestion.summary}</p>
-                <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-[#060a18] p-3 font-mono text-[11px] text-white/70">
-                  {suggestion.query}
-                </pre>
-                {suggestion.rationale && (
-                  <p className="mt-2 text-[11px] text-blue-200/80">
-                    {suggestion.rationale}
-                  </p>
-                )}
-                {suggestion.warnings?.length ? (
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px] text-amber-200/80">
-                    {suggestion.warnings.map((warning, index) => (
-                      <li key={index}>{warning}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <SqlSuggestionsPanel
+        suggestions={suggestions}
+        suggestionAnalysis={suggestionAnalysis}
+        suggestionsError={suggestionsError}
+        onSelectSuggestion={handleSuggestionSelect}
+      />
     );
   };
 
@@ -689,7 +318,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
               Running query…
             </div>
           ) : (
-            renderResultContent()
+            <SqlResultsView result={result} />
           )}
         </section>
       );
