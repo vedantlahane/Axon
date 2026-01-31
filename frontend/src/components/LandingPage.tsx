@@ -28,7 +28,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
   };
 
   const orbitDots = Array.from({ length: 10 }, (_, idx) => idx);
-  const mosaicTiles = Array.from({ length: 18 }, (_, idx) => idx);
+  const mosaicTiles = Array.from({ length: 14 }, (_, idx) => idx);
   const particleDots = Array.from({ length: 28 }, (_, idx) => idx);
   const [tileOrder, setTileOrder] = useState(mosaicTiles);
 
@@ -216,7 +216,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
-        className="mx-auto max-w-7xl px-6 pb-20 -mt-8"
+        className="mx-auto max-w-screen-2xl px-8 pb-20 -mt-8"
         aria-hidden
       >
         <div className="grid gap-6 md:grid-cols-3">
