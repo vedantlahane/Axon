@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import MainPanel from './components/MainPanel';
 import AuthModal from './components/AuthModal';
 import DatabaseConnectionModal from './components/DatabaseConnectionModal';
-import { type SqlSideWindowProps, type SqlQueryHistoryEntry, type PendingQuery } from './components/Canvas';
-import { normalizeSql } from './utils/sqlUtils';
+import { type SqlSideWindowProps } from './components/Canvas';
+import useAuth from './hooks/useAuth';
+import useDatabaseSettings from './hooks/useDatabaseSettings';
+import useSqlConsole from './hooks/useSqlConsole';
 import {
   fetchConversation,
   fetchConversations,
@@ -14,26 +16,7 @@ import {
   type RawConversationSummary,
   type RawMessage,
   type RawAttachment,
-  getCurrentUser,
-  signIn,
-  signOut,
-  signUp,
-  requestPasswordReset,
-  confirmPasswordReset,
-  type UserProfile,
-  fetchDatabaseConnectionSettings,
-  updateDatabaseConnectionSettings,
-  clearDatabaseConnectionSettings,
-  testDatabaseConnectionSettings,
-  runSqlQuery,
-  fetchDatabaseSchema,
-  requestSqlSuggestions,
-  type DatabaseConnectionSettings,
   type UpdateDatabaseConnectionPayload,
-  type DatabaseMode,
-  type SqlQueryResult,
-  type SqlSchemaPayload,
-  type SqlQuerySuggestion,
 } from './services/chatApi';
 
 export type ChatSender = 'user' | 'assistant';
@@ -91,44 +74,6 @@ const App: React.FC = () => {
   const [currentMessages, setCurrentMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
   const [inputSessionKey, setInputSessionKey] = useState<string>(() => `new-${Date.now()}`);
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [authModalState, setAuthModalState] = useState<{ open: boolean; mode: 'signin' | 'signup' }>({
-    open: false,
-    mode: 'signin',
-  });
-  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authSuccessMessage, setAuthSuccessMessage] = useState<string | null>(null);
-  const [databaseModalOpen, setDatabaseModalOpen] = useState(false);
-  const [databaseSettings, setDatabaseSettings] = useState<DatabaseConnectionSettings | null>(null);
-  const [databaseModes, setDatabaseModes] = useState<DatabaseMode[]>([]);
-  const [environmentFallback, setEnvironmentFallback] = useState<DatabaseConnectionSettings | null>(null);
-  const [isDatabaseLoading, setIsDatabaseLoading] = useState(false);
-  const [isDatabaseBusy, setIsDatabaseBusy] = useState(false);
-  const [databaseFeedback, setDatabaseFeedback] = useState<{ status: 'success' | 'error'; message: string } | null>(null);
-  const [isSideWindowOpen, setIsSideWindowOpen] = useState(false);
-  const [sqlEditorValue, setSqlEditorValue] = useState<string>('');
-  const [sqlSchema, setSqlSchema] = useState<SqlSchemaPayload | null>(null);
-  const [isSchemaLoading, setIsSchemaLoading] = useState(false);
-  const [isExecutingSql, setIsExecutingSql] = useState(false);
-  const [sqlConsoleError, setSqlConsoleError] = useState<string | null>(null);
-  const [sqlHistory, setSqlHistory] = useState<SqlQueryHistoryEntry[]>([]);
-  const [sqlSuggestions, setSqlSuggestions] = useState<SqlQuerySuggestion[]>([]);
-  const [sqlSuggestionAnalysis, setSqlSuggestionAnalysis] = useState<string | null>(null);
-  const [isFetchingSqlSuggestions, setIsFetchingSqlSuggestions] = useState(false);
-  const [sqlSuggestionsError, setSqlSuggestionsError] = useState<string | null>(null);
-  const [pendingSqlQuery, setPendingSqlQuery] = useState<PendingQuery | null>(null);
-  const [hiddenAssistantMessage, setHiddenAssistantMessage] = useState<ChatMessage | null>(null);
-  const [latestAutoResult, setLatestAutoResult] = useState<SqlQueryResult | null>(null);
-  const [autoExecuteEnabled, setAutoExecuteEnabled] = useState<boolean>(() => {
-    const stored = localStorage.getItem('axon-auto-execute');
-    return stored === 'true';
-  });
-  // Map from SQL query string to its execution result
-  const [executedQueries, setExecutedQueries] = useState<Map<string, SqlQueryResult>>(new Map());
-
-  const lastAssistantMessageIdRef = useRef<string | null>(null);
-
   const deriveErrorMessage = (error: unknown, fallback: string): string => {
     if (error instanceof Error && error.message) {
       return error.message;
@@ -136,191 +81,13 @@ const App: React.FC = () => {
     return fallback;
   };
 
-  const activeConnection = databaseSettings ?? environmentFallback;
-  const canUseDatabaseTools = Boolean(activeConnection);
-
-  const resetSqlConsoleState = (options?: { close?: boolean }) => {
-    setSqlEditorValue('');
-    setSqlSchema(null);
-    setSqlConsoleError(null);
-    setSqlHistory([]);
-    setIsSchemaLoading(false);
-    setIsExecutingSql(false);
-    setSqlSuggestions([]);
-    setSqlSuggestionAnalysis(null);
-    setSqlSuggestionsError(null);
-    setIsFetchingSqlSuggestions(false);
-    setPendingSqlQuery(null);
-      setHiddenAssistantMessage(null);
-    setLatestAutoResult(null);
-    if (options?.close) {
-      setIsSideWindowOpen(false);
-    }
-  };
-
-  const handleRefreshDatabaseSchema = async () => {
-    if (!canUseDatabaseTools) {
-      setSqlSchema(null);
-      setSqlConsoleError('Configure a database connection to inspect the schema.');
-      return;
-    }
-
-    setIsSchemaLoading(true);
-    setSqlConsoleError(null);
-
-    try {
-      const schemaPayload = await fetchDatabaseSchema();
-      setSqlSchema(schemaPayload);
-    } catch (error) {
-      setSqlConsoleError(deriveErrorMessage(error, 'Unable to load database schema.'));
-    } finally {
-      setIsSchemaLoading(false);
-    }
-  };
-
-  const handleExecuteSqlQuery = async (query: string, limit = 200, source: 'ai' | 'user' = 'user'): Promise<SqlQueryResult> => {
-    if (!canUseDatabaseTools) {
-      const error = new Error('Configure a database connection before running SQL queries.');
-      setSqlConsoleError(error.message);
-      throw error;
-    }
-
-    setIsSideWindowOpen(true);
-    setSqlEditorValue(query);
-    setIsExecutingSql(true);
-    setSqlConsoleError(null);
-    setLatestAutoResult(null); // Clear previous auto result
-
-    try {
-      const result = await runSqlQuery({ query, limit });
-
-      const historyEntry: SqlQueryHistoryEntry = {
-        id: `sql-${Date.now()}`,
-        query,
-        executedAt: new Date().toISOString(),
-        type: result.type,
-        rowCount: result.rowCount,
-        result, // Store full result for viewing later
-        source, // Track if AI generated
-      };
-
-      setSqlHistory((prev) => [historyEntry, ...prev].slice(0, 25));
-      
-      // Set the latest auto result so Canvas can display it
-      if (source === 'ai') {
-        setLatestAutoResult(result);
-      }
-      
-      // Track executed query for "View in Canvas" button in chat
-      // Use normalized SQL as key for consistent lookups
-      setExecutedQueries((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(normalizeSql(query), result);
-        return newMap;
-      });
-      
-      return result;
-    } catch (error) {
-      const message = deriveErrorMessage(error, 'Unable to execute SQL query.');
-      setSqlConsoleError(message);
-      throw new Error(message);
-    } finally {
-      setIsExecutingSql(false);
-    }
-  };
-
-  const handleRequestSqlSuggestions = async (
-    query: string,
-    options?: { includeSchema?: boolean; maxSuggestions?: number },
-  ): Promise<void> => {
-    if (!canUseDatabaseTools) {
-      const error = new Error('Configure a database connection before requesting suggestions.');
-      setSqlSuggestionsError(error.message);
-      throw error;
-    }
-
-    const trimmed = query.trim();
-    if (!trimmed) {
-      const error = new Error('Provide a SQL query to analyse.');
-      setSqlSuggestionsError(error.message);
-      throw error;
-    }
-
-  setIsSideWindowOpen(true);
-    setSqlEditorValue(trimmed);
-    setIsFetchingSqlSuggestions(true);
-    setSqlSuggestionsError(null);
-
-    try {
-      const response = await requestSqlSuggestions({
-        query: trimmed,
-        includeSchema: options?.includeSchema ?? true,
-        maxSuggestions: options?.maxSuggestions,
-      });
-      setSqlSuggestions(response.suggestions ?? []);
-      setSqlSuggestionAnalysis(response.analysis ?? null);
-    } catch (error) {
-      const message = deriveErrorMessage(error, 'Unable to generate SQL suggestions.');
-      setSqlSuggestionsError(message);
-      throw new Error(message);
-    } finally {
-      setIsFetchingSqlSuggestions(false);
-    }
-  };
-
-  const handleApprovePendingQuery = async () => {
-    if (!pendingSqlQuery) return;
-    const query = pendingSqlQuery.query;
-    const source = pendingSqlQuery.source;
-    setPendingSqlQuery(null);
-    try {
-      await handleExecuteSqlQuery(query, 200, source);
-      // After successful execution, show the hidden assistant message in chat
-      if (hiddenAssistantMessage) {
-        setCurrentMessages((prev) => [...prev, hiddenAssistantMessage]);
-        setHiddenAssistantMessage(null);
-      }
-    } catch {
-      // Error already handled in handleExecuteSqlQuery
-    }
-  };
-
-  const handleRejectPendingQuery = () => {
-    setPendingSqlQuery(null);
-    setHiddenAssistantMessage(null);
-  };
-
-  const handleToggleAutoExecute = () => {
-    setAutoExecuteEnabled((prev) => {
-      const next = !prev;
-      localStorage.setItem('axon-auto-execute', String(next));
-      
-      // If turning ON auto-execute and there's a pending query, execute it
-      if (next && pendingSqlQuery) {
-        void handleExecuteSqlQuery(pendingSqlQuery.query, 200, pendingSqlQuery.source);
-          setHiddenAssistantMessage(null);
-        setPendingSqlQuery(null);
-      }
-      
-      return next;
-    });
-  };
-
-  const handleViewSqlInCanvas = (sql: string) => {
-    const normalizedSql = normalizeSql(sql);
-    const result = executedQueries.get(normalizedSql);
-    
-    // Always open canvas with the SQL query, even if not yet executed
-    setIsSideWindowOpen(true);
-    setSqlEditorValue(sql.trim()); // Keep original formatting for display
-    
-    // If we have a result, show it; otherwise canvas shows editor only
-    if (result) {
-      setLatestAutoResult(result);
-    } else {
-      // Clear previous auto result to avoid showing stale data
-      setLatestAutoResult(null);
-    }
+  const handleStartNewChat = () => {
+    setCurrentMessages([]);
+    setSelectedHistoryId(null);
+    setActiveConversationId(null);
+    setInputSessionKey(`new-${Date.now()}`);
+    setCurrentView('chat');
+    setActiveSidebarItem('chat');
   };
 
   const refreshConversations = useCallback(async () => {
@@ -332,18 +99,86 @@ const App: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const profile = await getCurrentUser();
-        if (profile) {
-          setCurrentUser(profile);
-        }
-      } catch (error) {
-        console.error('Failed to determine current user', error);
-      }
-    })();
-  }, []);
+  const {
+    currentUser,
+    authModalState,
+    openAuthModal,
+    closeAuthModal,
+    isAuthSubmitting,
+    authError,
+    authSuccessMessage,
+    signIn: signInUser,
+    signUp: signUpUser,
+    signOut: signOutUser,
+    requestPasswordReset: requestPasswordResetUser,
+    confirmPasswordReset: confirmPasswordResetUser,
+  } = useAuth({
+    onSignedIn: async () => {
+      await refreshConversations();
+    },
+    onPasswordResetComplete: async () => {
+      handleStartNewChat();
+    },
+  });
+
+  const {
+    databaseModalOpen,
+    databaseSettings,
+    databaseModes,
+    environmentFallback,
+    isDatabaseLoading,
+    isDatabaseBusy,
+    databaseFeedback,
+    openDatabaseSettings,
+    closeDatabaseModal,
+    saveDatabaseSettings,
+    testDatabaseSettings,
+    disconnectDatabase,
+    setDatabaseModalOpen,
+    setDatabaseFeedback,
+  } = useDatabaseSettings({
+    currentUser,
+    deriveErrorMessage,
+  });
+
+  const activeConnection = databaseSettings ?? environmentFallback;
+  const canUseDatabaseTools = Boolean(activeConnection);
+
+  const {
+    isSideWindowOpen,
+    setIsSideWindowOpen,
+    sqlEditorValue,
+    setSqlEditorValue,
+    sqlSchema,
+    isSchemaLoading,
+    isExecutingSql,
+    sqlConsoleError,
+    sqlHistory,
+    sqlSuggestions,
+    sqlSuggestionAnalysis,
+    isFetchingSqlSuggestions,
+    sqlSuggestionsError,
+    pendingSqlQuery,
+    latestAutoResult,
+    autoExecuteEnabled,
+    executedQueries,
+    clearSqlErrors,
+    resetSqlSuggestions,
+    resetSqlConsoleState,
+    refreshDatabaseSchema,
+    executeSqlQuery,
+    requestSqlSuggestions,
+    approvePendingQuery,
+    rejectPendingQuery,
+    toggleAutoExecute,
+    viewSqlInCanvas,
+    handleAssistantMessageForSql,
+    filterConversationMessages,
+    resetAssistantTracking,
+  } = useSqlConsole({
+    canUseDatabaseTools,
+    onRevealMessage: (message) => setCurrentMessages((prev) => [...prev, message]),
+  });
 
   useEffect(() => {
     if (!currentUser) {
@@ -356,87 +191,17 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentMessages.length === 0) {
-      lastAssistantMessageIdRef.current = null;
+      resetAssistantTracking();
       return;
     }
 
     const latest = currentMessages[currentMessages.length - 1];
-    if (!latest || latest.id === lastAssistantMessageIdRef.current) {
+    if (!latest) {
       return;
     }
 
-    if (latest.sender !== 'assistant') {
-      return;
-    }
-
-    // Check for SQL code blocks in the assistant's message
-    const match = latest.content.match(/```sql\s*([\s\S]*?)```/i);
-    if (match && canUseDatabaseTools) {
-      const extracted = match[1].trim();
-      if (extracted) {
-        lastAssistantMessageIdRef.current = latest.id;
-        
-        if (autoExecuteEnabled) {
-          // Auto-execute the query
-          void handleExecuteSqlQuery(extracted, 200, 'ai');
-        } else {
-          // Set as pending query for user approval
-          setSqlEditorValue(extracted);
-          setPendingSqlQuery({
-            id: `pending-${Date.now()}`,
-            query: extracted,
-            source: 'ai',
-            timestamp: new Date().toISOString(),
-          });
-          setIsSideWindowOpen(true);
-        }
-      }
-    }
-  }, [currentMessages, canUseDatabaseTools, autoExecuteEnabled]);
-
-  // Auto-execute pending query when toggle is enabled
-  useEffect(() => {
-    if (autoExecuteEnabled && pendingSqlQuery) {
-      void handleExecuteSqlQuery(pendingSqlQuery.query, 200, pendingSqlQuery.source);
-      setPendingSqlQuery(null);
-    }
-  }, [autoExecuteEnabled]);
-
-  useEffect(() => {
-    if (!currentUser) {
-      setDatabaseSettings(null);
-      setDatabaseModes([]);
-      setEnvironmentFallback(null);
-      setIsDatabaseLoading(false);
-      return;
-    }
-
-    setIsDatabaseLoading(true);
-    (async () => {
-      try {
-        const result = await fetchDatabaseConnectionSettings();
-        setDatabaseSettings(result.connection);
-        setDatabaseModes(result.availableModes);
-        setEnvironmentFallback(result.environmentFallback ?? null);
-      } catch (error) {
-        console.error('Failed to load database settings', error);
-      } finally {
-        setIsDatabaseLoading(false);
-      }
-    })();
-  }, [currentUser]);
-
-  const openAuthModal = (mode: 'signin' | 'signup') => {
-    setAuthError(null);
-    setAuthSuccessMessage(null);
-    setAuthModalState({ open: true, mode });
-  };
-
-  const closeAuthModal = () => {
-    setAuthModalState((prev) => ({ ...prev, open: false }));
-    setAuthError(null);
-    setAuthSuccessMessage(null);
-  };
+    handleAssistantMessageForSql(latest);
+  }, [currentMessages, handleAssistantMessageForSql, resetAssistantTracking]);
 
   const handleOpenDatabaseSettings = () => {
     if (!currentUser) {
@@ -444,30 +209,11 @@ const App: React.FC = () => {
       return;
     }
 
-    setDatabaseFeedback(null);
-    setDatabaseModalOpen(true);
-    setIsDatabaseLoading(true);
-
-    (async () => {
-      try {
-        const result = await fetchDatabaseConnectionSettings();
-        setDatabaseSettings(result.connection);
-        setDatabaseModes(result.availableModes);
-        setEnvironmentFallback(result.environmentFallback ?? null);
-      } catch (error) {
-        setDatabaseFeedback({
-          status: 'error',
-          message: deriveErrorMessage(error, 'Unable to load database settings.'),
-        });
-      } finally {
-        setIsDatabaseLoading(false);
-      }
-    })();
+    void openDatabaseSettings();
   };
 
   const handleCloseDatabaseModal = () => {
-    setDatabaseModalOpen(false);
-    setDatabaseFeedback(null);
+    closeDatabaseModal();
   };
 
   const handleToggleSideWindow = () => {
@@ -481,14 +227,12 @@ const App: React.FC = () => {
       return;
     }
 
-    setSqlConsoleError(null);
-    setSqlSuggestionsError(null);
+    clearSqlErrors();
 
     if (!isSideWindowOpen) {
-      setSqlSuggestions([]);
-      setSqlSuggestionAnalysis(null);
+      resetSqlSuggestions();
       if (!sqlSchema) {
-        void handleRefreshDatabaseSchema();
+        void refreshDatabaseSchema();
       }
     }
 
@@ -497,174 +241,43 @@ const App: React.FC = () => {
 
   const handleCollapseSideWindow = () => {
     setIsSideWindowOpen(false);
-    setSqlConsoleError(null);
-    setSqlSuggestionsError(null);
+    clearSqlErrors();
   };
 
   const handleSaveDatabaseSettings = async (payload: UpdateDatabaseConnectionPayload) => {
-    setIsDatabaseBusy(true);
-    setDatabaseFeedback(null);
-
-    try {
-      const result = await updateDatabaseConnectionSettings(payload);
-      setDatabaseSettings(result.connection);
-      setDatabaseModes(result.availableModes);
-      setEnvironmentFallback(result.environmentFallback ?? null);
+    const ok = await saveDatabaseSettings(payload);
+    if (ok) {
       resetSqlConsoleState();
-      const successMessage = payload.testConnection
-        ? 'Database connection saved and verified.'
-        : 'Database connection updated.';
-      setDatabaseFeedback({ status: 'success', message: successMessage });
-    } catch (error) {
-      setDatabaseFeedback({
-        status: 'error',
-        message: deriveErrorMessage(error, 'Unable to save database configuration.'),
-      });
-    } finally {
-      setIsDatabaseBusy(false);
     }
   };
 
   const handleTestDatabaseSettings = async (payload: UpdateDatabaseConnectionPayload) => {
-    setIsDatabaseBusy(true);
-    setDatabaseFeedback(null);
-
-    try {
-      const result = await testDatabaseConnectionSettings(payload);
-      setDatabaseFeedback({
-        status: result.ok ? 'success' : 'error',
-        message: result.message,
-      });
-    } catch (error) {
-      setDatabaseFeedback({
-        status: 'error',
-        message: deriveErrorMessage(error, 'Unable to test database connection.'),
-      });
-    } finally {
-      setIsDatabaseBusy(false);
-    }
+    await testDatabaseSettings(payload);
   };
 
   const handleDisconnectDatabase = async () => {
-    setIsDatabaseBusy(true);
-    setDatabaseFeedback(null);
-
-    try {
-      const result = await clearDatabaseConnectionSettings();
-      setDatabaseSettings(result.connection);
-      setDatabaseModes(result.availableModes);
-      setEnvironmentFallback(result.environmentFallback ?? null);
+    const ok = await disconnectDatabase();
+    if (ok) {
       resetSqlConsoleState({ close: true });
-      setDatabaseFeedback({
-        status: 'success',
-        message: 'Database connection removed. Configure a new source to run SQL queries.',
-      });
-    } catch (error) {
-      setDatabaseFeedback({
-        status: 'error',
-        message: deriveErrorMessage(error, 'Unable to reset database configuration.'),
-      });
-    } finally {
-      setIsDatabaseBusy(false);
     }
   };
 
-  const handleSignIn = async (payload: { email: string; password: string }) => {
-    setIsAuthSubmitting(true);
-    setAuthError(null);
-    setAuthSuccessMessage(null);
+  const handleSignIn = signInUser;
 
-    try {
-      const user = await signIn(payload);
-      setCurrentUser(user);
-      closeAuthModal();
-      await refreshConversations();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to sign in.';
-      setAuthError(message);
-    } finally {
-      setIsAuthSubmitting(false);
-    }
-  };
-
-  const handleSignUp = async (payload: { name: string; email: string; password: string }) => {
-    setIsAuthSubmitting(true);
-    setAuthError(null);
-    setAuthSuccessMessage(null);
-
-    try {
-      const user = await signUp(payload);
-      setCurrentUser(user);
-      closeAuthModal();
-      await refreshConversations();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to sign up.';
-      setAuthError(message);
-    } finally {
-      setIsAuthSubmitting(false);
-    }
-  };
+  const handleSignUp = signUpUser;
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Failed to sign out', error);
-    } finally {
-      setCurrentUser(null);
-      setHistoryConversations([]);
-      handleStartNewChat();
-      setDatabaseModalOpen(false);
-      setDatabaseSettings(null);
-      setDatabaseModes([]);
-      setEnvironmentFallback(null);
-      setDatabaseFeedback(null);
-      resetSqlConsoleState({ close: true });
-    }
+    await signOutUser();
+    setHistoryConversations([]);
+    handleStartNewChat();
+    setDatabaseModalOpen(false);
+    setDatabaseFeedback(null);
+    resetSqlConsoleState({ close: true });
   };
 
-  const handleRequestPasswordReset = async (email: string) => {
-    setIsAuthSubmitting(true);
-    setAuthError(null);
-    setAuthSuccessMessage(null);
+  const handleRequestPasswordReset = requestPasswordResetUser;
 
-    try {
-      const result = await requestPasswordReset(email);
-      if (result.resetToken) {
-        setAuthSuccessMessage('Reset code generated. Enter it below to choose a new password.');
-      } else {
-        setAuthSuccessMessage('If that email is registered, you will receive reset instructions soon.');
-      }
-      return result.resetToken ?? null;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to start password reset.';
-      setAuthError(message);
-      throw new Error(message);
-    } finally {
-      setIsAuthSubmitting(false);
-    }
-  };
-
-  const handleConfirmPasswordReset = async (payload: { token: string; password: string }) => {
-    setIsAuthSubmitting(true);
-    setAuthError(null);
-    setAuthSuccessMessage(null);
-
-    try {
-      const user = await confirmPasswordReset(payload);
-      setCurrentUser(user);
-      setAuthSuccessMessage('Password updated successfully.');
-      closeAuthModal();
-      await refreshConversations();
-      handleStartNewChat();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to reset password.';
-      setAuthError(message);
-      throw new Error(message);
-    } finally {
-      setIsAuthSubmitting(false);
-    }
-  };
+  const handleConfirmPasswordReset = confirmPasswordResetUser;
 
   const handleSidebarSelect = (itemId: string) => {
     setActiveSidebarItem(itemId);
@@ -686,54 +299,13 @@ const App: React.FC = () => {
     });
   };
 
-  // Extract SQL query from message content (looks for ```sql blocks)
-  const extractSqlFromMessage = (content: string): string | null => {
-    const sqlBlockMatch = content.match(/```sql\s*([\s\S]*?)```/i);
-    if (sqlBlockMatch && sqlBlockMatch[1]) {
-      return sqlBlockMatch[1].trim();
-    }
-    return null;
-  };
-
   const updateMessagesFromDetail = (detail: RawConversationDetail) => {
     const mappedMessages = detail.messages.map(mapMessage);
     setSelectedHistoryId(detail.id);
     setActiveConversationId(detail.id);
     setInputSessionKey(detail.id);
 
-    // Check if the latest assistant message contains SQL
-    const latestMessage = mappedMessages[mappedMessages.length - 1];
-    let hasPendingSql = false;
-    
-    if (latestMessage && latestMessage.sender === 'assistant' && canUseDatabaseTools) {
-      const sqlQuery = extractSqlFromMessage(latestMessage.content);
-      if (sqlQuery && latestMessage.id !== lastAssistantMessageIdRef.current) {
-        lastAssistantMessageIdRef.current = latestMessage.id;
-        
-        if (autoExecuteEnabled) {
-          // Auto-execute the query with 'ai' source
-          void handleExecuteSqlQuery(sqlQuery, 200, 'ai');
-        } else {
-          // Set as pending query for user approval
-          hasPendingSql = true;
-          setPendingSqlQuery({
-            id: `pending-${Date.now()}`,
-            query: sqlQuery,
-            source: 'ai',
-            timestamp: new Date().toISOString(),
-          });
-          setHiddenAssistantMessage(latestMessage);
-          setIsSideWindowOpen(true);
-        }
-      }
-    }
-
-    // If there's a pending SQL query waiting for user approval (autorun OFF),
-    // don't show the assistant message with SQL in chat - it will be shown
-    // in the Canvas approval panel instead
-    const messagesToDisplay = hasPendingSql
-      ? mappedMessages.slice(0, -1) // Exclude the latest assistant message with SQL
-      : mappedMessages;
+    const messagesToDisplay = filterConversationMessages(mappedMessages);
 
     setCurrentMessages(messagesToDisplay);
   };
@@ -806,15 +378,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleStartNewChat = () => {
-    setCurrentMessages([]);
-    setSelectedHistoryId(null);
-    setActiveConversationId(null);
-    setInputSessionKey(`new-${Date.now()}`);
-    setCurrentView('chat');
-    setActiveSidebarItem('chat');
-  };
-
   const handleDeleteConversation = async (conversationId: string) => {
     try {
       await deleteConversationWithFiles(Number(conversationId), true);
@@ -845,12 +408,12 @@ const App: React.FC = () => {
     connectionSummary: sqlConnectionSummary,
     schema: sqlSchema,
     isSchemaLoading,
-    onRefreshSchema: handleRefreshDatabaseSchema,
-    onExecuteQuery: handleExecuteSqlQuery,
+    onRefreshSchema: refreshDatabaseSchema,
+    onExecuteQuery: executeSqlQuery,
     isExecuting: isExecutingSql,
     history: sqlHistory,
     errorMessage: sqlConsoleError,
-    onRequestSuggestions: handleRequestSqlSuggestions,
+    onRequestSuggestions: requestSqlSuggestions,
     isSuggesting: isFetchingSqlSuggestions,
     suggestions: sqlSuggestions,
     suggestionsError: sqlSuggestionsError,
@@ -858,10 +421,10 @@ const App: React.FC = () => {
     queryText: sqlEditorValue,
     onChangeQuery: setSqlEditorValue,
     pendingQuery: pendingSqlQuery,
-    onApprovePendingQuery: handleApprovePendingQuery,
-    onRejectPendingQuery: handleRejectPendingQuery,
+    onApprovePendingQuery: approvePendingQuery,
+    onRejectPendingQuery: rejectPendingQuery,
     autoExecuteEnabled,
-    onToggleAutoExecute: handleToggleAutoExecute,
+    onToggleAutoExecute: toggleAutoExecute,
     latestAutoResult,
   };
 
@@ -900,14 +463,14 @@ const App: React.FC = () => {
         isSideWindowOpen={isSideWindowOpen}
         canUseDatabaseTools={canUseDatabaseTools}
         sideWindow={sideWindowProps}
-        onViewSqlInCanvas={handleViewSqlInCanvas}
+        onViewSqlInCanvas={viewSqlInCanvas}
         executedQueries={executedQueries}
       />
       <AuthModal
         isOpen={authModalState.open}
         mode={authModalState.mode}
         onClose={closeAuthModal}
-        onModeChange={(mode) => setAuthModalState({ open: true, mode })}
+        onModeChange={openAuthModal}
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
         onRequestPasswordReset={handleRequestPasswordReset}
