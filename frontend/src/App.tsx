@@ -1,103 +1,29 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import MainPanel from './components/MainPanel';
 import AuthModal from './components/AuthModal';
 import DatabaseConnectionModal from './components/DatabaseConnectionModal';
 import { type SqlSideWindowProps } from './components/Canvas';
 import useAuth from './hooks/useAuth';
+import useConversationManager from './hooks/useConversationManager';
 import useDatabaseSettings from './hooks/useDatabaseSettings';
 import useSqlConsole from './hooks/useSqlConsole';
 import {
-  fetchConversation,
-  fetchConversations,
-  sendChatMessage,
-  deleteConversationWithFiles,
-  type RawConversationDetail,
-  type RawConversationSummary,
-  type RawMessage,
-  type RawAttachment,
   type UpdateDatabaseConnectionPayload,
 } from './services/chatApi';
+import type { ChatMessage } from './types/chat';
 
-export type ChatSender = 'user' | 'assistant';
-
-export interface ChatMessage {
-  id: string;
-  sender: ChatSender;
-  content: string;
-  timestamp: string;
-  attachments?: RawAttachment[];
-}
-
-export interface ConversationSummary {
-  id: string;
-  title: string;
-  updatedAt: string;
-  summary: string;
-  updatedAtISO?: string;
-  messageCount?: number;
-  messages?: ChatMessage[];
-}
-
-const mapMessage = (raw: RawMessage): ChatMessage => ({
-  id: raw.id,
-  sender: raw.sender,
-  content: raw.content,
-  timestamp: raw.timestamp,
-  attachments: raw.attachments ?? [],
-});
-
-const mapSummary = (raw: RawConversationSummary): ConversationSummary => ({
-  id: raw.id,
-  title: raw.title || 'New chat',
-  summary: raw.summary ?? '',
-  updatedAt: raw.updatedAt,
-  updatedAtISO: raw.updatedAtISO,
-  messageCount: raw.messageCount ?? 0,
-});
-
-const sortSummaries = (items: ConversationSummary[]): ConversationSummary[] => {
-  return [...items].sort((a, b) => {
-    const aTime = a.updatedAtISO ? Date.parse(a.updatedAtISO) : Date.parse(a.updatedAt);
-    const bTime = b.updatedAtISO ? Date.parse(b.updatedAtISO) : Date.parse(b.updatedAt);
-    return bTime - aTime;
-  });
-};
-
-const App: React.FC = () => {
-  const [historyConversations, setHistoryConversations] = useState<ConversationSummary[]>([]);
+const App = () => {
   const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeSidebarItem, setActiveSidebarItem] = useState('chat');
-  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [currentMessages, setCurrentMessages] = useState<ChatMessage[]>([]);
-  const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
-  const [inputSessionKey, setInputSessionKey] = useState<string>(() => `new-${Date.now()}`);
+  const startNewChatRef = useRef<() => void>(() => undefined);
   const deriveErrorMessage = (error: unknown, fallback: string): string => {
     if (error instanceof Error && error.message) {
       return error.message;
     }
     return fallback;
   };
-
-  const handleStartNewChat = () => {
-    setCurrentMessages([]);
-    setSelectedHistoryId(null);
-    setActiveConversationId(null);
-    setInputSessionKey(`new-${Date.now()}`);
-    setCurrentView('chat');
-    setActiveSidebarItem('chat');
-  };
-
-  const refreshConversations = useCallback(async () => {
-    try {
-      const items = await fetchConversations();
-      setHistoryConversations(sortSummaries(items.map(mapSummary)));
-    } catch (error) {
-      console.error('Failed to load conversations', error);
-    }
-  }, []);
 
   const {
     currentUser,
@@ -113,11 +39,8 @@ const App: React.FC = () => {
     requestPasswordReset: requestPasswordResetUser,
     confirmPasswordReset: confirmPasswordResetUser,
   } = useAuth({
-    onSignedIn: async () => {
-      await refreshConversations();
-    },
     onPasswordResetComplete: async () => {
-      handleStartNewChat();
+      startNewChatRef.current();
     },
   });
 
@@ -143,6 +66,7 @@ const App: React.FC = () => {
 
   const activeConnection = databaseSettings ?? environmentFallback;
   const canUseDatabaseTools = Boolean(activeConnection);
+  const appendMessageRef = useRef<(message: ChatMessage) => void>(() => undefined);
 
   const {
     isSideWindowOpen,
@@ -177,17 +101,35 @@ const App: React.FC = () => {
     resetAssistantTracking,
   } = useSqlConsole({
     canUseDatabaseTools,
-    onRevealMessage: (message) => setCurrentMessages((prev) => [...prev, message]),
+    onRevealMessage: (message) => appendMessageRef.current?.(message),
+  });
+
+  const {
+    historyConversations,
+    selectedHistoryId,
+    currentMessages,
+    isChatLoading,
+    inputSessionKey,
+    startNewChat,
+    sendMessage,
+    selectHistoryConversation,
+    deleteConversation,
+    appendMessage,
+    clearConversations,
+  } = useConversationManager({
+    currentUser,
+    openAuthModal,
+    filterConversationMessages,
   });
 
   useEffect(() => {
-    if (!currentUser) {
-      setHistoryConversations([]);
-      return;
-    }
-
-    void refreshConversations();
-  }, [currentUser, refreshConversations]);
+    appendMessageRef.current = appendMessage;
+    startNewChatRef.current = () => {
+      startNewChat();
+      setCurrentView('chat');
+      setActiveSidebarItem('chat');
+    };
+  }, [appendMessage, startNewChat]);
 
   useEffect(() => {
     if (currentMessages.length === 0) {
@@ -262,13 +204,19 @@ const App: React.FC = () => {
     }
   };
 
+  const handleStartNewChat = useCallback(() => {
+    startNewChat();
+    setCurrentView('chat');
+    setActiveSidebarItem('chat');
+  }, [startNewChat]);
+
   const handleSignIn = signInUser;
 
   const handleSignUp = signUpUser;
 
   const handleSignOut = async () => {
     await signOutUser();
-    setHistoryConversations([]);
+    clearConversations();
     handleStartNewChat();
     setDatabaseModalOpen(false);
     setDatabaseFeedback(null);
@@ -291,105 +239,35 @@ const App: React.FC = () => {
     setActiveSidebarItem(view);
   };
 
-  const applyConversationUpdate = (detail: RawConversationDetail) => {
-    const summary = mapSummary(detail);
-    setHistoryConversations((prev) => {
-      const filtered = prev.filter((item) => item.id !== summary.id);
-      return sortSummaries([summary, ...filtered]);
-    });
-  };
-
-  const updateMessagesFromDetail = (detail: RawConversationDetail) => {
-    const mappedMessages = detail.messages.map(mapMessage);
-    setSelectedHistoryId(detail.id);
-    setActiveConversationId(detail.id);
-    setInputSessionKey(detail.id);
-
-    const messagesToDisplay = filterConversationMessages(mappedMessages);
-
-    setCurrentMessages(messagesToDisplay);
-  };
-
-  const handleSendMessage = async (
-    content: string,
-    options?: {
-      documentIds?: string[];
-    },
-  ) => {
-    const trimmed = content.trim();
-    if (!trimmed) return;
-    if (!currentUser) {
-      openAuthModal('signin');
-      return;
-    }
-
-    const optimisticMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      content: trimmed,
-      timestamp: new Date().toISOString(),
-    };
-
-    setCurrentMessages((prev) => [...prev, optimisticMessage]);
-    setIsChatLoading(true);
-
-    try {
-      const detail = await sendChatMessage({
-        message: trimmed,
-        conversationId: activeConversationId ?? undefined,
-        title: activeConversationId ? undefined : trimmed,
-        documentIds: options?.documentIds,
-      });
-
-      updateMessagesFromDetail(detail);
-      applyConversationUpdate(detail);
+  const handleSendMessage = useCallback(
+    async (
+      content: string,
+      options?: {
+        documentIds?: string[];
+      },
+    ) => {
+      await sendMessage(content, options);
       setCurrentView('chat');
       setActiveSidebarItem('chat');
-    } catch (error) {
-      console.error('Failed to send chat message', error);
-      const fallbackReply: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        sender: 'assistant',
-        content: 'Sorry, I could not reach the assistant just now.',
-        timestamp: new Date().toISOString(),
-      };
-      setCurrentMessages((prev) => [...prev, fallbackReply]);
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
+    },
+    [sendMessage]
+  );
 
-  const handleSelectHistoryConversation = async (conversationId: string) => {
-    setSelectedHistoryId(conversationId);
-    setActiveConversationId(conversationId);
-    setInputSessionKey(conversationId);
-    setCurrentView('chat');
-    setActiveSidebarItem('chat');
-    setIsChatLoading(true);
+  const handleSelectHistoryConversation = useCallback(
+    async (conversationId: string) => {
+      await selectHistoryConversation(conversationId);
+      setCurrentView('chat');
+      setActiveSidebarItem('chat');
+    },
+    [selectHistoryConversation]
+  );
 
-    try {
-      const detail = await fetchConversation(conversationId);
-      updateMessagesFromDetail(detail);
-      applyConversationUpdate(detail);
-    } catch (error) {
-      console.error('Failed to load conversation detail', error);
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
-  const handleDeleteConversation = async (conversationId: string) => {
-    try {
-      await deleteConversationWithFiles(Number(conversationId), true);
-      setHistoryConversations((prev) => prev.filter((conversation) => conversation.id !== conversationId));
-
-      if (selectedHistoryId === conversationId || activeConversationId === conversationId) {
-        handleStartNewChat();
-      }
-    } catch (error) {
-      console.error('Failed to delete conversation', error);
-    }
-  };
+  const handleDeleteConversation = useCallback(
+    async (conversationId: string) => {
+      await deleteConversation(conversationId);
+    },
+    [deleteConversation]
+  );
 
   const databaseSummary = (() => {
     if (!currentUser) return 'Sign in';

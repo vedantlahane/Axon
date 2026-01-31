@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchDatabaseSchema, requestSqlSuggestions as requestSqlSuggestionsApi, runSqlQuery, type SqlQueryResult, type SqlQuerySuggestion, type SqlSchemaPayload } from "../services/chatApi";
 import { normalizeSql } from "../utils/sqlUtils";
 import type { SqlQueryHistoryEntry, PendingQuery } from "../components/Canvas";
-import type { ChatMessage } from "../App";
+import type { ChatMessage } from "../types/chat";
 
 interface UseSqlConsoleOptions {
 	canUseDatabaseTools: boolean;
