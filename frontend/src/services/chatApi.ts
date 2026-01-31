@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 function normalizeBaseUrl(value: string): string {
   return value.replace(/\/+$/, '');
 }
@@ -263,6 +265,7 @@ export interface SendChatPayload {
 }
 
 export async function sendChatMessage(payload: SendChatPayload): Promise<RawConversationDetail> {
+  const [count,setCount] = useState(0);
   const body: Record<string, unknown> = {
     message: payload.message,
   };
@@ -287,6 +290,11 @@ export async function sendChatMessage(payload: SendChatPayload): Promise<RawConv
     credentials: 'include',
     body: JSON.stringify(body),
   });
+
+
+  if(response.status === 205 && count < 3){
+    handleResponse<RawConversationDetail>(response);
+  }
 
   return handleResponse<RawConversationDetail>(response);
 }
