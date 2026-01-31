@@ -111,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       collapsed ? 'justify-center px-3 py-3' : 'justify-start gap-3 px-4 py-2.5',
       isActive
         ? 'bg-gradient-blue text-white border border-white/20'
-        : 'text-white/50 hover:bg-white/5 hover:text-white/80 border border-transparent',
+        : 'text-[var(--text-subtle)] hover:bg-white/5 hover:text-[var(--text-muted)] dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white/80 border border-transparent',
     ].join(' ');
 
 
@@ -152,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <motion.button
           type="button"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onToggle}
@@ -218,7 +218,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <motion.button
           type="button"
           onClick={() => (isAuthenticated ? onStartNewChat() : onRequireAuth('signup'))}
-          className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+          className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/80 dark:hover:text-white"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -241,7 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </motion.button>
         <motion.button
           type="button"
-          className="flex h-9 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+          className="flex h-9 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 text-sm text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setDarkTheme((prev) => !prev)}
@@ -266,30 +266,30 @@ const Sidebar: React.FC<SidebarProps> = ({
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
           </svg>
-          {!collapsed && <span>{darkTheme ? 'Dark theme' : 'Light theme'}</span>}
+          {!collapsed && <span className="text-[var(--text-muted)] dark:text-white/70">{darkTheme ? 'Dark theme' : 'Light theme'}</span>}
         </motion.button>
         {isAuthenticated ? (
           <motion.button
             type="button"
-            className="flex h-11 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white/70 transition hover:bg-rose-500/10 hover:text-rose-200"
+            className="flex h-11 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-[var(--text-muted)] transition hover:bg-rose-500/10 hover:text-rose-200 dark:text-white/70"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => void onSignOut()}
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-sm font-semibold text-white" aria-hidden>
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-sm font-semibold text-[var(--text-primary)] dark:text-white" aria-hidden>
               {(currentUser?.name?.charAt(0) ?? currentUser?.email?.charAt(0) ?? 'A').toUpperCase()}
             </span>
             {!collapsed && (
               <span className="flex flex-col items-start">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-white/40">Sign out</span>
-                <span className="text-sm font-medium text-white/80">{currentUser?.name ?? currentUser?.email ?? 'Account'}</span>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--text-subtle)] dark:text-white/40">Sign out</span>
+                <span className="text-sm font-medium text-[var(--text-muted)] dark:text-white/80">{currentUser?.name ?? currentUser?.email ?? 'Account'}</span>
               </span>
             )}
           </motion.button>
         ) : (
           <motion.button
             type="button"
-            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 text-sm text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onRequireAuth('signin')}

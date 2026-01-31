@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import MainPanel from './components/MainPanel';
 import AuthModal from './components/AuthModal';
 import DatabaseConnectionModal from './components/DatabaseConnectionModal';
+import LandingPage from './components/LandingPage';
 import { type SqlSideWindowProps } from './components/Canvas';
 import useAuth from './hooks/useAuth';
 import useConversationManager from './hooks/useConversationManager';
@@ -305,6 +306,28 @@ const App = () => {
     onToggleAutoExecute: toggleAutoExecute,
     latestAutoResult,
   };
+
+  // Show landing page when user is not authenticated
+  if (!currentUser) {
+    return (
+      <>
+        <LandingPage onGetStarted={() => openAuthModal('signup')} />
+        <AuthModal
+          isOpen={authModalState.open}
+          mode={authModalState.mode}
+          onClose={closeAuthModal}
+          onModeChange={openAuthModal}
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+          onRequestPasswordReset={handleRequestPasswordReset}
+          onConfirmPasswordReset={handleConfirmPasswordReset}
+          isSubmitting={isAuthSubmitting}
+          errorMessage={authError}
+          successMessage={authSuccessMessage}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden text-[var(--text-primary)] bg-[var(--bg-base)] dark:text-white dark:bg-[radial-gradient(ellipse_at_top,_rgba(25,40,85,0.35),_transparent_70%)]">

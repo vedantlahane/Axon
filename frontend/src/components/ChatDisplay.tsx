@@ -143,7 +143,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
             <thead className="border-b border-white/10 bg-white/5">
               <tr>
                 {result.columns.map((col, colIdx) => (
-                  <th key={colIdx} className="px-3 py-2 text-left text-white/70 font-mono font-medium">
+                  <th key={colIdx} className="px-3 py-2 text-left text-[var(--text-muted)] dark:text-white/70 font-mono font-medium">
                     {col}
                   </th>
                 ))}
@@ -153,7 +153,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
               {displayRows.map((row, idx) => (
                 <tr key={idx} className="hover:bg-white/5">
                   {result.columns.map((_, colIdx) => (
-                    <td key={`${idx}-${colIdx}`} className="px-3 py-2 text-white/80 font-mono truncate max-w-[200px]">
+                    <td key={`${idx}-${colIdx}`} className="px-3 py-2 text-[var(--text-muted)] dark:text-white/80 font-mono truncate max-w-[200px]">
                       {String(row[colIdx] ?? 'NULL')}
                     </td>
                   ))}
@@ -162,8 +162,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
             </tbody>
           </table>
           {hasMore && (
-            <div className="px-3 py-2 border-t border-white/10 text-xs text-white/50 bg-white/5">
-              Showing {displayRows.length} of {result.rows.length} rows. <span className="text-white/40">View all in Canvas</span>
+            <div className="px-3 py-2 border-t border-white/10 text-xs text-[var(--text-subtle)] dark:text-white/50 bg-white/5">
+              Showing {displayRows.length} of {result.rows.length} rows. <span className="text-[var(--text-subtle)] dark:text-white/40">View all in Canvas</span>
             </div>
           )}
         </div>
@@ -174,7 +174,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     if (result.type === 'ack') {
       return (
         <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3">
-          <p className="text-xs text-emerald-300">
+          <p className="text-xs text-emerald-700 dark:text-emerald-300">
             ✓ {result.message} ({result.rowCount} {result.rowCount === 1 ? 'row' : 'rows'} affected)
           </p>
         </div>
@@ -223,9 +223,9 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           
           const isOrdered = items[startIdx]?.ordered;
           return isOrdered ? (
-            <ol className="list-decimal space-y-1 pl-4 text-white/70">{result}</ol>
+            <ol className="list-decimal space-y-1 pl-4 text-[var(--text-muted)] dark:text-white/70">{result}</ol>
           ) : (
-            <ul className="list-disc space-y-1 pl-4 text-white/70">{result}</ul>
+            <ul className="list-disc space-y-1 pl-4 text-[var(--text-muted)] dark:text-white/70">{result}</ul>
           );
         };
         
@@ -245,7 +245,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         const codeMatch = remaining.match(/^`([^`]+)`/);
         if (codeMatch) {
           parts.push(
-            <code key={keyIdx++} className="rounded bg-blue-500/15 px-1.5 py-0.5 font-mono text-[13px] text-blue-200">
+            <code key={keyIdx++} className="rounded bg-blue-500/15 px-1.5 py-0.5 font-mono text-[13px] text-blue-700 dark:text-blue-200">
               {codeMatch[1]}
             </code>
           );
@@ -256,7 +256,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         // Bold **text** or __text__
         const boldMatch = remaining.match(/^(\*\*|__)(.+?)\1/);
         if (boldMatch) {
-          parts.push(<strong key={keyIdx++} className="font-semibold text-white/90">{boldMatch[2]}</strong>);
+          parts.push(<strong key={keyIdx++} className="font-semibold text-[var(--text-primary)] dark:text-white/90">{boldMatch[2]}</strong>);
           remaining = remaining.slice(boldMatch[0].length);
           continue;
         }
@@ -264,7 +264,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         // Italic *text* or _text_
         const italicMatch = remaining.match(/^(\*|_)([^*_]+)\1/);
         if (italicMatch) {
-          parts.push(<em key={keyIdx++} className="italic text-white/80">{italicMatch[2]}</em>);
+          parts.push(<em key={keyIdx++} className="italic text-[var(--text-muted)] dark:text-white/80">{italicMatch[2]}</em>);
           remaining = remaining.slice(italicMatch[0].length);
           continue;
         }
@@ -300,11 +300,11 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           elements.push(
             <div key={`code-${elements.length}`} className="my-3 rounded-xl border border-white/10 bg-slate-50 dark:bg-[#0b1220]/80 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-white/50">{langLabel}</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-subtle)] dark:text-white/50">{langLabel}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(codeBlockContent.join('\n'))}
-                  className="text-[10px] text-slate-500 hover:text-slate-700 dark:text-white/40 dark:hover:text-white/70 transition"
+                  className="text-[10px] text-[var(--text-subtle)] hover:text-[var(--text-primary)] dark:text-white/40 dark:hover:text-white/70 transition"
                 >
                   Copy
                 </button>
@@ -332,12 +332,12 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
         flushList();
         const level = headerMatch[1].length;
         const headerClasses: Record<number, string> = {
-          1: 'text-lg font-semibold text-white/90 mt-4 mb-2',
-          2: 'text-base font-semibold text-white/85 mt-3 mb-2',
-          3: 'text-sm font-semibold text-white/80 mt-3 mb-1',
-          4: 'text-sm font-medium text-white/75 mt-2 mb-1',
-          5: 'text-xs font-medium text-white/70 mt-2 mb-1',
-          6: 'text-xs font-medium text-white/60 mt-2 mb-1',
+          1: 'text-lg font-semibold text-[var(--text-primary)] dark:text-white/90 mt-4 mb-2',
+          2: 'text-base font-semibold text-[var(--text-primary)] dark:text-white/85 mt-3 mb-2',
+          3: 'text-sm font-semibold text-[var(--text-primary)] dark:text-white/80 mt-3 mb-1',
+          4: 'text-sm font-medium text-[var(--text-primary)] dark:text-white/75 mt-2 mb-1',
+          5: 'text-xs font-medium text-[var(--text-muted)] dark:text-white/70 mt-2 mb-1',
+          6: 'text-xs font-medium text-[var(--text-muted)] dark:text-white/60 mt-2 mb-1',
         };
         elements.push(
           <div key={`h-${elements.length}`} className={headerClasses[level]}>
@@ -368,7 +368,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       if (quoteMatch) {
         flushList();
         elements.push(
-          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-blue-400/40 pl-3 italic text-white/60">
+          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-blue-400/40 pl-3 italic text-[var(--text-muted)] dark:text-white/60">
             {renderInlineFormatting(quoteMatch[1])}
           </blockquote>
         );
@@ -391,7 +391,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       // Regular paragraph
       flushList();
       elements.push(
-        <p key={`p-${elements.length}`} className="my-1 text-white/80 leading-relaxed">
+        <p key={`p-${elements.length}`} className="my-1 text-[var(--text-primary)] dark:text-white/80 leading-relaxed">
           {renderInlineFormatting(line)}
         </p>
       );
@@ -421,7 +421,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           {/* SQL Block with View in Canvas button */}
           <div className="rounded-lg border border-white/10 bg-slate-50 dark:bg-[#0d1117] overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
-              <span className="text-xs text-slate-500 dark:text-white/50 font-mono">SQL Query</span>
+              <span className="text-xs text-[var(--text-subtle)] dark:text-white/50 font-mono">SQL Query</span>
               <button
                 type="button"
                 onClick={() => onViewSqlInCanvas(sql)}
@@ -442,7 +442,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           {/* Display results if query has been executed */}
           {hasExecutedResults && queryResult && (
             <div className="flex flex-col gap-2">
-              <div className="text-xs text-slate-500 dark:text-white/40 px-1">Query Results:</div>
+              <div className="text-xs text-[var(--text-subtle)] dark:text-white/40 px-1">Query Results:</div>
               {renderSqlResults(queryResult)}
             </div>
           )}
@@ -494,7 +494,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                           className={`relative flex flex-col items-center  px-2 pb-1 text-xl font-semibold transition-colors ${
                             isActive
                               ? 'text-slate-900 dark:text-white'
-                              : 'text-slate-500 hover:text-slate-700 dark:text-white/60 dark:hover:text-white/80'
+                              : 'text-[var(--text-subtle)] hover:text-[var(--text-muted)] dark:text-white/60 dark:hover:text-white/80'
                           }`}
                         >
                           <span>{mode === 'chat' ? 'Chat' : 'History'}</span>
@@ -555,8 +555,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.6, delay: 0.4 }}
                     >
-                      <p className="text-2xl leading-relaxed text-white/70">Start your conversation with Axon</p>
-                      <p className="text-sm text-white/45">Draft a message below or pick one of the quick ideas.</p>
+                      <p className="text-2xl leading-relaxed text-[var(--text-muted)] dark:text-white/70">Start your conversation with Axon</p>
+                      <p className="text-sm text-[var(--text-subtle)] dark:text-white/45">Draft a message below or pick one of the quick ideas.</p>
                     </motion.div>
                   </div>
 
@@ -569,7 +569,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                     {suggestions.map((suggestion, index) => (
                       <motion.span
                         key={`${suggestion}-${index}`}
-                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/70"
+                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-[var(--text-muted)] dark:text-white/70"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: 0.7 + index * 0.05 }}
@@ -599,7 +599,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                     : 'bg-white/10 text-white';
                   const bubbleClasses = isUser
                     ? 'border border-white/10 bg-[#2563eb]/20 text-white'
-                    : 'border border-white/5 bg-white/5 text-white';
+                    : 'border border-white/5 bg-white/5 text-[var(--text-primary)] dark:text-white';
                   const hasAttachments = (message.attachments?.length ?? 0) > 0;
                   const sources = !isUser ? detectSources(message.content) : [];
 
@@ -651,8 +651,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                       {/* Message Content */}
                       <div className={`flex flex-col gap-1.5 min-w-0 ${isUser ? 'items-end max-w-[75%]' : 'flex-1 max-w-full'}`}>
                         {/* Header */}
-                        <div className={`flex items-center gap-2 text-xs text-white/50 ${isUser ? 'flex-row-reverse' : ''}`}>
-                          <span className="font-medium text-white/70">{title}</span>
+                        <div className={`flex items-center gap-2 text-xs text-[var(--text-subtle)] dark:text-white/50 ${isUser ? 'flex-row-reverse' : ''}`}>
+                          <span className="font-medium text-[var(--text-muted)] dark:text-white/70">{title}</span>
                           <span className="h-1 w-1 rounded-full bg-white/20" aria-hidden />
                           <span>{formatDisplayTime(message.timestamp)}</span>
                         </div>
@@ -668,7 +668,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                   href={attachment.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 transition hover:border-white/20 hover:bg-white/10"
+                                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-[var(--text-muted)] dark:text-white/80 transition hover:border-white/20 hover:bg-white/10"
                                 >
                                   <svg
                                     width="14"
@@ -685,7 +685,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                   <span className="truncate max-w-[120px]" title={attachment.name}>
                                     {attachment.name}
                                   </span>
-                                  <span className="text-white/40">
+                                  <span className="text-[var(--text-subtle)] dark:text-white/40">
                                     {formatAttachmentSize(attachment.size)}
                                   </span>
                                 </a>

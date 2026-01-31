@@ -246,22 +246,22 @@ const AuthModal = ({
           aria-modal="true"
         >
           <motion.div
-            className="w-full max-w-md rounded-2xl bg-slate-900/95 p-8 shadow-xl backdrop-blur"
+            className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900/95 p-8 shadow-xl backdrop-blur"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-white">{heading}</h2>
-                <p className="mt-1 text-sm text-slate-300">{subheading}</p>
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] dark:text-white">{heading}</h2>
+                <p className="mt-1 text-sm text-[var(--text-muted)] dark:text-slate-300">{subheading}</p>
                 {successMessage && (
-                  <p className="mt-2 text-xs text-blue-300">{successMessage}</p>
+                  <p className="mt-2 text-xs text-blue-600 dark:text-blue-300">{successMessage}</p>
                 )}
               </div>
               <button
                 type="button"
-                className="rounded-full p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+                className="rounded-full p-2 text-[var(--text-muted)] transition hover:bg-slate-200 hover:text-[var(--text-primary)] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                 onClick={onClose}
                 aria-label="Close authentication"
               >
@@ -272,60 +272,60 @@ const AuthModal = ({
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               {view === 'signup' && (
                 <div>
-                  <label className="text-sm font-medium text-slate-200" htmlFor="auth-name">
+                  <label className="text-sm font-medium text-[var(--text-primary)] dark:text-slate-200" htmlFor="auth-name">
                     Name
                   </label>
                   <input
                     id="auth-name"
                     type="text"
                     autoComplete="name"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-white focus:border-indigo-400 focus:outline-none"
                     value={form.name}
                     onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                     disabled={isSubmitting}
                   />
-                  {formErrors.name && <p className="mt-1 text-xs text-rose-400">{formErrors.name}</p>}
+                  {formErrors.name && <p className="mt-1 text-xs text-red-600 dark:text-rose-400">{formErrors.name}</p>}
                 </div>
               )}
 
               {view !== 'reset-confirm' && (
                 <div>
-                  <label className="text-sm font-medium text-slate-200" htmlFor="auth-email">
+                  <label className="text-sm font-medium text-[var(--text-primary)] dark:text-slate-200" htmlFor="auth-email">
                     Email
                   </label>
                   <input
                     id="auth-email"
                     type="email"
                     autoComplete="email"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-white focus:border-indigo-400 focus:outline-none"
                     value={form.email}
                     onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
                     disabled={isSubmitting}
                   />
-                  {formErrors.email && <p className="mt-1 text-xs text-rose-400">{formErrors.email}</p>}
+                  {formErrors.email && <p className="mt-1 text-xs text-red-600 dark:text-rose-400">{formErrors.email}</p>}
                 </div>
               )}
 
               {(view === 'signin' || view === 'signup') && (
                 <div>
-                  <label className="text-sm font-medium text-slate-200" htmlFor="auth-password">
+                  <label className="text-sm font-medium text-[var(--text-primary)] dark:text-slate-200" htmlFor="auth-password">
                     Password
                   </label>
                   <input
                     id="auth-password"
                     type="password"
                     autoComplete={view === 'signup' ? 'new-password' : 'current-password'}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-white focus:border-indigo-400 focus:outline-none"
                     value={form.password}
                     onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
                     disabled={isSubmitting}
                   />
-                  {formErrors.password && <p className="mt-1 text-xs text-rose-400">{formErrors.password}</p>}
+                  {formErrors.password && <p className="mt-1 text-xs text-red-600 dark:text-rose-400">{formErrors.password}</p>}
                 </div>
               )}
 
               {view === 'reset-request' && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--text-subtle)] dark:text-slate-400">
                   We will generate a reset code for your account. In production this would be emailed to you.
                 </p>
               )}
@@ -333,51 +333,51 @@ const AuthModal = ({
               {view === 'reset-confirm' && (
                 <>
                   <div>
-                    <label className="text-sm font-medium text-slate-200" htmlFor="auth-reset-token">
+                    <label className="text-sm font-medium text-[var(--text-primary)] dark:text-slate-200" htmlFor="auth-reset-token">
                       Reset code
                     </label>
                     <input
                       id="auth-reset-token"
                       type="text"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-white focus:border-indigo-400 focus:outline-none"
                       value={form.resetToken}
                       onChange={(event) => setForm((prev) => ({ ...prev, resetToken: event.target.value }))}
                       disabled={isSubmitting}
                     />
-                    {formErrors.resetToken && <p className="mt-1 text-xs text-rose-400">{formErrors.resetToken}</p>}
+                    {formErrors.resetToken && <p className="mt-1 text-xs text-red-600 dark:text-rose-400">{formErrors.resetToken}</p>}
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-slate-200" htmlFor="auth-new-password">
+                    <label className="text-sm font-medium text-[var(--text-primary)] dark:text-slate-200" htmlFor="auth-new-password">
                       New password
                     </label>
                     <input
                       id="auth-new-password"
                       type="password"
                       autoComplete="new-password"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-white focus:border-indigo-400 focus:outline-none"
                       value={form.password}
                       onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
                       disabled={isSubmitting}
                     />
-                    {formErrors.password && <p className="mt-1 text-xs text-rose-400">{formErrors.password}</p>}
+                    {formErrors.password && <p className="mt-1 text-xs text-red-600 dark:text-rose-400">{formErrors.password}</p>}
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-slate-200" htmlFor="auth-confirm-password">
+                    <label className="text-sm font-medium text-[var(--text-primary)] dark:text-slate-200" htmlFor="auth-confirm-password">
                       Confirm password
                     </label>
                     <input
                       id="auth-confirm-password"
                       type="password"
                       autoComplete="new-password"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-[var(--text-primary)] dark:text-white focus:border-indigo-400 focus:outline-none"
                       value={form.confirmPassword}
                       onChange={(event) => setForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
                       disabled={isSubmitting}
                     />
                     {formErrors.confirmPassword && (
-                      <p className="mt-1 text-xs text-rose-400">{formErrors.confirmPassword}</p>
+                      <p className="mt-1 text-xs text-red-600 dark:text-rose-400">{formErrors.confirmPassword}</p>
                     )}
                   </div>
                 </>
@@ -386,7 +386,7 @@ const AuthModal = ({
               {view === 'signin' && (
                 <button
                   type="button"
-                  className="text-xs font-medium text-indigo-300 transition hover:text-indigo-200"
+                  className="text-xs font-medium text-indigo-600 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
                   onClick={switchToResetRequest}
                   disabled={isSubmitting}
                 >
@@ -394,7 +394,7 @@ const AuthModal = ({
                 </button>
               )}
 
-              {errorMessage && <p className="text-sm text-rose-300">{errorMessage}</p>}
+              {errorMessage && <p className="text-sm text-red-600 dark:text-rose-300">{errorMessage}</p>}
 
               <button
                 type="submit"
@@ -405,11 +405,11 @@ const AuthModal = ({
               </button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-slate-300">
+            <div className="mt-6 text-center text-sm text-[var(--text-muted)] dark:text-slate-300">
               {view === 'signup' ? (
                 <button
                   type="button"
-                  className="font-medium text-indigo-300 transition hover:text-indigo-200"
+                  className="font-medium text-indigo-600 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
                   onClick={switchToSignIn}
                   disabled={isSubmitting}
                 >
@@ -418,7 +418,7 @@ const AuthModal = ({
               ) : view === 'signin' ? (
                 <button
                   type="button"
-                  className="font-medium text-indigo-300 transition hover:text-indigo-200"
+                  className="font-medium text-indigo-600 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
                   onClick={switchToSignUp}
                   disabled={isSubmitting}
                 >
@@ -427,7 +427,7 @@ const AuthModal = ({
               ) : (
                 <button
                   type="button"
-                  className="font-medium text-indigo-300 transition hover:text-indigo-200"
+                  className="font-medium text-indigo-600 transition hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
                   onClick={switchToSignIn}
                   disabled={isSubmitting}
                 >
