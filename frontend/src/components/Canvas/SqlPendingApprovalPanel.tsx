@@ -43,7 +43,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
             <span>Source: {pendingQuery.source === "ai" ? "AI Generated" : "User Input"}</span>
             <span>{new Date(pendingQuery.timestamp).toLocaleTimeString()}</span>
           </div>
-          <pre className="mb-4 overflow-x-auto rounded-lg border border-white/10 bg-[#060a18] p-3 font-mono text-sm text-white/80">
+          <pre className="mb-4 overflow-x-auto rounded-lg border border-white/10 bg-slate-100 text-slate-700 dark:bg-[#060a18] dark:text-white/80 p-3 font-mono text-sm">
             {pendingQuery.query}
           </pre>
           <p className="mb-4 text-xs text-amber-200/60">

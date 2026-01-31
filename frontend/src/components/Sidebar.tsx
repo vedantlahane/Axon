@@ -117,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <motion.aside
-      className="flex flex-col overflow-hidden border-r border-white/10  backdrop-blur-xl"
+      className="flex flex-col overflow-hidden border-r border-white/10 bg-[var(--bg-panel)]/90 dark:bg-[#0b1220]/70 backdrop-blur-xl"
       animate={{ width: collapsed ? 80 : 260 }}
       transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
     >

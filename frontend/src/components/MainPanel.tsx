@@ -182,7 +182,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
   };
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden bg-[radial-gradient(ellipse_at_top,_rgba(30,45,85,0.25),_transparent_65%)] px-6 pb-6 pt-4 dark:bg-[radial-gradient(ellipse_at_top,_rgba(0,100,100,0.25),_transparent_65%)] lg:px-5">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden bg-[radial-gradient(ellipse_at_top,_rgba(148,163,184,0.35),_transparent_70%)] px-6 pb-6 pt-4 dark:bg-[radial-gradient(ellipse_at_top,_rgba(0,100,100,0.25),_transparent_65%)] lg:px-5">
       <header className="relative z-20 backdrop-blur-xl">
         <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-4">
           <motion.button

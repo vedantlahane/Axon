@@ -298,18 +298,18 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           // End code block
           const langLabel = codeBlockLang.toUpperCase() || 'CODE';
           elements.push(
-            <div key={`code-${elements.length}`} className="my-3 rounded-xl border border-white/10 bg-[#0b1220]/80 overflow-hidden">
+            <div key={`code-${elements.length}`} className="my-3 rounded-xl border border-white/10 bg-slate-50 dark:bg-[#0b1220]/80 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-white/50">{langLabel}</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-white/50">{langLabel}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(codeBlockContent.join('\n'))}
-                  className="text-[10px] text-white/40 hover:text-white/70 transition"
+                  className="text-[10px] text-slate-500 hover:text-slate-700 dark:text-white/40 dark:hover:text-white/70 transition"
                 >
                   Copy
                 </button>
               </div>
-              <pre className="p-4 text-sm font-mono text-sky-200/90 overflow-x-auto leading-relaxed">
+              <pre className="p-4 text-sm font-mono text-slate-700 dark:text-sky-200/90 overflow-x-auto leading-relaxed">
                 <code>{codeBlockContent.join('\n')}</code>
               </pre>
             </div>
@@ -419,13 +419,13 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           {beforeSql.trim() && <div className="prose-content">{parseFormattedContent(beforeSql.trim())}</div>}
           
           {/* SQL Block with View in Canvas button */}
-          <div className="rounded-lg border border-white/10 bg-[#0d1117] overflow-hidden">
+          <div className="rounded-lg border border-white/10 bg-slate-50 dark:bg-[#0d1117] overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
-              <span className="text-xs text-white/50 font-mono">SQL Query</span>
+              <span className="text-xs text-slate-500 dark:text-white/50 font-mono">SQL Query</span>
               <button
                 type="button"
                 onClick={() => onViewSqlInCanvas(sql)}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white/80 bg-[#2563eb]/80 hover:bg-[#2563eb] rounded-md transition"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-[#2563eb]/80 hover:bg-[#2563eb] rounded-md transition"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -434,7 +434,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 {hasExecutedResults ? 'View in Canvas' : 'Open in Canvas'}
               </button>
             </div>
-            <pre className="p-3 text-sm font-mono text-sky-300 overflow-x-auto">
+            <pre className="p-3 text-sm font-mono text-slate-700 dark:text-sky-300 overflow-x-auto">
               <code>{sql}</code>
             </pre>
           </div>
@@ -442,7 +442,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           {/* Display results if query has been executed */}
           {hasExecutedResults && queryResult && (
             <div className="flex flex-col gap-2">
-              <div className="text-xs text-white/40 px-1">Query Results:</div>
+              <div className="text-xs text-slate-500 dark:text-white/40 px-1">Query Results:</div>
               {renderSqlResults(queryResult)}
             </div>
           )}
@@ -492,7 +492,9 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                           type="button"
                           onClick={() => onViewChange(mode)}
                           className={`relative flex flex-col items-center  px-2 pb-1 text-xl font-semibold transition-colors ${
-                            isActive ? 'text-white' : 'text-white/60 hover:text-white/80'
+                            isActive
+                              ? 'text-slate-900 dark:text-white'
+                              : 'text-slate-500 hover:text-slate-700 dark:text-white/60 dark:hover:text-white/80'
                           }`}
                         >
                           <span>{mode === 'chat' ? 'Chat' : 'History'}</span>
@@ -518,7 +520,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                       transition={{ duration: 0.6, delay: 0.2 }}
                     >
                       <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#7dd3fc] opacity-40 blur-3xl" />
-                      <div className="relative grid h-28 w-28 place-items-center rounded-[26px] border border-white/15 bg-[#0b1220]/90 shadow-[0_25px_60px_-30px_rgba(37,99,235,0.8)] backdrop-blur-sm">
+                      <div className="relative grid h-28 w-28 place-items-center rounded-[26px] border border-slate-200 dark:border-white/15 bg-white/90 dark:bg-[#0b1220]/90 shadow-[0_25px_60px_-30px_rgba(37,99,235,0.35)] dark:shadow-[0_25px_60px_-30px_rgba(37,99,235,0.8)] backdrop-blur-sm">
                         <div className="absolute h-20 w-20 rounded-[22px] border border-[#3b82f6]/40" />
                         <motion.div
                           className="relative flex h-20 w-20 items-center justify-center rounded-[22px] bg-[conic-gradient(from_140deg,_rgba(125,211,252,0.4),_rgba(37,99,235,0.85),_rgba(14,165,233,0.4))] shadow-[0_18px_45px_-18px_rgba(14,165,233,0.9)]"

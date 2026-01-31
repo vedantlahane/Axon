@@ -599,13 +599,13 @@ const InputSection: React.FC<InputSectionProps> = ({
             <AnimatePresence>
               {showModelSelector && (
                 <motion.div
-                  className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-white/10 bg-[#0d1117] p-2 shadow-xl z-50"
+                  className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-white/10 bg-white text-slate-700 dark:bg-[#0d1117] dark:text-white p-2 shadow-xl z-50"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <div className="text-[10px] uppercase tracking-wider text-white/40 px-2 py-1 mb-1">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-white/40 px-2 py-1 mb-1">
                     AI Model
                   </div>
                   {availableModels.map((model) => (
@@ -614,10 +614,10 @@ const InputSection: React.FC<InputSectionProps> = ({
                       type="button"
                       className={`w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition ${
                         currentModel === model.id
-                          ? 'bg-blue-500/20 text-blue-300'
+                          ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300'
                           : model.available
-                            ? 'text-white/70 hover:bg-white/10 hover:text-white'
-                            : 'text-white/30 cursor-not-allowed'
+                            ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white'
+                            : 'text-slate-400 dark:text-white/30 cursor-not-allowed'
                       }`}
                       onClick={() => {
                         if (model.available && onModelChange) {
@@ -630,7 +630,7 @@ const InputSection: React.FC<InputSectionProps> = ({
                       <span className="flex items-center gap-2">
                         <span>{model.name}</span>
                         {model.isDefault && (
-                          <span className="text-[9px] uppercase bg-white/10 px-1 py-0.5 rounded text-white/50">
+                          <span className="text-[9px] uppercase bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-white/50 px-1 py-0.5 rounded">
                             Default
                           </span>
                         )}
@@ -678,7 +678,7 @@ const InputSection: React.FC<InputSectionProps> = ({
 
           <motion.button
             type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg bg-[#2563eb] text-white transition hover:bg-[#3b82f6] disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={isSendDisabled}
             whileHover={isSendDisabled ? {} : { scale: 1.05 }}
             whileTap={isSendDisabled ? {} : { scale: 0.95 }}

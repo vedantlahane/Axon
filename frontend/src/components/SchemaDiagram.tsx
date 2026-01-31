@@ -77,14 +77,16 @@ const SchemaDiagram: React.FC<SchemaDiagramProps> = ({ schema }) => {
       return;
     }
 
-    if (!initialisedRef.current) {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: 'dark',
-        securityLevel: 'loose',
-      });
-      initialisedRef.current = true;
-    }
+    const isDarkTheme = typeof document !== 'undefined'
+      ? document.documentElement.classList.contains('dark')
+      : true;
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDarkTheme ? 'dark' : 'default',
+      securityLevel: 'loose',
+    });
+    initialisedRef.current = true;
 
     mermaid
       .render(`${renderIdRef.current}`, mermaidDefinition)
@@ -99,7 +101,7 @@ const SchemaDiagram: React.FC<SchemaDiagramProps> = ({ schema }) => {
   }, [mermaidDefinition, schema]);
 
   if (!schema) {
-    return <p className="text-sm text-white/60">No schema information is available.</p>;
+    return <p className="text-sm text-slate-600 dark:text-white/60">No schema information is available.</p>;
   }
 
   if (renderError) {
@@ -111,12 +113,12 @@ const SchemaDiagram: React.FC<SchemaDiagramProps> = ({ schema }) => {
   }
 
   if (!svgContent) {
-    return <p className="text-sm text-white/60">Generating schema diagram…</p>;
+    return <p className="text-sm text-slate-600 dark:text-white/60">Generating schema diagram…</p>;
   }
 
   return (
     <div
-      className="schema-diagram max-h-[420px] overflow-auto rounded-xl border border-white/10 bg-white/5 p-4"
+      className="schema-diagram max-h-[420px] overflow-auto rounded-xl border border-white/10 bg-slate-50 text-slate-700 dark:bg-white/5 dark:text-white/80 p-4"
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
   );

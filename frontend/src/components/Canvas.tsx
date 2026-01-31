@@ -2,21 +2,23 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import SchemaDiagram from "./SchemaDiagram";
 import type { SqlQueryResult, SqlQuerySuggestion } from "../services/chatApi";
+import type {
+  SqlSideWindowProps,
+  SqlQueryHistoryEntry,
+  CanvasTab,
+  EditorPanel,
+} from "./Canvas/types";
 import {
-  type SqlSideWindowProps,
-  type SqlQueryHistoryEntry,
-  type CanvasTab,
-  type EditorPanel,
   DEFAULT_QUERY_LIMIT,
   QUERY_LIMIT_MIN,
   QUERY_LIMIT_MAX,
   CANVAS_TABS,
   TAB_LABELS,
-  SqlResultsView,
-  SqlHistoryPanel,
-  SqlSuggestionsPanel,
-  SqlPendingApprovalPanel,
-} from "./Canvas";
+} from "./Canvas/types";
+import { SqlResultsView } from "./Canvas/SqlResultsView";
+import { SqlHistoryPanel } from "./Canvas/SqlHistoryPanel";
+import { SqlSuggestionsPanel } from "./Canvas/SqlSuggestionsPanel";
+import { SqlPendingApprovalPanel } from "./Canvas/SqlPendingApprovalPanel";
 
 // Re-export types for backward compatibility
 export type { SqlQueryHistoryEntry, PendingQuery, SqlSideWindowProps } from "./Canvas";
@@ -642,7 +644,7 @@ const Canvas: React.FC<CanvasProps> = ({ children, sideWindow }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f1a] shadow-2xl"
+            className="fixed inset-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white text-slate-900 dark:bg-[#0a0f1a] dark:text-white shadow-2xl"
           >
             <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div className="flex items-center gap-3">

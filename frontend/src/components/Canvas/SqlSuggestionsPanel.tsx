@@ -55,7 +55,7 @@ export const SqlSuggestionsPanel: React.FC<SqlSuggestionsPanelProps> = ({
                 </button>
               </div>
               <p className="text-xs text-white/60">{suggestion.summary}</p>
-              <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-[#060a18] p-3 font-mono text-[11px] text-white/70">
+              <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-slate-100 text-slate-700 dark:bg-[#060a18] dark:text-white/70 p-3 font-mono text-[11px]">
                 {suggestion.query}
               </pre>
               {suggestion.rationale && (
