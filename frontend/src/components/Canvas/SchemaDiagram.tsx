@@ -101,19 +101,19 @@ const SchemaDiagram: React.FC<SchemaDiagramProps> = ({ schema }) => {
   }, [mermaidDefinition, schema]);
 
   if (!schema) {
-    return <p className="text-sm text-slate-600 dark:text-white/60">No schema information is available.</p>;
+    return <p className="text-sm text-[var(--text-muted)] dark:text-white/60">No schema information is available.</p>;
   }
 
   if (renderError) {
     return (
-      <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 p-4 text-sm text-rose-200">
+      <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 p-4 text-sm text-rose-200 dark:text-rose-200">
         {renderError}
       </div>
     );
   }
 
   if (!svgContent) {
-    return <p className="text-sm text-slate-600 dark:text-white/60">Generating schema diagram…</p>;
+    return <p className="text-sm text-[var(--text-muted)] dark:text-white/60">Generating schema diagram…</p>;
   }
 
   return (

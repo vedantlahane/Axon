@@ -408,10 +408,10 @@ const InputSection: React.FC<InputSectionProps> = ({
                       : error ?? 'Upload failed';
                 const statusClass =
                   status === 'error'
-                    ? 'text-red-400'
+                    ? 'text-red-600 dark:text-red-400'
                     : status === 'uploading'
-                      ? 'text-amber-300'
-                      : 'text-blue-300';
+                      ? 'text-amber-600 dark:text-amber-300'
+                      : 'text-blue-600 dark:text-blue-300';
 
                 return (
                   <motion.div
@@ -427,7 +427,7 @@ const InputSection: React.FC<InputSectionProps> = ({
                     {preview ? (
                       <img src={preview} alt={file.name} className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-white/50">
+                      <div className="flex h-full items-center justify-center text-[var(--text-subtle)] dark:text-white/50">
                         <svg
                           width="24"
                           height="24"
@@ -446,15 +446,15 @@ const InputSection: React.FC<InputSectionProps> = ({
                   </div>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-white" title={file.name}>
+                      <p className="truncate text-xs font-medium text-[var(--text-primary)] dark:text-white" title={file.name}>
                         {file.name}
                       </p>
-                      <p className="text-[10px] text-white/50">{formatFileSize(file.size)}</p>
+                      <p className="text-[10px] text-[var(--text-subtle)] dark:text-white/50">{formatFileSize(file.size)}</p>
                       <p className={`text-[10px] ${statusClass}`}>{statusLabel}</p>
                     </div>
                     <motion.button
                       type="button"
-                      className="rounded-md bg-white/10 p-1 text-white/70 hover:bg-white/20 hover:text-white"
+                      className="rounded-md bg-white/10 p-1 text-[var(--text-muted)] hover:bg-white/20 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
                       onClick={() => removeFile(id)}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -486,10 +486,10 @@ const InputSection: React.FC<InputSectionProps> = ({
             type="button"
             className={`grid h-9 w-9 place-items-center rounded-lg transition ${
               isRecording
-                ? 'bg-red-500/20 text-red-400'
+                ? 'bg-red-500/20 text-red-600 dark:text-red-400'
                 : voiceButtonDisabled
-                  ? 'bg-white/5 text-white/30'
-                  : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+                  ? 'bg-white/5 text-[var(--text-subtle)] dark:text-white/30'
+                  : 'bg-white/5 text-[var(--text-muted)] hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white'
             }`}
             aria-label="Voice input"
             whileHover={voiceButtonDisabled ? {} : { scale: 1.05 }}
@@ -516,7 +516,7 @@ const InputSection: React.FC<InputSectionProps> = ({
 
           <motion.button
             type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
             aria-label="Attach files"
             title="Attach PDF files"
             whileHover={{ scale: 1.05 }}
@@ -555,7 +555,7 @@ const InputSection: React.FC<InputSectionProps> = ({
                       ? 'Ask Axon anything…'
                       : 'Sign in to start chatting'
             }
-            className="flex-1 resize-none bg-transparent py-2 text-sm text-white placeholder:text-white/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 resize-none bg-transparent py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-white dark:placeholder:text-white/40"
             onKeyDown={handleKeyDown}
             disabled={isHistoryActive || !isAuthenticated}
             aria-label="Chat message"
@@ -563,7 +563,7 @@ const InputSection: React.FC<InputSectionProps> = ({
 
           <motion.button
             type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-[var(--text-muted)] transition hover:border-white/20 hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
             aria-label="Configure database connection"
             title={databaseSummary}
             whileHover={databaseButtonDisabled ? {} : { scale: 1.03 }}
@@ -591,7 +591,7 @@ const InputSection: React.FC<InputSectionProps> = ({
           <div className="relative" ref={modelSelectorRef}>
             <motion.button
               type="button"
-              className={`flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 text-xs text-white/70 transition hover:border-white/20 hover:bg-white/10 hover:text-white ${isModelSwitching ? 'opacity-50' : ''}`}
+              className={`flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 text-xs text-[var(--text-muted)] transition hover:border-white/20 hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white ${isModelSwitching ? 'opacity-50' : ''}`}
               aria-label="Select AI model"
               title="Change AI model"
               whileHover={{ scale: 1.02 }}
@@ -622,7 +622,7 @@ const InputSection: React.FC<InputSectionProps> = ({
                   exit={{ opacity: 0, y: 10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-white/40 px-2 py-1 mb-1">
+                  <div className="text-[10px] uppercase tracking-wider text-[var(--text-subtle)] dark:text-white/40 px-2 py-1 mb-1">
                     AI Model
                   </div>
                   {availableModels.map((model) => (
@@ -631,10 +631,10 @@ const InputSection: React.FC<InputSectionProps> = ({
                       type="button"
                       className={`w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition ${
                         currentModel === model.id
-                          ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300'
+                          ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
                           : model.available
-                            ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white'
-                            : 'text-slate-400 dark:text-white/30 cursor-not-allowed'
+                            ? 'text-[var(--text-muted)] hover:bg-slate-200 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white'
+                            : 'text-[var(--text-subtle)] dark:text-white/30 cursor-not-allowed'
                       }`}
                       onClick={() => {
                         if (model.available && onModelChange) {

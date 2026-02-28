@@ -72,6 +72,22 @@
 :root:not(.dark) .border-white\/20 { border-color: var(--border) !important; }
 :root:not(.dark) .border-white\/30 { border-color: rgba(15, 23, 42, 0.16) !important; }
 
+/* Light mode overrides for colored text (blue, rose, amber) */
+:root:not(.dark) .text-blue-200 { color: #0369a1 !important; }
+:root:not(.dark) .text-blue-200\/80 { color: rgba(3, 105, 161, 0.8) !important; }
+:root:not(.dark) .text-rose-200 { color: #be123c !important; }
+:root:not(.dark) .text-rose-200\/80 { color: rgba(190, 18, 60, 0.8) !important; }
+:root:not(.dark) .text-amber-200\/80 { color: rgba(180, 83, 9, 0.8) !important; }
+:root:not(.dark) .text-slate-600 { color: #475569 !important; }
+:root:not(.dark) .text-slate-700 { color: #334155 !important; }
+
+/* Light mode overrides for colored backgrounds and borders */
+:root:not(.dark) .bg-blue-500\/10 { background-color: rgba(3, 105, 161, 0.08) !important; }
+:root:not(.dark) .border-blue-400\/30 { border-color: rgba(3, 105, 161, 0.3) !important; }
+:root:not(.dark) .bg-rose-500\/10 { background-color: rgba(190, 18, 60, 0.08) !important; }
+:root:not(.dark) .border-rose-400\/40 { border-color: rgba(190, 18, 60, 0.4) !important; }
+:root:not(.dark) .bg-slate-100 { background-color: #f1f5f9 !important; }
+
 /* Prose content styling for formatted messages */
 .prose-content {
     line-height: 1.6;
@@ -83,6 +99,60 @@
 
 .prose-content > *:last-child {
     margin-bottom: 0;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes float-0 {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50% { transform: translateY(-10px); opacity: 1; }
+}
+
+@keyframes float-1 {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(12px); opacity: 0.9; }
+}
+
+@keyframes float-2 {
+    0%, 100% { transform: translateX(0); opacity: 0.5; }
+    50% { transform: translateX(10px); opacity: 0.9; }
+}
+
+@keyframes float-3 {
+    0%, 100% { transform: translateX(0); opacity: 0.6; }
+    50% { transform: translateX(-12px); opacity: 1; }
+}
+
+@keyframes videoSweep {
+    0% { transform: translateX(-60%); }
+    100% { transform: translateX(60%); }
+}
+
+@keyframes videoGlow {
+    0%, 100% { opacity: 0.35; transform: scale(0.98); }
+    50% { opacity: 0.75; transform: scale(1.02); }
+}
+
+@keyframes tileDrift-0 {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+    50% { transform: translate(6px, -6px) scale(1.03); opacity: 1; }
+}
+
+@keyframes tileDrift-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.85; }
+    50% { transform: translate(-5px, 7px) scale(0.98); opacity: 1; }
+}
+
+@keyframes tileDrift-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+    50% { transform: translate(7px, 4px) scale(1.02); opacity: 1; }
 }
 
 .prose-content pre {
