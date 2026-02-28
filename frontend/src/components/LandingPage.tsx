@@ -103,16 +103,16 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
                   <path d="M11 4 7 12l4 8" />
                 </svg>
               </div>
-              <span className="text-3xl font-semibold tracking-wide text-[var(--text-primary)] dark:text-white">Axon</span>
+              <span className="text-3xl font-semibold tracking-wide text-(--text-primary) dark:text-white">Axon</span>
             </div>
 
             {/* Short app descriptor */}
-            <p className="text-sm uppercase tracking-[0.35em] text-[var(--text-subtle)] dark:text-white/50">
+            <p className="text-sm uppercase tracking-[0.35em] text-(--text-subtle) dark:text-white/50">
               AI data workspace
             </p>
 
             {/* Primary product description */}
-            <p className="text-base leading-relaxed text-[var(--text-muted)] dark:text-white/70 max-w-md">
+            <p className="text-base leading-relaxed text-(--text-muted) dark:text-white/70 max-w-md">
               Axon helps you connect data sources, ask questions in natural language, and explore answers fast with an AI workspace built for analysis.
             </p>
 
@@ -121,7 +121,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
               {['Connect data', 'Ask in plain language', 'Explore insights'].map((label) => (
                 <span
                   key={label}
-                  className="rounded-full border border-[var(--border)] bg-[var(--bg-panel)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--text-subtle)]"
+                  className="rounded-full border border-(--border) bg-(--bg-panel) px-3 py-1 text-xs uppercase tracking-[0.2em] text-(--text-subtle)"
                 >
                   {label}
                 </span>
@@ -145,30 +145,30 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
             className="relative rounded-3xl border border-[var(--border)] bg-[var(--bg-panel)]/80 p-6 shadow-xl"
             aria-hidden
           >
-            <div className="absolute inset-0 rounded-3xl border border-[var(--border)]/40" />
-            <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_20%_20%,_rgba(37,99,235,0.12),_transparent_45%)] opacity-70 animate-[videoGlow_8s_ease-in-out_infinite]" />
-            <div className="absolute inset-0 rounded-3xl bg-[linear-gradient(120deg,_transparent_40%,_rgba(37,99,235,0.08),_transparent_70%)] opacity-60 animate-[videoSweep_10s_linear_infinite]" />
-            <div className="absolute inset-0 rounded-3xl bg-[linear-gradient(90deg,_rgba(15,23,42,0.06)_1px,_transparent_1px),_linear-gradient(180deg,_rgba(15,23,42,0.06)_1px,_transparent_1px)] bg-[size:28px_28px] opacity-40" />
-            <div className="absolute -right-10 top-10 h-28 w-28 rotate-12 rounded-3xl border border-[var(--border)] bg-[var(--bg-panel)]/60 shadow-lg" />
-            <div className="absolute -left-8 bottom-8 h-20 w-20 -rotate-12 rounded-2xl border border-[var(--border)] bg-[var(--bg-soft)] shadow-md" />
-            <div className="absolute right-10 -bottom-6 h-16 w-28 rotate-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)]/70 shadow-md" />
-            <div className="absolute left-12 -top-8 h-12 w-12 -rotate-6 rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] shadow-md" />
+            <div className="absolute inset-0 rounded-3xl border border-(--border)/40" />
+            <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_20%_20%,rgba(37,99,235,0.12),transparent_45%)] opacity-70 animate-[videoGlow_8s_ease-in-out_infinite]" />
+            <div className="absolute inset-0 rounded-3xl bg-[linear-gradient(120deg,transparent_40%,rgba(37,99,235,0.08),transparent_70%)] opacity-60 animate-[videoSweep_10s_linear_infinite]" />
+            <div className="absolute inset-0 rounded-3xl bg-[linear-gradient(90deg,rgba(15,23,42,0.06)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,0.06)_1px,transparent_1px)] opacity-40" />
+            <div className="absolute -right-10 top-10 h-28 w-28 rotate-12 rounded-3xl border border-(--border) bg-(--bg-panel)/60 shadow-lg" />
+            <div className="absolute -left-8 bottom-8 h-20 w-20 -rotate-12 rounded-2xl border border-(--border) bg-(--bg-soft) shadow-md" />
+            <div className="absolute right-10 -bottom-6 h-16 w-28 rotate-3 rounded-2xl border border-(--border) bg-(--bg-panel)/70 shadow-md" />
+            <div className="absolute left-12 -top-8 h-12 w-12 -rotate-6 rounded-xl border border-(--border) bg-(--bg-soft) shadow-md" />
             <div className="absolute inset-x-12 top-6 flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((dot) => (
-                <span key={dot} className="h-1.5 w-1.5 rounded-full bg-[var(--accent-soft)]" />
+                <span key={dot} className="h-1.5 w-1.5 rounded-full bg-(--accent-soft)" />
               ))}
             </div>
             <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-soft)] p-5 relative overflow-hidden">
+              <div className="rounded-2xl border border-(--border) bg-(--bg-soft) p-5 relative overflow-hidden">
                 {/* Tile grid with animated sweep */}
-                <div className="absolute inset-0 bg-[linear-gradient(110deg,_rgba(37,99,235,0.08),_transparent_45%,_rgba(37,99,235,0.12))] opacity-60 animate-[videoSweep_6s_linear_infinite]" />
+                <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(37,99,235,0.08),transparent_45%,rgba(37,99,235,0.12))] opacity-60 animate-[videoSweep_6s_linear_infinite]" />
                 <div className="grid grid-cols-3 gap-3">
                   {tileOrder.map((tile, index) => (
                     <motion.span
                       key={tile}
                       layout
                       transition={spring}
-                      className="aspect-square rounded-xl bg-[var(--accent-soft)]"
+                      className="aspect-square rounded-xl bg-(--accent-soft)"
                       initial={{ opacity: 0.6, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       style={{
@@ -224,30 +224,30 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
             <motion.div
               key={index}
               variants={itemVariants}
-              className={`relative overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--bg-panel)] p-6 shadow-lg ${
+              className={`relative overflow-hidden rounded-3xl border border-(--border) bg-(--bg-panel) p-6 shadow-lg ${
                 index === 0
-                  ? 'rotate-2 min-h-[260px]'
+                  ? 'rotate-2 min-h-65'
                   : index === 1
-                    ? '-rotate-2 min-h-[320px]'
-                    : 'rotate-2 min-h-[280px]'
+                    ? '-rotate-2 min-h-80'
+                    : 'rotate-2 min-h-70'
               }`}
             >
               {/* Panel glow */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.12),_transparent_55%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.12),transparent_55%)]" />
               <div className="relative flex h-full flex-col gap-6">
                 <div className="flex items-center gap-2">
                   {[1, 2, 3, 4].map((dot) => (
-                    <span key={dot} className="h-2 w-2 rounded-full bg-[var(--accent-soft)]" />
+                    <span key={dot} className="h-2 w-2 rounded-full bg-(--accent-soft)" />
                   ))}
                 </div>
                 <div className="grid grid-cols-6 gap-2">
                   {Array.from({ length: 18 }, (_, tile) => (
-                    <span key={tile} className="h-4 rounded-lg bg-[var(--bg-soft)]" />
+                    <span key={tile} className="h-4 rounded-lg bg-(--bg-soft)" />
                   ))}
                 </div>
                 <div className="flex gap-3">
-                  <span className="h-10 w-10 rounded-xl bg-[var(--accent-soft)]" />
-                  <span className="h-10 w-20 rounded-xl bg-[var(--bg-soft)]" />
+                  <span className="h-10 w-10 rounded-xl bg-(--accent-soft)" />
+                  <span className="h-10 w-20 rounded-xl bg-(--bg-soft)" />
                 </div>
               </div>
             </motion.div>
