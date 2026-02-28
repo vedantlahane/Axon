@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import ChatDisplay from "./ChatDisplay";
-import InputSection from "./InputSection";
-import Canvas, { type SqlSideWindowProps } from "./Canvas";
-import type { ChatMessage, ConversationSummary } from "../types/chat";
-import type { UserProfile, SqlQueryResult, LLMModel } from "../services/chatApi";
-import { fetchAvailableModels, setCurrentModel, exportConversationZip } from "../services/chatApi";
+import ChatDisplay from "../chat/ChatDisplay";
+import InputSection from "../chat/InputSection";
+import Canvas, { type SqlSideWindowProps } from "../Canvas";
+import type { ChatMessage, ConversationSummary } from "../../types/chat";
+import type { UserProfile, SqlQueryResult, LLMModel } from "../../services/chatApi";
+import { fetchAvailableModels, setCurrentModel, exportConversationZip } from "../../services/chatApi";
 
 /**
  * Layout contract for the main chat surface. Each prop maps to a control in the surrounding shell
@@ -38,6 +38,7 @@ interface MainPanelProps {
   sideWindow: SqlSideWindowProps;
   onViewSqlInCanvas?: (sql: string) => void;
   executedQueries?: Map<string, SqlQueryResult>;
+  showToast?: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
 }
 
 /**
@@ -69,6 +70,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
   sideWindow,
   onViewSqlInCanvas,
   executedQueries,
+  showToast,
 }) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const settingsRef = useRef<HTMLDivElement | null>(null);
@@ -77,15 +79,21 @@ const MainPanel: React.FC<MainPanelProps> = ({
   const [availableModels, setAvailableModels] = useState<LLMModel[]>([]);
   const [currentModel, setCurrentModelState] = useState<string>("gemini");
   const [isModelSwitching, setIsModelSwitching] = useState(false);
+  const [isModelsLoading, setIsModelsLoading] = useState(true);
 
   // Fetch available models on mount
   useEffect(() => {
+    setIsModelsLoading(true);
     fetchAvailableModels()
       .then((data) => {
         setAvailableModels(data.models);
         setCurrentModelState(data.current);
       })
-      .catch((err) => console.error("Failed to fetch models:", err));
+      .catch((err) => {
+        console.error("Failed to fetch models:", err);
+        showToast?.('error', 'Failed to load available models');
+      })
+      .finally(() => setIsModelsLoading(false));
   }, []);
 
   const handleModelChange = async (modelId: string) => {
@@ -98,6 +106,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
       }
     } catch (err) {
       console.error("Failed to switch model:", err);
+      showToast?.('error', 'Failed to switch model');
     } finally {
       setIsModelSwitching(false);
     }
@@ -132,9 +141,10 @@ const MainPanel: React.FC<MainPanelProps> = ({
         });
       }
       
-      await exportConversationZip(Number(selectedHistoryId), sqlResults);
+      await exportConversationZip(selectedHistoryId, sqlResults);
     } catch (err) {
       console.error("Failed to export conversation:", err);
+      showToast?.('error', 'Failed to export conversation');
     } finally {
       setIsExporting(false);
       setShowSettingsMenu(false);
@@ -164,21 +174,23 @@ const MainPanel: React.FC<MainPanelProps> = ({
   const subtitle = useMemo(() => {
     // Keep the header status text in sync with loading state and the active conversation context.
     if (isChatLoading) {
-      return "   •   Axon is thinking…";
+      return " \u00b7 Axon is thinking\u2026";
     }
     if (selectedHistory) {
-      return `   •   Resuming "${selectedHistory.title}"`;
+      return ` \u00b7 Viewing "${selectedHistory.title}"`;
     }
     if (messages.length > 0) {
-      return "   •   Continuing your current conversation";
+      return " \u00b7 Continuing your current conversation";
     }
-    return "   •   Start a new conversation or revisit one from history";
+    return " \u00b7 Start a new conversation or revisit one from history";
   }, [isChatLoading, messages.length, selectedHistory]);
 
   const showLanding = currentView === "chat" && messages.length === 0;
 
   const handleBack = () => {
-    onStartNewChat();
+    if (messages.length > 0 || selectedHistoryId) {
+      onViewChange('history');
+    }
   };
 
   return (
@@ -213,7 +225,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </span>
-            <span className="max-w-0 overflow-hidden text-xs uppercase tracking-[0.25em] text-white/60 opacity-0 transition-all duration-300 group-hover/back:max-w-[80px] group-hover/back:opacity-100">
+            <span className="text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)] hidden sm:inline">
               Back
             </span>
           </motion.button>
@@ -251,7 +263,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
               </span>
-              <span className="max-w-0 overflow-hidden text-xs uppercase tracking-[0.25em] text-white/60 opacity-0 transition-all duration-300 group-hover/settings:max-w-[100px] group-hover/settings:opacity-100">
+              <span className="text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)] hidden sm:inline">
                 Settings
               </span>
             </motion.button>
@@ -263,21 +275,21 @@ const MainPanel: React.FC<MainPanelProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute right-0 z-50 mt-3 w-56 rounded-2xl border border-white/10 bg-[#0b1220]/95 p-3 text-sm text-white/80 shadow-lg backdrop-blur"
+                  className="absolute right-0 z-50 mt-3 w-56 rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)]/95 p-3 text-sm text-[var(--text-primary)] shadow-lg backdrop-blur"
                 >
-                  <p className="mb-2 text-xs uppercase tracking-[0.25em] text-white/40">
+                  <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
                     Account
                   </p>
                   {isAuthenticated ? (
                     <>
-                      <div className="flex w-full flex-col gap-1 rounded-xl bg-white/5 px-3 py-2 text-left text-xs text-white/70">
-                        <span className="text-[10px] uppercase text-white/40">
+                      <div className="flex w-full flex-col gap-1 rounded-xl bg-[var(--bg-soft)] px-3 py-2 text-left text-xs text-[var(--text-muted)]">
+                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
                           Signed in as
                         </span>
-                        <span className="text-sm font-medium text-white">
+                        <span className="text-sm font-medium text-[var(--text-primary)]">
                           {currentUser?.name ?? currentUser?.email}
                         </span>
-                        <span className="text-xs text-white/50">
+                        <span className="text-xs text-[var(--text-subtle)]">
                           {currentUser?.email}
                         </span>
                       </div>
@@ -296,7 +308,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                     <>
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white"
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                         onClick={() => {
                           setShowSettingsMenu(false);
                           onOpenAuthModal("signin");
@@ -306,7 +318,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                       </button>
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white"
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                         onClick={() => {
                           setShowSettingsMenu(false);
                           onOpenAuthModal("signup");
@@ -316,21 +328,29 @@ const MainPanel: React.FC<MainPanelProps> = ({
                       </button>
                     </>
                   )}
-                  <div className="mt-3 border-t border-white/10 pt-3">
-                    <p className="mb-2 text-xs uppercase tracking-[0.25em] text-white/40">
+                  <div className="mt-3 border-t border-[var(--border)] pt-3">
+                    <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
                       AI Model
                     </p>
                     <div className="flex flex-col gap-1">
-                      {availableModels.map((model) => (
+                      {isModelsLoading ? (
+                        <div className="flex items-center justify-center py-3">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+                          <span className="ml-2 text-xs text-[var(--text-subtle)]">Loading models...</span>
+                        </div>
+                      ) : availableModels.length === 0 ? (
+                        <div className="py-2 text-xs text-[var(--text-subtle)]">No models available</div>
+                      ) : (
+                      availableModels.map((model) => (
                         <button
                           key={model.id}
                           type="button"
                           disabled={!model.available || isModelSwitching}
                           className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition ${
                             currentModel === model.id
-                              ? "bg-blue-500/20 text-blue-300"
+                              ? "bg-[var(--accent-soft)] text-[var(--accent)]"
                               : model.available
-                              ? "hover:bg-white/10 hover:text-white"
+                              ? "hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                               : "cursor-not-allowed opacity-40"
                           }`}
                           onClick={() => handleModelChange(model.id)}
@@ -338,14 +358,14 @@ const MainPanel: React.FC<MainPanelProps> = ({
                           <span className="flex items-center gap-2">
                             {model.name}
                             {model.isDefault && (
-                              <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] uppercase text-white/50">
+                              <span className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 text-[9px] uppercase text-[var(--text-subtle)]">
                                 Default
                               </span>
                             )}
                           </span>
                           {currentModel === model.id && (
                             <svg
-                              className="h-4 w-4 text-blue-400"
+                              className="h-4 w-4 text-[var(--accent)]"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -359,80 +379,87 @@ const MainPanel: React.FC<MainPanelProps> = ({
                             </svg>
                           )}
                           {!model.available && (
-                            <span className="text-[10px] uppercase text-white/40">
+                            <span className="text-[10px] uppercase text-[var(--text-subtle)]">
                               No API Key
                             </span>
                           )}
                         </button>
-                      ))}
+                      ))
+                      )}
                     </div>
                   </div>
-                  <div className="mt-3 border-t border-white/10 pt-3">
-                    <p className="mb-2 text-xs uppercase tracking-[0.25em] text-white/40">
+                  <div className="mt-3 border-t border-[var(--border)] pt-3">
+                    <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
                       Appearance
                     </p>
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white"
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                       onClick={() => {
+                        const isDark = document.documentElement.classList.toggle('dark');
+                        localStorage.setItem('theme', isDark ? 'dark' : 'light');
                         setShowSettingsMenu(false);
-                        onStartNewChat();
                       }}
                     >
-                      Reset workspace
-                      <span className="text-[10px] uppercase text-white/40">
-                        Clear
+                      Theme
+                      <span className="text-[10px] uppercase text-[var(--text-subtle)]">
+                        {document.documentElement.classList.contains('dark') ? 'Dark' : 'Light'}
                       </span>
                     </button>
                     {isAuthenticated ? null : (
                       <button
                         type="button"
-                        className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white"
+                        className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                         onClick={() => {
                           setShowSettingsMenu(false);
                           onOpenAuthModal("signin");
                         }}
                       >
                         Unlock more
-                        <span className="text-[10px] uppercase text-white/40">
+                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
                           Sign in
                         </span>
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white"
-                      onClick={() => setShowSettingsMenu(false)}
-                    >
-                      Theme
-                      <span className="text-[10px] uppercase text-white/40">
-                        Auto
-                      </span>
-                    </button>
                   </div>
                   {isAuthenticated && (
-                    <div className="mt-3 border-t border-white/10 pt-3">
-                      <p className="mb-2 text-xs uppercase tracking-[0.25em] text-white/40">
+                    <div className="mt-3 border-t border-[var(--border)] pt-3">
+                      <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
                         Data
                       </p>
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white"
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                         onClick={() => {
                           setShowSettingsMenu(false);
                           onOpenDatabaseSettings();
                         }}
                       >
                         Database
-                        <span className="text-[10px] uppercase text-white/40">
+                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
                           {databaseSummary}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-rose-500/10 hover:text-rose-300"
+                        onClick={() => {
+                          if (window.confirm('Clear all messages and start fresh? This cannot be undone.')) {
+                            setShowSettingsMenu(false);
+                            onStartNewChat();
+                          }
+                        }}
+                      >
+                        Reset workspace
+                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
+                          Clear
                         </span>
                       </button>
                       {selectedHistoryId && messages.length > 0 && (
                         <button
                           type="button"
                           disabled={isExporting}
-                          className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                          className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)] disabled:opacity-50"
                           onClick={handleExportConversation}
                         >
                           <span className="flex items-center gap-2">
@@ -472,6 +499,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                   onViewSqlInCanvas={onViewSqlInCanvas}
                   executedQueries={executedQueries}
                   isAuthenticated={isAuthenticated}
+                  onSuggestionClick={(text: string) => void onSendMessage(text)}
                 />
               </div>
               <InputSection

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import type { UserProfile } from '../services/chatApi';
+import type { UserProfile } from '../../services/chatApi';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -80,24 +80,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         icon: (
           <svg {...baseIconProps} viewBox="0 0 24 24" aria-hidden>
             <path d="M3 3v5h5M3 8.5A9 9 0 1 0 12 3" />
-          </svg>
-        ),
-      },
-      {
-        id: 'library',
-        label: 'Library',
-        icon: (
-          <svg {...baseIconProps} viewBox="0 0 24 24" aria-hidden>
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5z" />
-          </svg>
-        ),
-      },
-      {
-        id: 'notifications',
-        label: 'Notifications',
-        icon: (
-          <svg {...baseIconProps} viewBox="0 0 24 24" aria-hidden>
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
         ),
       },

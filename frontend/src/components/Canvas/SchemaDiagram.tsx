@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import mermaid from 'mermaid';
-import type { SqlSchemaPayload, SqlSchemaTable } from '../services/chatApi';
+import type { SqlSchemaPayload, SqlSchemaTable } from '../../services/chatApi';
 
 interface SchemaDiagramProps {
   schema: SqlSchemaPayload | null;

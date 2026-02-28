@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { deleteDocument, uploadDocument, type UploadedDocument, type LLMModel } from '../services/chatApi';
+import { deleteDocument, uploadDocument, type UploadedDocument, type LLMModel } from '../../services/chatApi';
 
 interface FileTile {
   id: string;
@@ -56,6 +56,7 @@ const InputSection: React.FC<InputSectionProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [showModelSelector, setShowModelSelector] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
   const modelSelectorRef = useRef<HTMLDivElement | null>(null);
@@ -84,12 +85,7 @@ const InputSection: React.FC<InputSectionProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (isHistoryActive && message) {
-      setMessage('');
-    }
-  }, [isHistoryActive, message]);
-
+  // When switching to history mode, clear files only (message already disabled via textarea)
   useEffect(() => {
     const element = messageInputRef.current;
     if (!element) {
@@ -198,6 +194,7 @@ const InputSection: React.FC<InputSectionProps> = ({
 
     const currentFiles = [...files];
     setMessage('');
+    setSendError(null);
     try {
       const result = onSend(trimmed, { documentIds: uploadedFileIds });
       // Handle both Promise and void returns
@@ -207,6 +204,8 @@ const InputSection: React.FC<InputSectionProps> = ({
     } catch (error) {
       console.error('Failed to send message', error);
       setMessage(trimmed);
+      setSendError(error instanceof Error ? error.message : 'Failed to send message. Please try again.');
+      setTimeout(() => setSendError(null), 5000);
       return;
     } finally {
       currentFiles.forEach((tile) => revokePreview(tile.id));
@@ -217,10 +216,8 @@ const InputSection: React.FC<InputSectionProps> = ({
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
     if (!selectedFiles.length) {
+      // User cancelled the file picker — do nothing
       event.target.value = '';
-      if (!isAuthenticated) {
-        onRequireAuth('signup');
-      }
       return;
     }
 
@@ -370,7 +367,27 @@ const InputSection: React.FC<InputSectionProps> = ({
   };
 
   return (
-    <footer className="sticky bottom-10 z-30 flex justify-center px-6  pt-4 backdrop-blur-xl">
+    <footer className="sticky bottom-10 z-30 flex flex-col items-center justify-center px-6 pt-4 backdrop-blur-xl">
+      <AnimatePresence>
+        {sendError && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="mb-2 flex w-full max-w-3xl items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-950/60 px-3 py-2 text-xs text-rose-300"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <span className="flex-1">{sendError}</span>
+            <button type="button" onClick={() => setSendError(null)} className="opacity-60 hover:opacity-100">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="w-full max-w-3xl">
         <AnimatePresence>
           {files.length > 0 && (

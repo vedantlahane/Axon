@@ -159,7 +159,7 @@ const useConversationManager = ({
   const deleteConversation = useCallback(
     async (conversationId: string) => {
       try {
-        await deleteConversationWithFiles(Number(conversationId), true);
+        await deleteConversationWithFiles(conversationId, true);
         setHistoryConversations((prev) => prev.filter((conversation) => conversation.id !== conversationId));
 
         if (selectedHistoryId === conversationId || activeConversationId === conversationId) {

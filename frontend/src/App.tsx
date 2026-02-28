@@ -1,29 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import Sidebar from './components/Sidebar';
-import MainPanel from './components/MainPanel';
-import AuthModal from './components/AuthModal';
-import DatabaseConnectionModal from './components/DatabaseConnectionModal';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Sidebar from './components/layout/Sidebar';
+import MainPanel from './components/layout/MainPanel';
+import AuthModal from './components/modals/AuthModal';
+import DatabaseConnectionModal from './components/modals/DatabaseConnectionModal';
 import { type SqlSideWindowProps } from './components/Canvas';
 import useAuth from './hooks/useAuth';
 import useConversationManager from './hooks/useConversationManager';
 import useDatabaseSettings from './hooks/useDatabaseSettings';
 import useSqlConsole from './hooks/useSqlConsole';
+import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 import {
   type UpdateDatabaseConnectionPayload,
 } from './services/chatApi';
 import type { ChatMessage } from './types/chat';
+import { ToastContainer, createToast, type ToastMessage } from './components/Toast';
+
+/** Pure utility — kept outside the component to avoid recreation on every render. */
+const deriveErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+};
 
 const App = () => {
   const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeSidebarItem, setActiveSidebarItem] = useState('chat');
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const startNewChatRef = useRef<() => void>(() => undefined);
-  const deriveErrorMessage = (error: unknown, fallback: string): string => {
-    if (error instanceof Error && error.message) {
-      return error.message;
-    }
-    return fallback;
-  };
+
+  const showToast = useCallback((type: 'success' | 'error' | 'info' | 'warning', message: string) => {
+    setToasts((prev) => [...prev, createToast(type, message)]);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const {
     currentUser,
@@ -276,6 +289,14 @@ const App = () => {
     return 'Select database';
   })();
 
+  // Global keyboard shortcuts
+  const shortcuts = useMemo(() => [
+    { key: 'n', ctrl: true, handler: handleStartNewChat },
+    { key: 'h', ctrl: true, shift: true, handler: () => handleViewChange('history') },
+  ], [handleStartNewChat, handleViewChange]);
+
+  useKeyboardShortcuts(shortcuts);
+
   const sqlConnectionSummary = activeConnection
     ? activeConnection.displayName || activeConnection.label || 'Connected database'
     : 'Database not configured';
@@ -343,6 +364,7 @@ const App = () => {
         sideWindow={sideWindowProps}
         onViewSqlInCanvas={viewSqlInCanvas}
         executedQueries={executedQueries}
+        showToast={showToast}
       />
       <AuthModal
         isOpen={authModalState.open}
@@ -370,6 +392,7 @@ const App = () => {
         isLoading={isDatabaseLoading}
         feedback={databaseFeedback}
       />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

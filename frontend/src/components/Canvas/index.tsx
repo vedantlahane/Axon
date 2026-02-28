@@ -1,27 +1,27 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import SchemaDiagram from "./SchemaDiagram";
-import type { SqlQueryResult, SqlQuerySuggestion } from "../services/chatApi";
+import type { SqlQueryResult, SqlQuerySuggestion } from "../../services/chatApi";
 import type {
   SqlSideWindowProps,
   SqlQueryHistoryEntry,
   CanvasTab,
   EditorPanel,
-} from "./Canvas/types";
+} from "./types";
 import {
   DEFAULT_QUERY_LIMIT,
   QUERY_LIMIT_MIN,
   QUERY_LIMIT_MAX,
   CANVAS_TABS,
   TAB_LABELS,
-} from "./Canvas/types";
-import { SqlResultsView } from "./Canvas/SqlResultsView";
-import { SqlHistoryPanel } from "./Canvas/SqlHistoryPanel";
-import { SqlSuggestionsPanel } from "./Canvas/SqlSuggestionsPanel";
-import { SqlPendingApprovalPanel } from "./Canvas/SqlPendingApprovalPanel";
+} from "./types";
+import { SqlResultsView } from "./SqlResultsView";
+import { SqlHistoryPanel } from "./SqlHistoryPanel";
+import { SqlSuggestionsPanel } from "./SqlSuggestionsPanel";
+import { SqlPendingApprovalPanel } from "./SqlPendingApprovalPanel";
 
 // Re-export types for backward compatibility
-export type { SqlQueryHistoryEntry, PendingQuery, SqlSideWindowProps } from "./Canvas";
+export type { SqlQueryHistoryEntry, PendingQuery, SqlSideWindowProps } from "./types";
 
 interface CanvasProps {
   children: React.ReactNode;

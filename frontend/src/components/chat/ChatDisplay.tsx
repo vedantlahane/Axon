@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
-import type { ChatMessage, ConversationSummary } from '../App';
-import type { SqlQueryResult, FeedbackType } from '../services/chatApi';
-import { submitMessageFeedback, deleteMessageFeedback } from '../services/chatApi';
-import { normalizeSql } from '../utils/sqlUtils';
+import type { ChatMessage, ConversationSummary } from '../../types/chat';
+import type { SqlQueryResult, FeedbackType } from '../../services/chatApi';
+import { submitMessageFeedback, deleteMessageFeedback } from '../../services/chatApi';
+import { normalizeSql } from '../../utils/sqlUtils';
+import MarkdownRenderer from './MarkdownRenderer';
+import ScrollToBottom from './ScrollToBottom';
 
 interface ChatDisplayProps {
   view: 'chat' | 'history';
@@ -17,6 +19,7 @@ interface ChatDisplayProps {
   onViewSqlInCanvas?: (sql: string) => void;
   isAuthenticated?: boolean;
   executedQueries?: Map<string, SqlQueryResult>; // sql -> result
+  onSuggestionClick?: (text: string) => void;
 }
 
 // Detect sources used in a message based on content patterns
@@ -82,6 +85,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   onViewSqlInCanvas,
   executedQueries,
   isAuthenticated = false,
+  onSuggestionClick,
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const showLanding = view === 'chat' && messages.length === 0;
@@ -90,10 +94,28 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
 
   // Handle copy with feedback
-  const handleCopy = (messageId: string, content: string) => {
-    navigator.clipboard.writeText(content);
-    setCopiedMessageId(messageId);
-    setTimeout(() => setCopiedMessageId(null), 2000);
+  const handleCopy = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch {
+      // Fallback for non-HTTPS or denied permissions
+      const textarea = document.createElement('textarea');
+      textarea.value = content;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedMessageId(messageId);
+        setTimeout(() => setCopiedMessageId(null), 2000);
+      } catch {
+        console.error('Copy failed: clipboard access denied');
+      }
+      document.body.removeChild(textarea);
+    }
   };
 
   // Handle message feedback
@@ -138,22 +160,22 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       const hasMore = result.rows.length > maxRows;
 
       return (
-        <div className="rounded-lg border border-white/10 bg-white/5 overflow-x-auto">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="border-b border-white/10 bg-white/5">
+            <thead className="border-b border-[var(--border)] bg-[var(--bg-soft)]">
               <tr>
                 {result.columns.map((col, colIdx) => (
-                  <th key={colIdx} className="px-3 py-2 text-left text-white/70 font-mono font-medium">
+                  <th key={colIdx} className="px-3 py-2 text-left text-[var(--text-muted)] font-mono font-medium">
                     {col}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-[var(--border)]">
               {displayRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-white/5">
+                <tr key={idx} className="hover:bg-[var(--bg-soft)]">
                   {result.columns.map((_, colIdx) => (
-                    <td key={`${idx}-${colIdx}`} className="px-3 py-2 text-white/80 font-mono truncate max-w-[200px]">
+                    <td key={`${idx}-${colIdx}`} className="px-3 py-2 text-[var(--text-secondary)] font-mono truncate max-w-[200px]">
                       {String(row[colIdx] ?? 'NULL')}
                     </td>
                   ))}
@@ -162,8 +184,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
             </tbody>
           </table>
           {hasMore && (
-            <div className="px-3 py-2 border-t border-white/10 text-xs text-white/50 bg-white/5">
-              Showing {displayRows.length} of {result.rows.length} rows. <span className="text-white/40">View all in Canvas</span>
+            <div className="px-3 py-2 border-t border-[var(--border)] text-xs text-[var(--text-muted)] bg-[var(--bg-soft)]">
+              Showing {displayRows.length} of {result.rows.length} rows. <span className="text-[var(--text-subtle)]">View all in Canvas</span>
             </div>
           )}
         </div>
@@ -184,244 +206,38 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     return null;
   };
 
-  // Parse markdown-like content into formatted elements
-  const parseFormattedContent = (text: string): React.ReactNode[] => {
-    const elements: React.ReactNode[] = [];
-    const lines = text.split('\n');
-    let inCodeBlock = false;
-    let codeBlockLang = '';
-    let codeBlockContent: string[] = [];
-    let listItems: { level: number; content: string; ordered: boolean; num?: number }[] = [];
-    
-    const flushList = () => {
-      if (listItems.length > 0) {
-        const renderList = (items: typeof listItems, startIdx = 0): React.ReactNode => {
-          const result: React.ReactNode[] = [];
-          let i = startIdx;
-          const baseLevel = items[startIdx]?.level ?? 0;
-          
-          while (i < items.length && items[i].level >= baseLevel) {
-            const item = items[i];
-            if (item.level === baseLevel) {
-              result.push(
-                <li key={i} className="ml-4">
-                  {renderInlineFormatting(item.content)}
-                </li>
-              );
-              i++;
-            } else {
-              // Find nested items
-              const nestedStart = i;
-              while (i < items.length && items[i].level > baseLevel) i++;
-              result.push(
-                <li key={`nested-${nestedStart}`} className="ml-4 list-none">
-                  {renderList(items.slice(nestedStart, i), 0)}
-                </li>
-              );
-            }
-          }
-          
-          const isOrdered = items[startIdx]?.ordered;
-          return isOrdered ? (
-            <ol className="list-decimal space-y-1 pl-4 text-white/70">{result}</ol>
-          ) : (
-            <ul className="list-disc space-y-1 pl-4 text-white/70">{result}</ul>
-          );
-        };
-        
-        elements.push(<div key={`list-${elements.length}`} className="my-2">{renderList(listItems)}</div>);
-        listItems = [];
-      }
-    };
-
-    const renderInlineFormatting = (text: string): React.ReactNode => {
-      // Handle inline code, bold, italic
-      const parts: React.ReactNode[] = [];
-      let remaining = text;
-      let keyIdx = 0;
-
-      while (remaining.length > 0) {
-        // Inline code `code`
-        const codeMatch = remaining.match(/^`([^`]+)`/);
-        if (codeMatch) {
-          parts.push(
-            <code key={keyIdx++} className="rounded bg-blue-500/15 px-1.5 py-0.5 font-mono text-[13px] text-blue-200">
-              {codeMatch[1]}
-            </code>
-          );
-          remaining = remaining.slice(codeMatch[0].length);
-          continue;
-        }
-
-        // Bold **text** or __text__
-        const boldMatch = remaining.match(/^(\*\*|__)(.+?)\1/);
-        if (boldMatch) {
-          parts.push(<strong key={keyIdx++} className="font-semibold text-white/90">{boldMatch[2]}</strong>);
-          remaining = remaining.slice(boldMatch[0].length);
-          continue;
-        }
-
-        // Italic *text* or _text_
-        const italicMatch = remaining.match(/^(\*|_)([^*_]+)\1/);
-        if (italicMatch) {
-          parts.push(<em key={keyIdx++} className="italic text-white/80">{italicMatch[2]}</em>);
-          remaining = remaining.slice(italicMatch[0].length);
-          continue;
-        }
-
-        // Regular character
-        const nextSpecial = remaining.slice(1).search(/[`*_]/);
-        if (nextSpecial === -1) {
-          parts.push(remaining);
-          break;
-        } else {
-          parts.push(remaining.slice(0, nextSpecial + 1));
-          remaining = remaining.slice(nextSpecial + 1);
-        }
-      }
-
-      return parts.length === 1 ? parts[0] : <>{parts}</>;
-    };
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Code block start/end
-      const codeBlockMatch = line.match(/^```(\w*)/);
-      if (codeBlockMatch) {
-        if (!inCodeBlock) {
-          flushList();
-          inCodeBlock = true;
-          codeBlockLang = codeBlockMatch[1] || 'text';
-          codeBlockContent = [];
-        } else {
-          // End code block
-          const langLabel = codeBlockLang.toUpperCase() || 'CODE';
-          elements.push(
-            <div key={`code-${elements.length}`} className="my-3 rounded-xl border border-white/10 bg-slate-50 dark:bg-[#0b1220]/80 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-white/50">{langLabel}</span>
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard.writeText(codeBlockContent.join('\n'))}
-                  className="text-[10px] text-slate-500 hover:text-slate-700 dark:text-white/40 dark:hover:text-white/70 transition"
-                >
-                  Copy
-                </button>
-              </div>
-              <pre className="p-4 text-sm font-mono text-slate-700 dark:text-sky-200/90 overflow-x-auto leading-relaxed">
-                <code>{codeBlockContent.join('\n')}</code>
-              </pre>
-            </div>
-          );
-          inCodeBlock = false;
-          codeBlockLang = '';
-          codeBlockContent = [];
-        }
-        continue;
-      }
-
-      if (inCodeBlock) {
-        codeBlockContent.push(line);
-        continue;
-      }
-
-      // Headers
-      const headerMatch = line.match(/^(#{1,6})\s+(.+)/);
-      if (headerMatch) {
-        flushList();
-        const level = headerMatch[1].length;
-        const headerClasses: Record<number, string> = {
-          1: 'text-lg font-semibold text-white/90 mt-4 mb-2',
-          2: 'text-base font-semibold text-white/85 mt-3 mb-2',
-          3: 'text-sm font-semibold text-white/80 mt-3 mb-1',
-          4: 'text-sm font-medium text-white/75 mt-2 mb-1',
-          5: 'text-xs font-medium text-white/70 mt-2 mb-1',
-          6: 'text-xs font-medium text-white/60 mt-2 mb-1',
-        };
-        elements.push(
-          <div key={`h-${elements.length}`} className={headerClasses[level]}>
-            {renderInlineFormatting(headerMatch[2])}
-          </div>
-        );
-        continue;
-      }
-
-      // Unordered list items
-      const ulMatch = line.match(/^(\s*)[-*+]\s+(.+)/);
-      if (ulMatch) {
-        const level = Math.floor(ulMatch[1].length / 2);
-        listItems.push({ level, content: ulMatch[2], ordered: false });
-        continue;
-      }
-
-      // Ordered list items
-      const olMatch = line.match(/^(\s*)(\d+)\.\s+(.+)/);
-      if (olMatch) {
-        const level = Math.floor(olMatch[1].length / 2);
-        listItems.push({ level, content: olMatch[3], ordered: true, num: parseInt(olMatch[2]) });
-        continue;
-      }
-
-      // Blockquote
-      const quoteMatch = line.match(/^>\s*(.+)/);
-      if (quoteMatch) {
-        flushList();
-        elements.push(
-          <blockquote key={`q-${elements.length}`} className="my-2 border-l-2 border-blue-400/40 pl-3 italic text-white/60">
-            {renderInlineFormatting(quoteMatch[1])}
-          </blockquote>
-        );
-        continue;
-      }
-
-      // Horizontal rule
-      if (/^[-*_]{3,}$/.test(line.trim())) {
-        flushList();
-        elements.push(<hr key={`hr-${elements.length}`} className="my-4 border-white/10" />);
-        continue;
-      }
-
-      // Empty line
-      if (line.trim() === '') {
-        flushList();
-        continue;
-      }
-
-      // Regular paragraph
-      flushList();
-      elements.push(
-        <p key={`p-${elements.length}`} className="my-1 text-white/80 leading-relaxed">
-          {renderInlineFormatting(line)}
-        </p>
-      );
-    }
-
-    flushList();
-    return elements;
-  };
+  // Rendered via MarkdownRenderer component (replaces hand-rolled parser)
 
   // Helper to render message content with clickable SQL blocks
   const renderMessageContent = (message: ChatMessage) => {
-    const sql = extractSql(message.content);
-    const normalizedSql = sql ? normalizeSql(sql) : null;
-    const queryResult = normalizedSql && executedQueries ? executedQueries.get(normalizedSql) : null;
-    const hasExecutedResults = !!queryResult;
-    
-    if (sql && onViewSqlInCanvas) {
-      // Split content around the SQL block
-      const parts = message.content.split(/```sql[\s\S]*?```/i);
-      const beforeSql = parts[0] || '';
-      const afterSql = parts[1] || '';
-      
-      return (
-        <div className="flex flex-col gap-2">
-          {beforeSql.trim() && <div className="prose-content">{parseFormattedContent(beforeSql.trim())}</div>}
-          
-          {/* SQL Block with View in Canvas button */}
-          <div className="rounded-lg border border-white/10 bg-slate-50 dark:bg-[#0d1117] overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
-              <span className="text-xs text-slate-500 dark:text-white/50 font-mono">SQL Query</span>
+    // Extract ALL SQL blocks from the message
+    const sqlBlockRegex = /```sql\s*([\s\S]*?)```/gi;
+    const sqlMatches = [...message.content.matchAll(sqlBlockRegex)];
+
+    if (sqlMatches.length > 0 && onViewSqlInCanvas) {
+      // Split content around all SQL blocks
+      const parts: React.ReactNode[] = [];
+      let lastIndex = 0;
+
+      sqlMatches.forEach((match, matchIdx) => {
+        const sql = match[1].trim();
+        const normalizedSql = normalizeSql(sql);
+        const queryResult = normalizedSql && executedQueries ? executedQueries.get(normalizedSql) : null;
+        const hasExecutedResults = !!queryResult;
+        const matchStart = match.index ?? 0;
+        const matchEnd = matchStart + match[0].length;
+
+        // Text before this SQL block
+        const beforeText = message.content.slice(lastIndex, matchStart).trim();
+        if (beforeText) {
+          parts.push(<div key={`text-${matchIdx}`} className="prose-content"><MarkdownRenderer content={beforeText} /></div>);
+        }
+
+        // SQL block
+        parts.push(
+          <div key={`sql-${matchIdx}`} className="rounded-lg border border-white/10 bg-slate-50 dark:bg-[#0d1117] overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-soft)]">
+              <span className="text-xs text-[var(--text-muted)] font-mono">SQL Query</span>
               <button
                 type="button"
                 onClick={() => onViewSqlInCanvas(sql)}
@@ -438,23 +254,33 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
               <code>{sql}</code>
             </pre>
           </div>
+        );
 
-          {/* Display results if query has been executed */}
-          {hasExecutedResults && queryResult && (
-            <div className="flex flex-col gap-2">
-              <div className="text-xs text-slate-500 dark:text-white/40 px-1">Query Results:</div>
+        // Display results if query has been executed
+        if (hasExecutedResults && queryResult) {
+          parts.push(
+            <div key={`result-${matchIdx}`} className="flex flex-col gap-2">
+              <div className="text-xs text-[var(--text-subtle)] px-1">Query Results:</div>
               {renderSqlResults(queryResult)}
             </div>
-          )}
-          
-          {afterSql.trim() && <div className="prose-content">{parseFormattedContent(afterSql.trim())}</div>}
-        </div>
-      );
+          );
+        }
+
+        lastIndex = matchEnd;
+      });
+
+      // Remaining text after the last SQL block
+      const afterText = message.content.slice(lastIndex).trim();
+      if (afterText) {
+        parts.push(<div key="text-after" className="prose-content"><MarkdownRenderer content={afterText} /></div>);
+      }
+
+      return <div className="flex flex-col gap-2">{parts}</div>;
     }
     
     // For non-SQL messages, render with full formatting
     if (message.sender === 'assistant') {
-      return <div className="prose-content">{parseFormattedContent(message.content)}</div>;
+      return <div className="prose-content"><MarkdownRenderer content={message.content} /></div>;
     }
     
     // User messages - simpler formatting
@@ -469,7 +295,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   const historyEmpty = useMemo(() => historyConversations.length === 0, [historyConversations]);
 
   return (
-    <section className="flex h-full flex-col items-center">
+    <section className="relative flex h-full flex-col items-center">
       <div ref={scrollRef} className="flex h-full w-full flex-col items-center overflow-y-auto px-6 pb-10 pt-6">
         <div className="flex w-full max-w-3xl flex-1 flex-col">
           <AnimatePresence mode="wait">
@@ -555,8 +381,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.6, delay: 0.4 }}
                     >
-                      <p className="text-2xl leading-relaxed text-white/70">Start your conversation with Axon</p>
-                      <p className="text-sm text-white/45">Draft a message below or pick one of the quick ideas.</p>
+                      <p className="text-2xl leading-relaxed text-[var(--text-secondary)]">Start your conversation with Axon</p>
+                      <p className="text-sm text-[var(--text-subtle)]">Draft a message below or pick one of the quick ideas.</p>
                     </motion.div>
                   </div>
 
@@ -567,15 +393,17 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                     transition={{ duration: 0.6, delay: 0.6 }}
                   >
                     {suggestions.map((suggestion, index) => (
-                      <motion.span
+                      <motion.button
+                        type="button"
                         key={`${suggestion}-${index}`}
-                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/70"
+                        className="rounded-full border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] cursor-pointer"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: 0.7 + index * 0.05 }}
+                        onClick={() => onSuggestionClick?.(suggestion)}
                       >
                         {suggestion}
-                      </motion.span>
+                      </motion.button>
                     ))}
                   </motion.div>
                 </motion.div>
@@ -596,10 +424,10 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                   const title = isUser ? 'You' : 'Axon';
                   const avatarClasses = isUser
                     ? 'bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white'
-                    : 'bg-white/10 text-white';
+                    : 'bg-[var(--bg-soft)] text-[var(--text-primary)]';
                   const bubbleClasses = isUser
-                    ? 'border border-white/10 bg-[#2563eb]/20 text-white'
-                    : 'border border-white/5 bg-white/5 text-white';
+                    ? 'border border-[var(--accent)]/20 bg-[var(--accent)]/10 text-[var(--text-primary)]'
+                    : 'border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-primary)]';
                   const hasAttachments = (message.attachments?.length ?? 0) > 0;
                   const sources = !isUser ? detectSources(message.content) : [];
 
@@ -613,7 +441,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                     >
                       {/* Avatar */}
                       <div
-                        className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-white/10 shadow-inner ${avatarClasses}`}
+                        className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-[var(--border)] shadow-inner ${avatarClasses}`}
                         aria-hidden
                       >
                         {isUser ? (
@@ -651,9 +479,9 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                       {/* Message Content */}
                       <div className={`flex flex-col gap-1.5 min-w-0 ${isUser ? 'items-end max-w-[75%]' : 'flex-1 max-w-full'}`}>
                         {/* Header */}
-                        <div className={`flex items-center gap-2 text-xs text-white/50 ${isUser ? 'flex-row-reverse' : ''}`}>
-                          <span className="font-medium text-white/70">{title}</span>
-                          <span className="h-1 w-1 rounded-full bg-white/20" aria-hidden />
+                        <div className={`flex items-center gap-2 text-xs text-[var(--text-muted)] ${isUser ? 'flex-row-reverse' : ''}`}>
+                          <span className="font-medium text-[var(--text-secondary)]">{title}</span>
+                          <span className="h-1 w-1 rounded-full bg-[var(--text-subtle)]" aria-hidden />
                           <span>{formatDisplayTime(message.timestamp)}</span>
                         </div>
 
@@ -668,7 +496,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                   href={attachment.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 transition hover:border-white/20 hover:bg-white/10"
+                                  className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:border-[var(--accent)]/30 hover:bg-[var(--bg-soft)]"
                                 >
                                   <svg
                                     width="14"
@@ -685,7 +513,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                   <span className="truncate max-w-[120px]" title={attachment.name}>
                                     {attachment.name}
                                   </span>
-                                  <span className="text-white/40">
+                                  <span className="text-[var(--text-subtle)]">
                                     {formatAttachmentSize(attachment.size)}
                                   </span>
                                 </a>
@@ -700,13 +528,13 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                             {/* Sources */}
                             {sources.length > 0 && (
                               <div className="flex items-center gap-1.5">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-subtle)]">
                                   <circle cx="12" cy="12" r="10" />
                                   <path d="M12 16v-4M12 8h.01" />
                                 </svg>
-                                <span className="text-[10px] text-white/40">Sources:</span>
+                                <span className="text-[10px] text-[var(--text-subtle)]">Sources:</span>
                                 {sources.map((source) => (
-                                  <span key={source} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/50 border border-white/10">
+                                  <span key={source} className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-soft)] text-[var(--text-muted)] border border-[var(--border)]">
                                     {source}
                                   </span>
                                 ))}
@@ -722,7 +550,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                 className={`p-1.5 rounded-lg transition ${
                                   copiedMessageId === message.id
                                     ? 'text-green-400 bg-green-500/10'
-                                    : 'text-white/30 hover:text-white/70 hover:bg-white/5'
+                                    : 'text-[var(--text-subtle)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-soft)]'
                                 }`}
                                 title={copiedMessageId === message.id ? 'Copied!' : 'Copy message'}
                               >
@@ -746,7 +574,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                 className={`p-1.5 rounded-lg transition ${
                                   messageFeedback.get(message.id) === 'like'
                                     ? 'text-green-400 bg-green-500/15'
-                                    : 'text-white/30 hover:text-green-400 hover:bg-green-500/10'
+                                    : 'text-[var(--text-subtle)] hover:text-green-400 hover:bg-green-500/10'
                                 } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
                                 title="Good response"
                               >
@@ -763,7 +591,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                 className={`p-1.5 rounded-lg transition ${
                                   messageFeedback.get(message.id) === 'dislike'
                                     ? 'text-rose-400 bg-rose-500/15'
-                                    : 'text-white/30 hover:text-rose-400 hover:bg-rose-500/10'
+                                    : 'text-[var(--text-subtle)] hover:text-rose-400 hover:bg-rose-500/10'
                                 } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
                                 title="Bad response"
                               >
@@ -780,7 +608,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                                 className={`p-1.5 rounded-lg transition ${
                                   messageFeedback.get(message.id) === 'report'
                                     ? 'text-amber-400 bg-amber-500/15'
-                                    : 'text-white/30 hover:text-amber-400 hover:bg-amber-500/10'
+                                    : 'text-[var(--text-subtle)] hover:text-amber-400 hover:bg-amber-500/10'
                                 } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
                                 title="Report issue"
                               >
@@ -809,7 +637,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
               >
                 {historyEmpty ? (
-                  <div className="flex flex-1 items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/5 text-center text-white/40">
+                  <div className="flex flex-1 items-center justify-center rounded-3xl border border-dashed border-[var(--border)] bg-[var(--bg-soft)] text-center text-[var(--text-subtle)]">
                     <p>No saved conversations yet. Your next chats will appear here.</p>
                   </div>
                 ) : (
@@ -820,8 +648,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                         key={conversation.id}
                         className={`relative flex w-full flex-col gap-2 rounded-2xl border px-5 py-4 text-left transition ${
                           isSelected
-                            ? 'border-[#2563eb] bg-[#2563eb]/15 text-white'
-                            : 'border-white/10 bg-white/5 text-white/80 hover:border-white/20 hover:bg-white/10'
+                            ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-primary)]'
+                            : 'border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-secondary)] hover:border-[var(--accent)]/30 hover:bg-[var(--bg-panel)]'
                         }`}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
@@ -836,14 +664,14 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                         }}
                       >
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="text-base font-semibold text-white">{conversation.title}</h3>
+                          <h3 className="text-base font-semibold text-[var(--text-primary)]">{conversation.title}</h3>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs uppercase tracking-[0.2em] text-white/40">
+                            <span className="text-xs uppercase tracking-[0.2em] text-[var(--text-subtle)]">
                               {conversation.updatedAt}
                             </span>
                             <button
                               type="button"
-                              className="rounded-lg border border-transparent p-1 text-white/40 hover:border-white/20 hover:text-white/80"
+                              className="rounded-lg border border-transparent p-1 text-[var(--text-subtle)] hover:border-[var(--border)] hover:text-[var(--text-secondary)]"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 void onDeleteConversation(conversation.id);
@@ -869,9 +697,9 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                             </button>
                           </div>
                         </div>
-                        <p className="text-sm text-white/60">{conversation.summary}</p>
-            <div className="flex items-center gap-2 text-xs text-white/40">
-              <span>{conversation.messageCount ?? conversation.messages?.length ?? 0} messages</span>
+                        <p className="text-sm text-[var(--text-muted)]">{conversation.summary}</p>
+                        <div className="flex items-center gap-2 text-xs text-[var(--text-subtle)]">
+                          <span>{conversation.messageCount ?? conversation.messages?.length ?? 0} messages</span>
                           <span>•</span>
                           <span>Tap to reopen this chat</span>
                         </div>
@@ -891,7 +719,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
               exit={{ opacity: 0, y: 12 }}
             >
               <div
-                className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/10 text-white"
+                className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-primary)]"
                 aria-hidden
               >
                 <svg
@@ -909,17 +737,17 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 </svg>
               </div>
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-xs text-white/50">
-                  <span className="font-semibold text-white">Axon</span>
-                  <span className="h-1 w-1 rounded-full bg-white/30" aria-hidden />
+                <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                  <span className="font-semibold text-[var(--text-primary)]">Axon</span>
+                  <span className="h-1 w-1 rounded-full bg-[var(--text-subtle)]" aria-hidden />
                   <span>Thinking…</span>
                 </div>
-                <div className="w-fit rounded-2xl border border-black bg-white/5 px-4 py-3 text-sm leading-relaxed text-white shadow-lg">
+                <div className="w-fit rounded-2xl border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-3 text-sm leading-relaxed text-[var(--text-primary)] shadow-lg">
                   <div className="flex items-center gap-2">
                     {[0, 1, 2].map((index) => (
                       <motion.span
                         key={index}
-                        className="h-2 w-2 rounded-full bg-white/70"
+                        className="h-2 w-2 rounded-full bg-[var(--text-secondary)]"
                         animate={{ opacity: [0.3, 1, 0.3] }}
                         transition={{ duration: 1, repeat: Infinity, delay: index * 0.2 }}
                       />
@@ -931,6 +759,11 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
           )}
         </div>
       </div>
+
+      {/* Floating scroll-to-bottom button */}
+      {view === 'chat' && !showLanding && (
+        <ScrollToBottom scrollRef={scrollRef} />
+      )}
     </section>
   );
 };

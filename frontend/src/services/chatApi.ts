@@ -638,7 +638,7 @@ export async function changePassword(
 }
 
 // Export conversation to DOCX
-export async function exportConversationDocx(conversationId: number): Promise<void> {
+export async function exportConversationDocx(conversationId: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/export/`, {
     method: 'GET',
     credentials: 'include',
@@ -697,7 +697,7 @@ export interface SqlResultExport {
 }
 
 export async function exportConversationZip(
-  conversationId: number,
+  conversationId: string,
   sqlResults: SqlResultExport[] = []
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}/export/zip/`, {
@@ -736,7 +736,7 @@ export interface ConversationDocument {
 }
 
 // Get all documents attached to a conversation
-export async function getConversationDocuments(conversationId: number): Promise<{
+export async function getConversationDocuments(conversationId: string): Promise<{
   conversation_id: number;
   documents: ConversationDocument[];
   count: number;
@@ -750,7 +750,7 @@ export async function getConversationDocuments(conversationId: number): Promise<
 
 // Delete a document from a conversation
 export async function deleteConversationDocument(
-  conversationId: number,
+  conversationId: string,
   documentId: number
 ): Promise<{
   status: string;
@@ -769,7 +769,7 @@ export async function deleteConversationDocument(
 
 // Delete conversation with all files
 export async function deleteConversationWithFiles(
-  conversationId: number,
+  conversationId: string,
   deleteFiles = true
 ): Promise<{
   status: string;

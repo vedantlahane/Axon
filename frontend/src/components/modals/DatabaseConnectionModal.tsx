@@ -4,7 +4,7 @@ import type {
   DatabaseConnectionSettings,
   DatabaseMode,
   UpdateDatabaseConnectionPayload,
-} from '../services/chatApi';
+} from '../../services/chatApi';
 
 interface DatabaseConnectionModalProps {
   isOpen: boolean;
