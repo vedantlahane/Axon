@@ -328,7 +328,7 @@ const App = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden text-[var(--text-primary)] bg-[var(--bg-base)] dark:text-white dark:bg-[radial-gradient(ellipse_at_top,_rgba(25,40,85,0.35),_transparent_70%)]">
+    <div className="flex h-screen w-screen overflow-hidden text-(--text-primary) bg-[var(--bg-base)] dark:text-white dark:bg-[radial-gradient(ellipse_at_top,rgba(25,40,85,0.35),transparent_70%)]">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
