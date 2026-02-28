@@ -137,9 +137,9 @@ const InputSection: React.FC<InputSectionProps> = ({
       setIsRecording(false);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: Event) => {
       setIsRecording(false);
-      console.warn('Speech recognition error:', event.error);
+      console.warn('Speech recognition error:', (event as unknown as { error?: string }).error);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {

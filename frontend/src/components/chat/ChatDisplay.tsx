@@ -146,12 +146,6 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     }
   }, [isAuthenticated, messageFeedback]);
 
-  // Helper to extract SQL from message content
-  const extractSql = (content: string): string | null => {
-    const match = content.match(/```sql\s*([\s\S]*?)```/i);
-    return match ? match[1].trim() : null;
-  };
-
   // Helper to render SQL query results inline
   const renderSqlResults = (result: SqlQueryResult) => {
     if (result.type === 'rows' && result.columns && result.rows) {

@@ -27,7 +27,6 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
     },
   };
 
-  const orbitDots = Array.from({ length: 10 }, (_, idx) => idx);
   const mosaicTiles = Array.from({ length: 14 }, (_, idx) => idx);
   const particleDots = Array.from({ length: 28 }, (_, idx) => idx);
   const [tileOrder, setTileOrder] = useState(mosaicTiles);

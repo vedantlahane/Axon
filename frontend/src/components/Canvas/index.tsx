@@ -14,6 +14,7 @@ import {
   QUERY_LIMIT_MAX,
   CANVAS_TABS,
   TAB_LABELS,
+  formatExecutionTimestamp,
 } from "./types";
 import { SqlResultsView } from "./SqlResultsView";
 import { SqlHistoryPanel } from "./SqlHistoryPanel";

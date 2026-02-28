@@ -338,7 +338,7 @@ const AuthModal = ({
                   </label>
                   <input
                     id="auth-email"
-                    ref={view !== 'signup' && view !== 'reset-confirm' ? firstInputRef : undefined}
+                    ref={view !== 'signup' && (view as string) !== 'reset-confirm' ? firstInputRef : undefined}
                     type="email"
                     autoComplete="email"
                     className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-400 focus:outline-none"
