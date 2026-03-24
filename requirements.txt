@@ -1,0 +1,12 @@
+fastapi==0.115.3
+uvicorn[standard]==0.25.0
+sqlalchemy==2.0.30
+asyncpg==0.27.0
+alembic==1.11.1
+python-jose==3.3.0
+passlib[bcrypt]==1.7.5
+pydantic==2.8.0
+pydantic-settings==2.0.1
+langgraph==1.0.0
+langchain==0.3.0
+aiofiles==23.2.1
