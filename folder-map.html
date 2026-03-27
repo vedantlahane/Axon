@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Axon — Folder Map</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a0a;
+    color: #e8e4e0;
+    min-height: 100vh;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .tree {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 12.5px;
+    line-height: 2;
+    width: max-content;
+    text-align: left;
+  }
+  h1 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #a09a94;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  h2 {
+    font-size: 1.9rem;
+    font-weight: 600;
+    color: #e8e4e0;
+    margin-bottom: 2rem;
+  }
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    margin-bottom: 2rem;
+    padding: 12px 16px;
+    background: #111;
+    border-radius: 8px;
+    border: 0.5px solid #222;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-del { background: #E24B4A; }
+  .dot-move { background: #BA7517; }
+  .dot-keep { background: #5F5E5A; }
+  .dot-new { background: #1D9E75; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #111;
+    border: 0.5px solid #222;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    overflow: hidden;
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 0.5px solid #222;
+  }
+  .label-del   { color: #E24B4A; }
+  .label-new   { color: #1D9E75; }
+  .label-move  { color: #BA7517; }
+  .label-keep  { color: #5F5E5A; }
+
+  .tree {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 12.5px;
+    line-height: 2;
+  }
+  .del  { color: #E24B4A; text-decoration: line-through; opacity: 0.75; }
+  .keep { color: #5F5E5A; }
+  .new  { color: #1D9E75; font-weight: 500; }
+  .move { color: #BA7517; }
+  .dir  { color: #e8e4e0; font-weight: 600; }
+  .cm   { color: #444; font-style: italic; }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 20px;
+    margin-left: 8px;
+    vertical-align: middle;
+    font-family: inherit;
+  }
+  .b-new  { background: #0a2a1e; color: #1D9E75; border: 0.5px solid #1D9E75; }
+  .b-same { background: #1a1a1a; color: #5F5E5A; border: 0.5px solid #333; }
+  .b-gone { background: #2a0a0a; color: #E24B4A; border: 0.5px solid #E24B4A; }
+  .b-move { background: #2a1a00; color: #BA7517; border: 0.5px solid #BA7517; }
+</style>
+</head>
+<body>
+
+<h1>Axon Platform</h1>
+<h2>Folder Map</h2>
+
+<div class="tree">
+  <span class="new">.github/</span> <span class="cm">(CI/CD workflows)</span><br>
+  <span class="new">  workflows/ci.yml</span> <span class="cm">(PR lint/test pipeline)</span><br>
+  <span class="new">  workflows/cd-staging.yml</span> <span class="cm">(deploy dev/staging)</span><br>
+  <span class="new">  workflows/cd-prod.yml</span> <span class="cm">(production gates)</span><br>
+  <br>
+  <span class="keep">backend/</span> <span class="cm">(FastAPI app sources)</span><br>
+  <span class="keep">  main.py</span> <span class="cm">(app startup)</span><br>
+  <span class="keep">  config.py</span> <span class="cm">(config values)</span><br>
+  <span class="keep">  database.py</span> <span class="cm">(DB connection/session)</span><br>
+  <span class="keep">  auth/</span> <span class="cm">(JWT and auth deps)</span><br>
+  <span class="keep">  models/</span> <span class="cm">(ORM models)</span><br>
+  <span class="keep">  routers/</span> <span class="cm">(API routes)</span><br>
+  <span class="keep">  schemas/</span> <span class="cm">(Pydantic payloads)</span><br>
+  <span class="keep">  agent/</span> <span class="cm">(plugin tools module)</span><br>
+  <span class="keep">  Dockerfile</span> <span class="cm">(backend container image)</span><br>
+  <span class="keep">  requirements.txt</span> <span class="cm">(Python deps)</span><br>
+  <span class="keep">  alembic/</span> <span class="cm">(DB migrations)</span><br>
+  <br>
+  <span class="keep">mcp/</span> <span class="cm">(moderation micro service)</span><br>
+  <span class="keep">  server.py</span> <span class="cm">(mcp FastAPI entrypoint)</span><br>
+  <span class="keep">  Dockerfile</span> <span class="cm">(mcp image)</span><br>
+  <span class="keep">  requirements.txt</span> <span class="cm">(mcp deps)</span><br>
+  <br>
+  <span class="keep">frontend/</span> <span class="cm">(React UI)</span><br>
+  <span class="keep">  Dockerfile</span> <span class="cm">(web image)</span><br>
+  <span class="keep">  src/</span> <span class="cm">(app source)</span><br>
+  <span class="keep">  package.json</span> <span class="cm">(JS deps and scripts)</span><br>
+  <span class="keep">  vite.config.ts</span> <span class="cm">(Vite config)</span><br>
+  <br>
+  <span class="new">infra/</span> <span class="cm">(deployment IaC)</span><br>
+  <span class="new">  terraform/</span> <span class="cm">(AWS provisioning)</span><br>
+  <span class="new">    main.tf</span> <span class="cm">(provider + state)</span><br>
+  <span class="new">    vpc.tf</span> <span class="cm">(network setup)</span><br>
+  <span class="new">    ec2.tf</span> <span class="cm">(instance resources)</span><br>
+  <span class="new">    security_groups.tf</span> <span class="cm">(firewall)</span><br>
+  <span class="new">    ecr.tf</span> <span class="cm">(containers repo)</span><br>
+  <span class="new">    variables.tf</span> <span class="cm">(inputs)</span><br>
+  <span class="new">    outputs.tf</span> <span class="cm">(outputs)</span><br>
+  <span class="new">  ansible/</span> <span class="cm">(provisioning scripts)</span><br>
+  <span class="new">    roles/</span> <span class="cm">(role structure)</span><br>
+  <span class="new">      app/</span> <span class="cm">(deploy app services)</span><br>
+  <span class="new">      common/</span> <span class="cm">(base config & packages)</span><br>
+  <span class="new">      monitoring/</span> <span class="cm">(Prom/Grafana setup)</span><br>
+  <span class="new">      nginx/</span> <span class="cm">(reverse proxy setup)</span><br>
+  <span class="new">    playbooks/</span> <span class="cm">(site playbooks)</span><br>
+  <span class="new">    inventory/</span> <span class="cm">(hosts)</span><br>
+  <span class="new">    templates/</span> <span class="cm">(config templates)</span><br>
+  <span class="new">  nginx/nginx.conf</span> <span class="cm">(web proxy)</span><br>
+  <br>
+  <span class="new">monitoring/</span> <span class="cm">(observability stack)</span><br>
+  <span class="new">  prometheus/prometheus.yml</span> <span class="cm">(scrape config)</span><br>
+  <span class="new">  grafana/dashboards/axon.json</span> <span class="cm">(dashboard def)</span><br>
+  <span class="new">  alertmanager/rules.yml</span> <span class="cm">(alerts)</span><br>
+  <br>
+  <span class="new">docker-compose.yml</span> <span class="cm">(dev stack)</span><br>
+  <span class="new">docker-compose.prod.yml</span> <span class="cm">(prod stack)</span><br>
+  <span class="new">Makefile</span> <span class="cm">(task shortcuts)</span><br>
+  <span class="new">.env.example</span> <span class="cm">(env template)</span><br>
+  <span class="new">README.md</span> <span class="cm">(project docs)</span>
+</div>
+
+</body>
+</html>
