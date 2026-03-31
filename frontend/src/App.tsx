@@ -13,7 +13,7 @@ import {
   type UpdateDatabaseConnectionPayload,
 } from './services/chatApi';
 import type { ChatMessage } from './types/chat';
-import { ToastContainer, createToast, type ToastMessage } from './components/Toast';
+import { ToastContainer, type ToastMessage } from './components/Toast';
 
 /** Pure utility — kept outside the component to avoid recreation on every render. */
 const deriveErrorMessage = (error: unknown, fallback: string): string => {
@@ -22,6 +22,13 @@ const deriveErrorMessage = (error: unknown, fallback: string): string => {
   }
   return fallback;
 };
+
+/** Creates a toast message object with a unique ID. */
+const createToast = (type: 'success' | 'error' | 'info' | 'warning', message: string): ToastMessage => ({
+  id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  type,
+  message,
+});
 
 const App = () => {
   const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat');
@@ -247,10 +254,10 @@ const App = () => {
     }
   };
 
-  const handleViewChange = (view: 'chat' | 'history') => {
+  const handleViewChange = useCallback((view: 'chat' | 'history') => {
     setCurrentView(view);
     setActiveSidebarItem(view);
-  };
+  }, []);
 
   const handleSendMessage = useCallback(
     async (

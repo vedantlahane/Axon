@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ConversationBase(BaseModel):
@@ -12,10 +12,9 @@ class ConversationCreate(ConversationBase):
 
 
 class ConversationRead(ConversationBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        orm_mode = True

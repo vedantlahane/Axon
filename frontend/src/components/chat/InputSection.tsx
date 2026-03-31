@@ -72,9 +72,10 @@ const InputSection: React.FC<InputSectionProps> = ({
   }, []);
 
   useEffect(() => {
+    const previews = previewsRef.current;
     return () => {
-      previewsRef.current.forEach((url) => URL.revokeObjectURL(url));
-      previewsRef.current.clear();
+      previews.forEach((url) => URL.revokeObjectURL(url));
+      previews.clear();
       if (recognitionRef.current) {
         recognitionRef.current.onresult = null;
         recognitionRef.current.onend = null;

@@ -98,13 +98,4 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismis
   );
 };
 
-/** Creates a toast message object with a unique ID. */
-export function createToast(type: ToastType, message: string): ToastMessage {
-  return {
-    id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    type,
-    message,
-  };
-}
-
 export default ToastContainer;

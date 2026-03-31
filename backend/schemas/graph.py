@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SystemGraphCreate(BaseModel):
@@ -9,8 +9,7 @@ class SystemGraphCreate(BaseModel):
 
 
 class SystemGraphRead(SystemGraphCreate):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     is_active: bool
-
-    class Config:
-        orm_mode = True

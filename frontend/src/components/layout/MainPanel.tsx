@@ -94,7 +94,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
         showToast?.('error', 'Failed to load available models');
       })
       .finally(() => setIsModelsLoading(false));
-  }, []);
+  }, [showToast]);
 
   const handleModelChange = async (modelId: string) => {
     if (modelId === currentModel || isModelSwitching) return;

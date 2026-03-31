@@ -4,6 +4,12 @@
 >
 > **Author:** Vedant Lahane | **Year:** 2026 | **Status:** Active development
 
+### Implementation Snapshot (March 2026)
+
+- The running repository currently exposes compatibility routes under `/api/` (aligned with frontend integration), while `/api/v1/` remains the long-term architecture target.
+- Database schema changes are now managed through Alembic migrations in `backend/alembic/` (runtime table auto-creation was removed).
+- Chat in `backend/routers/api_compat.py` is wired to a LangGraph-backed agent pipeline in `backend/agent/pipeline.py` (`collect_context -> build_prompt -> generate_answer`) with provider routing (Gemini/OpenAI) and local context tools (documents + SQLite schema/query context).
+
 ---
 
 ## Table of Contents

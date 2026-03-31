@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings
+from .routers import api_compat
 from .routers import auth, chat, database, documents, export, graph, health
 
 settings = Settings()
@@ -23,6 +24,7 @@ app.include_router(documents.router, prefix='/documents', tags=['documents'])
 app.include_router(database.router, prefix='/database', tags=['database'])
 app.include_router(graph.router, prefix='/graph', tags=['graph'])
 app.include_router(export.router, prefix='/export', tags=['export'])
+app.include_router(api_compat.router, tags=['api'])
 
 
 @app.get('/')
