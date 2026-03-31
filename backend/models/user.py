@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from passlib.context import CryptContext
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
@@ -10,6 +10,10 @@ from ..database import Base
 pwd_context = CryptContext(schemes=['pbkdf2_sha256'], deprecated='auto')
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -19,8 +23,8 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     def verify_password(self, plain_password: str) -> bool:
         return pwd_context.verify(plain_password, self.hashed_password)

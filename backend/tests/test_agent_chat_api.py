@@ -3,6 +3,7 @@ import uuid
 
 from fastapi.testclient import TestClient
 
+import backend.tests.warnings_config  # noqa: F401
 from backend.main import app
 from backend.tests.test_support import ensure_database_schema
 

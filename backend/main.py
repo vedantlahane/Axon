@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings
+from .database import engine
 from .routers import api_compat
 
 settings = Settings()
@@ -27,3 +28,8 @@ async def root():
 @app.get('/health')
 async def health_alias():
     return {'status': 'ok'}
+
+
+@app.on_event('shutdown')
+async def shutdown_event() -> None:
+    await engine.dispose()

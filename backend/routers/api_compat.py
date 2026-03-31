@@ -5,7 +5,7 @@ import json
 import sqlite3
 import uuid
 import zipfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
@@ -37,6 +37,10 @@ _user_theme_prefs: dict[int, str] = {}
 _user_db_connections: dict[int, dict[str, object]] = {}
 _user_feedback: dict[int, dict[str, dict[str, object]]] = {}
 agent_pipeline = AxonAgentPipeline()
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class SignUpPayload(BaseModel):
@@ -116,7 +120,7 @@ class ExportConversationZipPayload(BaseModel):
 
 def _iso(dt: datetime | None) -> str:
     if dt is None:
-        return datetime.utcnow().isoformat()
+        return _utcnow().isoformat()
     return dt.isoformat()
 
 
@@ -368,7 +372,7 @@ async def get_preferences(user: User = Depends(_require_current_user)):
         'preferences': {
             'preferredModel': _user_model_prefs.get(user.id, 'gemini'),
             'theme': _user_theme_prefs.get(user.id, 'dark'),
-            'updatedAt': datetime.utcnow().isoformat(),
+            'updatedAt': _utcnow().isoformat(),
         }
     }
 
@@ -384,7 +388,7 @@ async def update_preferences(payload: dict[str, str], user: User = Depends(_requ
         'preferences': {
             'preferredModel': _user_model_prefs.get(user.id, 'gemini'),
             'theme': _user_theme_prefs.get(user.id, 'dark'),
-            'updatedAt': datetime.utcnow().isoformat(),
+            'updatedAt': _utcnow().isoformat(),
         }
     }
 
@@ -402,7 +406,7 @@ async def add_feedback(message_id: str, payload: FeedbackPayload, user: User = D
         'id': feedback_id,
         'type': payload.type,
         'messageId': message_id,
-        'createdAt': datetime.utcnow().isoformat(),
+        'createdAt': _utcnow().isoformat(),
         'reason': payload.reason,
     }
     return {'success': True, 'feedback': user_feedback[message_id]}
@@ -612,7 +616,7 @@ async def send_chat(
     db.add(assistant_message)
 
     conversation.summary = assistant_reply[:160]
-    conversation.updated_at = datetime.utcnow()
+    conversation.updated_at = _utcnow()
 
     await db.commit()
     await db.refresh(conversation)
@@ -942,14 +946,14 @@ async def run_query(payload: SqlQueryPayload, user: User = Depends(_require_curr
     sqlite_path = _resolve_sqlite_path(_connection_for_user(user.id))
     sqlite_path.parent.mkdir(parents=True, exist_ok=True)
 
-    started = datetime.utcnow()
+    started = _utcnow()
     conn = sqlite3.connect(str(sqlite_path))
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     try:
         cursor.execute(query)
         lowered = query.lower().lstrip()
-        elapsed_ms = int((datetime.utcnow() - started).total_seconds() * 1000)
+        elapsed_ms = int((_utcnow() - started).total_seconds() * 1000)
 
         if lowered.startswith('select') or lowered.startswith('pragma'):
             rows = cursor.fetchmany(payload.limit or 200)
@@ -1022,7 +1026,7 @@ async def get_schema(user: User = Depends(_require_current_user)):
             'schema': None,
             'tables': tables,
             'views': [],
-            'generatedAt': datetime.utcnow().isoformat(),
+            'generatedAt': _utcnow().isoformat(),
             'connection': {'label': sqlite_path.name, 'mode': 'sqlite'},
         }
     finally:
@@ -1070,7 +1074,7 @@ async def get_query_suggestions(payload: SqlSuggestionPayload, user: User = Depe
         'originalQuery': payload.query,
         'analysis': 'Generated lightweight suggestions based on your current query.',
         'suggestions': suggestions[: max(1, min(payload.maxSuggestions or 3, 10))],
-        'generatedAt': datetime.utcnow().isoformat(),
+        'generatedAt': _utcnow().isoformat(),
         'connection': {'label': 'SQLite Database', 'mode': 'sqlite'},
         'schemaIncluded': bool(payload.includeSchema),
     }
@@ -1085,5 +1089,5 @@ async def export_database_rows(payload: ExportSqlPayload, user: User = Depends(_
         output.write(line + '\n')
 
     content = output.getvalue().encode('utf-8')
-    headers = {'Content-Disposition': f'attachment; filename=sql_results_{int(datetime.utcnow().timestamp())}.xlsx'}
+    headers = {'Content-Disposition': f'attachment; filename=sql_results_{int(_utcnow().timestamp())}.xlsx'}
     return StreamingResponse(io.BytesIO(content), media_type='application/octet-stream', headers=headers)

@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 import unittest
 
+import backend.tests.warnings_config  # noqa: F401
 from backend.agent import AgentContext, AxonAgentPipeline
 from backend.tests.test_support import ensure_database_schema
 

@@ -1,9 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
 
 from ..database import Base
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 message_attachments = Table(
@@ -21,6 +25,6 @@ class Message(Base):
     conversation_id = Column(Integer, ForeignKey('conversations.id'), nullable=False, index=True)
     sender = Column(String(20), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
 
     attachments = relationship('Document', secondary=message_attachments, back_populates='messages')
