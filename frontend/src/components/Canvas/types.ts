@@ -4,7 +4,7 @@ export interface SqlQueryHistoryEntry {
   id: string;
   query: string;
   executedAt: string;
-  type: "rows" | "ack";
+  type: "rows" | "ack" | "error";
   rowCount: number;
   result?: SqlQueryResult;
   source?: "ai" | "user";

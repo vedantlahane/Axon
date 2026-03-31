@@ -1,0 +1,69 @@
+.prose-content {
+  line-height: 1.6;
+}
+
+.prose-content > *:first-child {
+  margin-top: 0;
+}
+
+.prose-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.prose-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.prose-content code {
+  word-break: break-word;
+}
+
+/* Keep light mode readable where legacy components still rely on white utility classes. */
+:root:not(.dark) .text-white {
+  color: var(--text-primary) !important;
+}
+
+:root:not(.dark) .text-white\/80,
+:root:not(.dark) .text-white\/70,
+:root:not(.dark) .text-white\/60 {
+  color: var(--text-muted) !important;
+}
+
+:root:not(.dark) .text-white\/50,
+:root:not(.dark) .text-white\/40,
+:root:not(.dark) .text-white\/30 {
+  color: var(--text-subtle) !important;
+}
+
+:root:not(.dark) .bg-white\/5 {
+  background-color: rgba(15, 24, 40, 0.04) !important;
+}
+
+:root:not(.dark) .bg-white\/10 {
+  background-color: rgba(15, 24, 40, 0.08) !important;
+}
+
+:root:not(.dark) .border-white\/10,
+:root:not(.dark) .border-white\/15,
+:root:not(.dark) .border-white\/20 {
+  border-color: var(--border) !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}

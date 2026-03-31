@@ -165,14 +165,14 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
       {isOpen && (
         <motion.div
           key="database-modal"
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-gradient-to-b from-[#0f1829] to-[#0b1220] text-white shadow-2xl overflow-hidden"
+            className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)] text-[var(--text-primary)] shadow-2xl"
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
@@ -180,9 +180,9 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
             onClick={(event) => event.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.02] px-6 py-4">
+            <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-soft)]/65 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2563eb]/20 text-[#2563eb]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <ellipse cx="12" cy="5" rx="9" ry="3"/>
                     <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
@@ -191,12 +191,12 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                 </div>
                 <div>
                   <h2 className="text-base font-semibold">Database Connection</h2>
-                  <p className="text-xs text-white/50">Configure your SQL database</p>
+                  <p className="text-xs text-[var(--text-subtle)]">Configure your SQL database</p>
                 </div>
               </div>
               <button
                 type="button"
-                className="grid h-8 w-8 place-items-center rounded-lg text-white/40 transition hover:bg-white/10 hover:text-white"
+                className="grid h-8 w-8 place-items-center rounded-lg text-[var(--text-subtle)] transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                 onClick={onClose}
                 disabled={isBusy}
               >
@@ -209,7 +209,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
             {/* Connection Status */}
             {hasCustomConfig && (
-              <div className="flex items-center gap-2 border-b border-white/10 bg-emerald-500/5 px-6 py-2.5">
+              <div className="flex items-center gap-2 border-b border-[var(--border)] bg-emerald-500/5 px-6 py-2.5">
                 <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-xs text-emerald-300/80">
                   Connected{config?.label ? ` — ${config.label}` : config?.displayName ? ` — ${config.displayName}` : ''}
@@ -231,8 +231,8 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
             <form className="p-6 space-y-5" onSubmit={handleSave}>
               {/* Mode Selection - Tab Style */}
               <div className="space-y-2">
-                <span className="text-xs font-medium text-white/50">Connection Type</span>
-                <div className="flex gap-1 rounded-xl bg-white/5 p-1">
+                <span className="text-xs font-medium text-[var(--text-subtle)]">Connection Type</span>
+                <div className="flex gap-1 rounded-xl bg-[var(--bg-soft)] p-1">
                   {modes.map((option) => {
                     const active = mode === option;
                     const icons: Record<DatabaseMode, React.ReactNode> = {
@@ -255,8 +255,8 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                         type="button"
                         className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
                           active
-                            ? 'bg-[#2563eb] text-white shadow-md'
-                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                            ? 'bg-[var(--accent)] text-white shadow-md'
+                            : 'text-[var(--text-muted)] hover:bg-[var(--bg-panel)] hover:text-[var(--text-primary)]'
                         }`}
                         onClick={() => {
                           if (!disableInteractions) {
@@ -275,13 +275,13 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
               {/* Display Name */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-white/50" htmlFor="db-display-name">
-                  Display Name <span className="text-white/30">(optional)</span>
+                <label className="text-xs font-medium text-[var(--text-subtle)]" htmlFor="db-display-name">
+                  Display Name <span className="text-[var(--text-subtle)]">(optional)</span>
                 </label>
                 <input
                   id="db-display-name"
                   type="text"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-60"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:opacity-60"
                   placeholder="e.g. Production Database"
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
@@ -291,13 +291,13 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
               {!isRemote && (
                 <div className="space-y-3">
-                  <span className="text-xs font-medium text-white/50">SQLite Database</span>
+                  <span className="text-xs font-medium text-[var(--text-subtle)]">SQLite Database</span>
                   
                   {/* File Upload Card */}
-                  <div className="rounded-xl border border-dashed border-white/20 bg-white/[0.02] p-4 transition hover:border-white/30">
+                  <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-soft)]/60 p-4 transition hover:border-[var(--border-strong)]">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/50">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--bg-panel)]">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-subtle)]">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                           <polyline points="17 8 12 3 7 8"/>
                           <line x1="12" y1="3" x2="12" y2="15"/>
@@ -305,10 +305,10 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <label className="cursor-pointer">
-                          <p className="text-sm font-medium text-white/80 truncate">
+                          <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                             {uploadedFile ? uploadedFile.name : 'Upload database file'}
                           </p>
-                          <p className="text-xs text-white/40">
+                          <p className="text-xs text-[var(--text-subtle)]">
                             {uploadedFile ? `${(uploadedFile.size / 1024).toFixed(1)} KB` : '.db, .sqlite, or .sqlite3'}
                           </p>
                           <input
@@ -323,7 +323,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       {uploadedFile && (
                         <button
                           type="button"
-                          className="flex-shrink-0 rounded-lg bg-[#2563eb] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#1d4ed8] disabled:opacity-50"
+                          className="flex-shrink-0 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-50"
                           onClick={handleFileUpload}
                           disabled={disableInteractions}
                         >
@@ -332,9 +332,9 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       )}
                     </div>
                     {uploadProgress > 0 && uploadProgress < 100 && (
-                      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
+                      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-[var(--bg-panel)]">
                         <div 
-                          className="h-full bg-[#2563eb] transition-all duration-300"
+                          className="h-full bg-[var(--accent)] transition-all duration-300"
                           style={{ width: `${uploadProgress}%` }}
                         />
                       </div>
@@ -352,20 +352,20 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
                   {/* Divider */}
                   <div className="flex items-center gap-3">
-                    <div className="h-px flex-1 bg-white/10" />
-                    <span className="text-xs text-white/30">or</span>
-                    <div className="h-px flex-1 bg-white/10" />
+                    <div className="h-px flex-1 bg-[var(--border)]" />
+                    <span className="text-xs text-[var(--text-subtle)]">or</span>
+                    <div className="h-px flex-1 bg-[var(--border)]" />
                   </div>
 
                   {/* Manual Path */}
                   <div className="space-y-2">
-                    <label className="text-xs text-white/50" htmlFor="db-sqlite-path">
+                    <label className="text-xs text-[var(--text-subtle)]" htmlFor="db-sqlite-path">
                       Server file path
                     </label>
                     <input
                       id="db-sqlite-path"
                       type="text"
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-60 font-mono"
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-2.5 font-mono text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:opacity-60"
                       placeholder="backend/db.sqlite3"
                       value={sqlitePath}
                       onChange={(event) => setSqlitePath(event.target.value)}
@@ -373,7 +373,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                       autoComplete="off"
                     />
                     {config?.resolvedSqlitePath && (
-                      <p className="flex items-center gap-1.5 text-xs text-white/40">
+                      <p className="flex items-center gap-1.5 text-xs text-[var(--text-subtle)]">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="9 11 12 14 22 4"/>
                           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
@@ -387,18 +387,18 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
               {isRemote && (
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-white/50" htmlFor="db-connection-string">
+                  <label className="text-xs font-medium text-[var(--text-subtle)]" htmlFor="db-connection-string">
                     Connection String
                   </label>
                   <textarea
                     id="db-connection-string"
-                    className="h-24 w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 disabled:opacity-60 font-mono"
+                    className="h-24 w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-3 font-mono text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:opacity-60"
                     placeholder="postgresql+psycopg2://user:password@host:5432/database"
                     value={connectionString}
                     onChange={(event) => setConnectionString(event.target.value)}
                     disabled={disableInteractions}
                   />
-                  <p className="text-xs text-white/40">
+                  <p className="text-xs text-[var(--text-subtle)]">
                     SQLAlchemy-compatible connection string for PostgreSQL, MySQL, or other databases.
                   </p>
                 </div>
@@ -430,7 +430,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
               )}
 
               {/* Footer Actions */}
-              <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] pt-3">
                 {hasCustomConfig ? (
                   <button
                     type="button"
@@ -451,7 +451,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                    className="rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)] disabled:opacity-50"
                     onClick={handleTest}
                     disabled={!canSubmit || disableInteractions}
                   >
@@ -459,7 +459,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                   </button>
                   <button
                     type="submit"
-                    className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[#2563eb]/25 transition hover:bg-[#1d4ed8] disabled:opacity-50 disabled:shadow-none"
+                    className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[var(--accent-soft)] transition hover:bg-[var(--accent-strong)] disabled:opacity-50 disabled:shadow-none"
                     disabled={!canSubmit || disableInteractions}
                   >
                     Save Connection
@@ -468,7 +468,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
               </div>
 
               {isLoading && (
-                <div className="flex items-center justify-center gap-2 pt-2 text-xs text-white/40">
+                <div className="flex items-center justify-center gap-2 pt-2 text-xs text-[var(--text-subtle)]">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -11,6 +10,8 @@ from typing import Any, Sequence, TypedDict
 
 import httpx
 from langgraph.graph import END, START, StateGraph
+
+from ..config import Settings
 
 
 @dataclass(slots=True)
@@ -53,9 +54,20 @@ class AxonAgentPipeline:
 
     def __init__(self, timeout_seconds: float = 20.0) -> None:
         self.timeout_seconds = timeout_seconds
-        self.gemini_api_key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
-        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+        settings = Settings()
+        self.gemini_api_key = self._normalize_api_key(settings.GEMINI_API_KEY) or self._normalize_api_key(
+            settings.GOOGLE_API_KEY
+        )
+        self.openai_api_key = self._normalize_api_key(settings.OPENAI_API_KEY)
         self.graph = self._build_graph()
+
+    @staticmethod
+    def _normalize_api_key(value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        cleaned = value.strip()
+        return cleaned or None
 
     def _build_graph(self) -> Any:
         workflow = StateGraph(AgentState)
@@ -102,7 +114,10 @@ class AxonAgentPipeline:
             tools_used.append('document_context_tool')
 
         schema_context = ''
-        if context.sqlite_path and self._looks_like_schema_request(context.message):
+        should_collect_schema = self._looks_like_schema_request(context.message) or self._looks_like_database_overview_request(
+            context.message
+        )
+        if context.sqlite_path and should_collect_schema:
             schema_context = await asyncio.to_thread(self._read_schema_snapshot, context.sqlite_path)
             if schema_context:
                 tools_used.append('schema_tool')
@@ -139,6 +154,12 @@ class AxonAgentPipeline:
     async def _generate_answer_node(self, state: AgentState) -> AgentState:
         context = state['context']
         prompt = str(state.get('prompt', ''))
+        schema_context = str(state.get('schema_context', ''))
+
+        if schema_context and self._looks_like_database_overview_request(context.message):
+            local_response = self._database_overview_response(schema_context)
+            if local_response:
+                return {'content': local_response, 'provider': 'local', 'model': 'sqlite-schema'}
 
         content, provider, model = await self._call_llm(prompt, context.preferred_model)
         if content:
@@ -271,8 +292,40 @@ class AxonAgentPipeline:
 
     def _looks_like_schema_request(self, message: str) -> bool:
         lowered = message.lower()
-        tokens = ('schema', 'table', 'columns', 'database structure', 'erd', 'relationship')
+        tokens = (
+            'schema',
+            'table',
+            'columns',
+            'database structure',
+            'database schema',
+            'list tables',
+            'what tables',
+            'erd',
+            'relationship',
+        )
         return any(token in lowered for token in tokens)
+
+    def _looks_like_database_overview_request(self, message: str) -> bool:
+        lowered = ' '.join(re.sub(r'[^a-z0-9\s]', ' ', message.lower()).split())
+        hints = (
+            "what's in database",
+            'whats in database',
+            "what's in the database",
+            'whats in the database',
+            'what is in the database',
+            'tell me what is in database',
+            'tell me whats in database',
+            'database contents',
+            'database overview',
+            'show tables',
+            'which tables',
+            "what's in db",
+            'whats in db',
+        )
+        if any(hint in lowered for hint in hints):
+            return True
+
+        return 'database' in lowered and any(token in lowered for token in ('list', 'show', 'tables', 'contents'))
 
     def _read_schema_snapshot(self, sqlite_path: str) -> str:
         db_path = Path(sqlite_path)
@@ -342,6 +395,57 @@ class AxonAgentPipeline:
 
         return ''
 
+    def _database_overview_response(self, schema_context: str) -> str:
+        lines = [line.strip() for line in schema_context.splitlines() if line.strip()]
+        if not lines:
+            return ''
+
+        if lines[0].lower().startswith('no user tables found'):
+            return (
+                'I checked your connected SQLite database and there are currently no user tables in it.\n\n'
+                'If you expected data, verify that the selected database path is correct and try again.'
+            )
+
+        table_summaries: list[str] = []
+        sample_table = ''
+        for line in lines[:12]:
+            if ':' not in line:
+                continue
+
+            table_name, raw_columns = line.split(':', 1)
+            table_name = table_name.strip()
+            if not table_name:
+                continue
+
+            if not sample_table:
+                sample_table = table_name
+
+            column_tokens = [token.strip() for token in raw_columns.split(',') if token.strip()]
+            column_names: list[str] = []
+            for token in column_tokens[:6]:
+                column_names.append(token.split(' ', 1)[0])
+
+            if column_names:
+                table_summaries.append(f"- {table_name}: columns -> {', '.join(column_names)}")
+            else:
+                table_summaries.append(f'- {table_name}')
+
+        if not table_summaries:
+            return ''
+
+        query_hint = ''
+        if sample_table:
+            query_hint = (
+                '\n\nTry this to preview data:\n'
+                f'SELECT * FROM "{sample_table}" LIMIT 10;'
+            )
+
+        return (
+            'Here is what I found in your connected SQLite database:\n\n'
+            + '\n'.join(table_summaries)
+            + query_hint
+        )
+
     def _build_prompt(
         self,
         *,
@@ -357,6 +461,11 @@ class AxonAgentPipeline:
         sections = [
             'You are Axon, an AI software intelligence assistant.',
             'Respond with practical, accurate guidance and clear next actions.',
+            (
+                'Database guidance: this app uses SQLite context tools. '
+                'When discussing database structure, use SQLite syntax (sqlite_master, PRAGMA) '
+                'and do not suggest MySQL-only commands like SHOW TABLES or DESCRIBE.'
+            ),
             f"Conversation title: {title or 'Untitled conversation'}",
             'Recent conversation:',
             '\n'.join(history_lines) if history_lines else '(no previous messages)',
@@ -369,6 +478,11 @@ class AxonAgentPipeline:
 
         if schema_context:
             sections.extend(['Database schema snapshot:', schema_context])
+        elif self._looks_like_database_overview_request(message):
+            sections.append(
+                'Database context status: no SQLite schema snapshot was available for this request. '
+                'Ask the user to configure Database Settings or upload/select a SQLite file before listing tables.'
+            )
 
         if sql_context:
             sections.extend(['Read-only SQL result sample (if relevant):', sql_context])
@@ -394,8 +508,20 @@ class AxonAgentPipeline:
         if schema_context:
             fragments.append('I inspected the database schema and can help you craft queries against it.')
 
+        if self._looks_like_database_overview_request(message) and not schema_context:
+            fragments.append(
+                'I could not inspect a SQLite schema for this chat. '
+                'Save a SQLite connection in Database Settings, then ask again and I will list tables directly.'
+            )
+
         if sql_context:
             fragments.append('I also executed a read-only SQL sample and can refine or explain the result.')
 
-        fragments.append('If you configure GEMINI_API_KEY or OPENAI_API_KEY, I can provide richer reasoning.')
+        if self.gemini_api_key or self.openai_api_key:
+            fragments.append(
+                'A provider key is configured, but the provider request failed. '
+                'Verify key/project access, quota, and outbound network access.'
+            )
+        else:
+            fragments.append('If you configure GEMINI_API_KEY or OPENAI_API_KEY, I can provide richer reasoning.')
         return '\n\n'.join(fragments)

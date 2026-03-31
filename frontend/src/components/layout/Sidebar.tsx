@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { UserProfile } from '../../services/chatApi';
+import { applyTheme, resolveInitialTheme } from '../../utils/theme';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -42,24 +43,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSignOut,
 }) => {
   const [darkTheme, setDarkTheme] = useState(() => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-    return localStorage.getItem('theme') !== 'light';
+    return resolveInitialTheme() === 'dark';
   });
 
   useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    if (darkTheme) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    applyTheme(darkTheme ? 'dark' : 'light');
   }, [darkTheme]);
 
 
@@ -92,14 +80,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       'group relative flex items-center rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
       collapsed ? 'justify-center px-3 py-3' : 'justify-start gap-3 px-4 py-2.5',
       isActive
-        ? 'bg-gradient-blue text-white border border-white/20'
-        : 'text-[var(--text-subtle)] hover:bg-white/5 hover:text-[var(--text-muted)] dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white/80 border border-transparent',
+        ? 'border-[var(--accent)]/30 bg-[var(--accent-soft)] text-[var(--accent)] shadow-[0_14px_28px_-22px_rgba(19,99,255,0.8)]'
+        : 'border border-transparent text-[var(--text-muted)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]',
     ].join(' ');
 
 
   return (
     <motion.aside
-      className="flex flex-col overflow-hidden border-r border-white/10 bg-[var(--bg-panel)]/90 dark:bg-[#0b1220]/70 backdrop-blur-xl"
+      className="flex flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--bg-panel)]/90 backdrop-blur-xl"
       animate={{ width: collapsed ? 80 : 260 }}
       transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
     >
@@ -111,30 +99,30 @@ const Sidebar: React.FC<SidebarProps> = ({
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#2563eb] to-[#3b82f6] text-lg font-black text-white shadow-lg">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#1363ff] to-[#63a0ff] text-lg font-black text-white shadow-lg">
               <svg
-                              width="26"
-                              height="26"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="text-sky-200"
-                            >
-                              <path d="M4 4h9l7 8-7 8H4l7-8z" />
-                              <path d="M11 4 7 12l4 8" />
-                            </svg>
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-[#d7e6ff]"
+              >
+                <path d="M4 4h9l7 8-7 8H4l7-8z" />
+                <path d="M11 4 7 12l4 8" />
+              </svg>
             </div>
-            <span className="text-sm font-semibold tracking-wide text-white">Axon</span>
+            <span className="text-sm font-semibold tracking-wide text-[var(--text-primary)]">Axon</span>
           </motion.div>
         )}
 
         <motion.button
           type="button"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onToggle}
@@ -195,16 +183,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <div
-        className={`flex flex-col gap-3 border-t border-white/10 pb-5 pt-4 ${collapsed ? 'px-3' : 'px-4'}`}
+        className={`flex flex-col gap-3 border-t border-[var(--border)] pb-5 pt-4 ${collapsed ? 'px-3' : 'px-4'}`}
       >
         <motion.button
           type="button"
           onClick={() => (isAuthenticated ? onStartNewChat() : onRequireAuth('signup'))}
-          className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/80 dark:hover:text-white"
+          className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <span className="grid h-6 w-6 place-items-center rounded-lg bg-[#2563eb]/20 text-white" aria-hidden>
+          <span className="grid h-6 w-6 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]" aria-hidden>
             <svg
               width="14"
               height="14"
@@ -223,7 +211,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </motion.button>
         <motion.button
           type="button"
-          className="flex h-9 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 text-sm text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
+          className="flex h-9 items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-sm text-[var(--text-muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setDarkTheme((prev) => !prev)}
@@ -248,35 +236,35 @@ const Sidebar: React.FC<SidebarProps> = ({
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
           </svg>
-          {!collapsed && <span className="text-[var(--text-muted)] dark:text-white/70">{darkTheme ? 'Dark theme' : 'Light theme'}</span>}
+          {!collapsed && <span className="text-[var(--text-muted)]">{darkTheme ? 'Dark theme' : 'Light theme'}</span>}
         </motion.button>
         {isAuthenticated ? (
           <motion.button
             type="button"
-            className="flex h-11 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-[var(--text-muted)] transition hover:bg-rose-500/10 hover:text-rose-200 dark:text-white/70"
+            className="flex h-11 items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] px-3 text-sm text-[var(--text-muted)] transition hover:bg-rose-500/10 hover:text-rose-300"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => void onSignOut()}
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-sm font-semibold text-[var(--text-primary)] dark:text-white" aria-hidden>
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]" aria-hidden>
               {(currentUser?.name?.charAt(0) ?? currentUser?.email?.charAt(0) ?? 'A').toUpperCase()}
             </span>
             {!collapsed && (
               <span className="flex flex-col items-start">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--text-subtle)] dark:text-white/40">Sign out</span>
-                <span className="text-sm font-medium text-[var(--text-muted)] dark:text-white/80">{currentUser?.name ?? currentUser?.email ?? 'Account'}</span>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--text-subtle)]">Sign out</span>
+                <span className="text-sm font-medium text-[var(--text-muted)]">{currentUser?.name ?? currentUser?.email ?? 'Account'}</span>
               </span>
             )}
           </motion.button>
         ) : (
           <motion.button
             type="button"
-            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 text-sm text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] text-sm text-[var(--text-muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onRequireAuth('signin')}
           >
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-white" aria-hidden>
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]" aria-hidden>
               <svg
                 width="14"
                 height="14"

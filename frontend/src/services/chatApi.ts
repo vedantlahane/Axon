@@ -131,7 +131,19 @@ export interface SqlQueryAckResult {
   };
 }
 
-export type SqlQueryResult = SqlQueryRowsResult | SqlQueryAckResult;
+export interface SqlQueryErrorResult {
+  type: 'error';
+  rowCount: number;
+  message: string;
+  errorCode?: string;
+  executionTimeMs: number;
+  connection: {
+    label: string;
+    mode: DatabaseMode;
+  };
+}
+
+export type SqlQueryResult = SqlQueryRowsResult | SqlQueryAckResult | SqlQueryErrorResult;
 
 export interface RunSqlQueryPayload {
   query: string;
@@ -378,6 +390,11 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     credentials: 'include',
   });
 
+  // Logged-out sessions are expected during app boot; treat as anonymous user.
+  if (response.status === 401) {
+    return null;
+  }
+
   const data = await handleResponse<{ user: UserProfile | null }>(response);
   return data.user ?? null;
 }
@@ -531,6 +548,12 @@ export async function fetchAvailableModels(): Promise<ModelsResponse> {
   const response = await fetch(`${API_BASE_URL}/models/`, {
     credentials: 'include',
   });
+
+  // Model preferences are user-scoped. Return a safe guest default when unauthenticated.
+  if (response.status === 401) {
+    return { models: [], current: 'gemini' };
+  }
+
   return handleResponse<ModelsResponse>(response);
 }
 

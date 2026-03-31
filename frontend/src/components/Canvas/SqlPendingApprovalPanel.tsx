@@ -19,7 +19,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
   return (
     <section className="flex flex-col gap-3">
       <header className="mb-2">
-        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200/80">
+        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-500 dark:text-amber-200/80">
           <svg
             width="14"
             height="14"
@@ -39,14 +39,14 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
       </header>
       {pendingQuery ? (
         <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
-          <div className="mb-3 flex items-center justify-between text-xs text-amber-200/70">
+          <div className="mb-3 flex items-center justify-between text-xs text-amber-700/80 dark:text-amber-200/70">
             <span>Source: {pendingQuery.source === "ai" ? "AI Generated" : "User Input"}</span>
             <span>{new Date(pendingQuery.timestamp).toLocaleTimeString()}</span>
           </div>
-          <pre className="mb-4 overflow-x-auto rounded-lg border border-white/10 bg-slate-100 text-slate-700 dark:bg-[#060a18] dark:text-white/80 p-3 font-mono text-sm">
+          <pre className="mb-4 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--bg-panel)] p-3 font-mono text-sm text-[var(--text-secondary)]">
             {pendingQuery.query}
           </pre>
-          <p className="mb-4 text-xs text-amber-200/60">
+          <p className="mb-4 text-xs text-amber-700/70 dark:text-amber-200/60">
             Review the SQL query above before it runs on your database. You can edit the query in
             the editor if needed.
           </p>
@@ -74,7 +74,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
             <button
               type="button"
               onClick={() => onEdit(pendingQuery.query)}
-              className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+              className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-panel)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
             >
               <svg
                 width="14"
@@ -114,7 +114,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
           </div>
         </div>
       ) : (
-        <p className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/50">
+        <p className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-soft)] p-4 text-sm text-[var(--text-subtle)]">
           No queries pending approval.
         </p>
       )}

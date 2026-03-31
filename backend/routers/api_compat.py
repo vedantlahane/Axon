@@ -10,6 +10,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
+from openpyxl import Workbook
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -122,6 +123,33 @@ def _iso(dt: datetime | None) -> str:
     if dt is None:
         return _utcnow().isoformat()
     return dt.isoformat()
+
+
+def _xlsx_cell_value(value: object) -> object:
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool, datetime)):
+        return value
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _build_xlsx_bytes(columns: list[str], rows: list[dict[str, object]]) -> bytes:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'results'
+
+    normalized_columns = columns or (list(rows[0].keys()) if rows else ['result'])
+    worksheet.append(normalized_columns)
+
+    for row in rows:
+        worksheet.append([_xlsx_cell_value(row.get(column)) for column in normalized_columns])
+
+    worksheet.freeze_panes = 'A2'
+
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    workbook.close()
+    return buffer.getvalue()
 
 
 def _serialize_user(user: User) -> dict[str, object]:
@@ -941,7 +969,14 @@ async def upload_database_file(
 async def run_query(payload: SqlQueryPayload, user: User = Depends(_require_current_user)):
     query = payload.query.strip()
     if not query:
-        raise HTTPException(status_code=400, detail='Query is required')
+        return {
+            'type': 'error',
+            'message': 'Query is required',
+            'errorCode': 'QUERY_REQUIRED',
+            'rowCount': 0,
+            'executionTimeMs': 0,
+            'connection': {'label': 'SQLite Database', 'mode': 'sqlite'},
+        }
 
     sqlite_path = _resolve_sqlite_path(_connection_for_user(user.id))
     sqlite_path.parent.mkdir(parents=True, exist_ok=True)
@@ -979,7 +1014,15 @@ async def run_query(payload: SqlQueryPayload, user: User = Depends(_require_curr
             'connection': {'label': sqlite_path.name, 'mode': 'sqlite'},
         }
     except Exception as ex:
-        raise HTTPException(status_code=400, detail=str(ex)) from ex
+        elapsed_ms = int((_utcnow() - started).total_seconds() * 1000)
+        return {
+            'type': 'error',
+            'message': str(ex),
+            'errorCode': 'SQL_EXECUTION_ERROR',
+            'rowCount': 0,
+            'executionTimeMs': max(0, elapsed_ms),
+            'connection': {'label': sqlite_path.name, 'mode': 'sqlite'},
+        }
     finally:
         cursor.close()
         conn.close()
@@ -1082,12 +1125,10 @@ async def get_query_suggestions(payload: SqlSuggestionPayload, user: User = Depe
 
 @router.post('/database/export/')
 async def export_database_rows(payload: ExportSqlPayload, user: User = Depends(_require_current_user)):
-    output = io.StringIO()
-    output.write(','.join(payload.columns) + '\n')
-    for row in payload.rows:
-        line = ','.join(json.dumps(row.get(col, ''), ensure_ascii=False) for col in payload.columns)
-        output.write(line + '\n')
-
-    content = output.getvalue().encode('utf-8')
+    content = _build_xlsx_bytes(payload.columns, payload.rows)
     headers = {'Content-Disposition': f'attachment; filename=sql_results_{int(_utcnow().timestamp())}.xlsx'}
-    return StreamingResponse(io.BytesIO(content), media_type='application/octet-stream', headers=headers)
+    return StreamingResponse(
+        io.BytesIO(content),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers=headers,
+    )

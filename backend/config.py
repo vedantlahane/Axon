@@ -4,10 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 _DEFAULT_SQLITE_PATH = (Path(__file__).resolve().parent / 'axon.db').as_posix()
+_ROOT_ENV_PATH = (Path(__file__).resolve().parents[1] / '.env').as_posix()
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
+    model_config = SettingsConfigDict(env_file=_ROOT_ENV_PATH, env_file_encoding='utf-8', extra='ignore')
 
     APP_NAME: str = 'Axon AI Platform'
     API_PREFIX: str = '/api'
@@ -23,4 +24,4 @@ class Settings(BaseSettings):
     ALGORITHM: str = 'HS256'
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    CORS_ORIGINS: list[str] = ['http://localhost:3000', 'http://localhost:5173']
+    CORS_ORIGINS: list[str] = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174']

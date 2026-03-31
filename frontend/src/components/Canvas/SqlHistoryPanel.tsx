@@ -16,10 +16,10 @@ export const SqlHistoryPanel: React.FC<SqlHistoryPanelProps> = ({
   return (
     <section className="flex flex-col gap-3">
       <header className="flex items-center justify-between">
-        <span className="text-xs text-white/40">{history.length} saved</span>
+        <span className="text-xs text-[var(--text-subtle)]">{history.length} saved</span>
       </header>
       {history.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/50">
+        <p className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-soft)] p-4 text-sm text-[var(--text-subtle)]">
           Run queries to build your history.
         </p>
       ) : (
@@ -27,10 +27,10 @@ export const SqlHistoryPanel: React.FC<SqlHistoryPanelProps> = ({
           {history.map((entry) => (
             <div
               key={entry.id}
-              className="flex flex-col gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70"
+              className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-xs text-[var(--text-muted)]"
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="font-mono text-[11px] text-white/60 flex-1">
+                <span className="flex-1 font-mono text-[11px] text-[var(--text-muted)]">
                   {entry.query.slice(0, 120)}
                   {entry.query.length > 120 && "..."}
                 </span>
@@ -40,9 +40,9 @@ export const SqlHistoryPanel: React.FC<SqlHistoryPanelProps> = ({
                   </span>
                 )}
               </div>
-              <div className="flex items-center justify-between text-[10px] text-white/40">
+              <div className="flex items-center justify-between text-[10px] text-[var(--text-subtle)]">
                 <span className="flex items-center gap-2">
-                  <span className="rounded bg-white/10 px-1.5 py-0.5">
+                  <span className="rounded bg-[var(--bg-panel)] px-1.5 py-0.5">
                     {entry.type.toUpperCase()}
                   </span>
                   <span>{entry.rowCount} rows</span>
@@ -53,7 +53,7 @@ export const SqlHistoryPanel: React.FC<SqlHistoryPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectHistory(entry)}
-                  className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/60 transition hover:bg-white/10 hover:text-white"
+                  className="flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--bg-panel)] px-2 py-1 text-[10px] text-[var(--text-muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
                 >
                   <svg
                     width="10"

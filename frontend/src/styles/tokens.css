@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  color-scheme: light;
+  --font-sans: 'Space Grotesk', 'Segoe UI', 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --bg-base: #f4f7fb;
+  --bg-panel: #ffffff;
+  --bg-soft: #eef3fb;
+  --bg-glass: rgba(12, 26, 50, 0.05);
+
+  --border: #d6dfeb;
+  --border-strong: #bac8dd;
+
+  --text-primary: #101a2d;
+  --text-secondary: #26344c;
+  --text-muted: #4f5e78;
+  --text-subtle: #7a879f;
+
+  --accent: #1363ff;
+  --accent-strong: #0a47b5;
+  --accent-soft: rgba(19, 99, 255, 0.14);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --bg-base: #060b14;
+  --bg-panel: #0f1828;
+  --bg-soft: rgba(255, 255, 255, 0.06);
+  --bg-glass: rgba(255, 255, 255, 0.08);
+
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
+
+  --text-primary: #e8eef9;
+  --text-secondary: #cad6eb;
+  --text-muted: rgba(232, 238, 249, 0.78);
+  --text-subtle: rgba(232, 238, 249, 0.52);
+
+  --accent: #63a0ff;
+  --accent-strong: #2d74ff;
+  --accent-soft: rgba(99, 160, 255, 0.2);
+}

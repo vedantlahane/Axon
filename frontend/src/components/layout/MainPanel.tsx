@@ -6,6 +6,7 @@ import Canvas, { type SqlSideWindowProps } from "../Canvas";
 import type { ChatMessage, ConversationSummary } from "../../types/chat";
 import type { UserProfile, SqlQueryResult, LLMModel } from "../../services/chatApi";
 import { fetchAvailableModels, setCurrentModel, exportConversationZip } from "../../services/chatApi";
+import { currentTheme, toggleTheme } from "../../utils/theme";
 
 /**
  * Layout contract for the main chat surface. Each prop maps to a control in the surrounding shell
@@ -80,9 +81,17 @@ const MainPanel: React.FC<MainPanelProps> = ({
   const [currentModel, setCurrentModelState] = useState<string>("gemini");
   const [isModelSwitching, setIsModelSwitching] = useState(false);
   const [isModelsLoading, setIsModelsLoading] = useState(true);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => currentTheme());
 
-  // Fetch available models on mount
+  // Fetch available models only for authenticated users.
   useEffect(() => {
+    if (!isAuthenticated) {
+      setAvailableModels([]);
+      setCurrentModelState('gemini');
+      setIsModelsLoading(false);
+      return;
+    }
+
     setIsModelsLoading(true);
     fetchAvailableModels()
       .then((data) => {
@@ -94,7 +103,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
         showToast?.('error', 'Failed to load available models');
       })
       .finally(() => setIsModelsLoading(false));
-  }, [showToast]);
+  }, [isAuthenticated, showToast]);
 
   const handleModelChange = async (modelId: string) => {
     if (modelId === currentModel || isModelSwitching) return;
@@ -174,15 +183,15 @@ const MainPanel: React.FC<MainPanelProps> = ({
   const subtitle = useMemo(() => {
     // Keep the header status text in sync with loading state and the active conversation context.
     if (isChatLoading) {
-      return " \u00b7 Axon is thinking\u2026";
+      return "Axon is thinking...";
     }
     if (selectedHistory) {
-      return ` \u00b7 Viewing "${selectedHistory.title}"`;
+      return `Viewing "${selectedHistory.title}"`;
     }
     if (messages.length > 0) {
-      return " \u00b7 Continuing your current conversation";
+      return "Continuing your current conversation";
     }
-    return " \u00b7 Start a new conversation or revisit one from history";
+    return "Start a new conversation or revisit one from history";
   }, [isChatLoading, messages.length, selectedHistory]);
 
   const showLanding = currentView === "chat" && messages.length === 0;
@@ -194,22 +203,22 @@ const MainPanel: React.FC<MainPanelProps> = ({
   };
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden bg-[radial-gradient(ellipse_at_top,_rgba(148,163,184,0.35),_transparent_70%)] px-6 pb-6 pt-4 dark:bg-[radial-gradient(ellipse_at_top,_rgba(0,100,100,0.25),_transparent_65%)] lg:px-5">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 pt-3 lg:px-5 lg:pb-5 lg:pt-4">
       <header className="relative z-20 backdrop-blur-xl">
-        <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-4">
+        <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl bg-[var(--bg-panel)]/70 px-3 py-2 shadow-[0_18px_35px_-28px_rgba(15,40,95,0.35)]">
           <motion.button
             type="button"
             onClick={handleBack}
-            className={`group/back flex items-center gap-2 rounded-full text-sm font-medium text-white/70 transition ${
+            className={`group/back flex items-center gap-2 rounded-full text-sm font-medium text-[var(--text-muted)] transition ${
               showLanding
                 ? "opacity-60 hover:opacity-100"
-                : "hover:bg-white/10 hover:text-white"
+                : "hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
             }`}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
             <span
-              className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
+              className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-soft)] text-[var(--text-primary)]"
               aria-hidden
             >
               <svg
@@ -230,23 +239,23 @@ const MainPanel: React.FC<MainPanelProps> = ({
             </span>
           </motion.button>
 
-          <div className="flex flex-col items-center justify-center text-center text-white">
-            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-white/70">
+          <div className="flex flex-col items-center justify-center text-center text-[var(--text-primary)]">
+            <span className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">
               Axon Copilot
             </span>
-            <span className="text-sm text-white/60">{subtitle}</span>
+            <span className="text-sm text-[var(--text-subtle)]">{subtitle}</span>
           </div>
 
           <div className="relative" ref={settingsRef}>
             <motion.button
               type="button"
-              className="group/settings flex items-center gap-2 rounded-full text-sm font-medium text-white/70 transition hover:text-white"
+              className="group/settings flex items-center gap-2 rounded-full text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowSettingsMenu((prev) => !prev)}
             >
               <span
-                className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
+                className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-soft)] text-[var(--text-primary)]"
                 aria-hidden
               >
                 <svg
@@ -333,7 +342,9 @@ const MainPanel: React.FC<MainPanelProps> = ({
                       AI Model
                     </p>
                     <div className="flex flex-col gap-1">
-                      {isModelsLoading ? (
+                      {!isAuthenticated ? (
+                        <div className="py-2 text-xs text-[var(--text-subtle)]">Sign in to manage model preferences</div>
+                      ) : isModelsLoading ? (
                         <div className="flex items-center justify-center py-3">
                           <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
                           <span className="ml-2 text-xs text-[var(--text-subtle)]">Loading models...</span>
@@ -380,7 +391,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
                           )}
                           {!model.available && (
                             <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                              No API Key
+                              Unavailable
                             </span>
                           )}
                         </button>
@@ -396,14 +407,14 @@ const MainPanel: React.FC<MainPanelProps> = ({
                       type="button"
                       className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                       onClick={() => {
-                        const isDark = document.documentElement.classList.toggle('dark');
-                        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                        const nextTheme = toggleTheme();
+                        setThemeMode(nextTheme);
                         setShowSettingsMenu(false);
                       }}
                     >
                       Theme
                       <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                        {document.documentElement.classList.contains('dark') ? 'Dark' : 'Light'}
+                        {themeMode === 'dark' ? 'Dark' : 'Light'}
                       </span>
                     </button>
                     {isAuthenticated ? null : (
@@ -486,7 +497,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
         <Canvas sideWindow={sideWindow}>
           <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden">
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-              <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="min-h-0 flex-1 overflow-hidden">
                 <ChatDisplay
                   view={currentView}
                   messages={messages}

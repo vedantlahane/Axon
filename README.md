@@ -81,6 +81,43 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+#### Windows (PowerShell) backend setup and run
+
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+If script execution is blocked, run this once in the current PowerShell session, then activate again:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+Run migrations:
+
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+alembic upgrade head
+```
+
+Start backend from repo root (important for `backend.main` imports):
+
+```powershell
+cd ..
+.\backend\venv\Scripts\python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+If you stay inside `backend` directory, use `--app-dir ..`:
+
+```powershell
+python -m uvicorn backend.main:app --app-dir .. --reload --host 127.0.0.1 --port 8000
+```
+
 ### 3. Configure Environment
 
 Create or update root `.env` (project root) with at least:
@@ -89,6 +126,7 @@ Create or update root `.env` (project root) with at least:
 # Backend core
 SECRET_KEY=change-me
 DATABASE_URL=sqlite+aiosqlite:///./backend/axon.db
+CORS_ORIGINS=["http://localhost:3000","http://localhost:5173","http://localhost:5174"]
 
 # Optional AI providers (at least one recommended)
 GEMINI_API_KEY=...
@@ -108,9 +146,15 @@ alembic upgrade head
 ### 5. Start Backend
 
 ```bash
-cd backend
+source backend/venv/bin/activate
+python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Alternative (if already inside `backend`):
+
+```bash
 source venv/bin/activate
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn backend.main:app --app-dir .. --reload --host 0.0.0.0 --port 8000
 ```
 
 ### 6. Start Frontend

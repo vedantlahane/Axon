@@ -54,17 +54,25 @@ const detectSources = (content: string): string[] => {
 };
 
 const suggestions = [
-  'What is artificial intelligence?',
-  'How does machine learning work?',
-  'Explain quantum computing',
-  'What are the benefits of cloud computing?',
-  'How do I migrate a legacy project?'
+  'Summarize the latest uploaded document in 5 bullets.',
+  'Write a SQL query to find the top 10 customers by revenue.',
+  'Explain this schema and highlight missing foreign keys.',
+  'Compare this month versus last month trend in plain language.',
+  'Generate a concise action plan from this conversation.'
 ];
 
 const formatDisplayTime = (timestamp: string) => {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatHistoryTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return timestamp;
+  const day = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `${day} ${time}`;
 };
 
 const formatAttachmentSize = (size: number) => {
@@ -89,6 +97,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const showLanding = view === 'chat' && messages.length === 0;
+  const showConversationLoading = view === 'chat' && isChatLoading && messages.length === 0;
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [messageFeedback, setMessageFeedback] = useState<Map<string, FeedbackType>>(new Map());
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
@@ -197,6 +206,14 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
       );
     }
 
+    if (result.type === 'error') {
+      return (
+        <div className="rounded-lg border border-rose-400/35 bg-rose-500/10 p-3">
+          <p className="text-xs text-rose-200">SQL error: {result.message}</p>
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -286,13 +303,18 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
     scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTo({ top: 0, behavior: 'auto' });
+  }, [view]);
+
   const historyEmpty = useMemo(() => historyConversations.length === 0, [historyConversations]);
 
   return (
     <section className="relative flex h-full flex-col items-center">
-      <div ref={scrollRef} className="flex h-full w-full flex-col items-center overflow-y-auto px-6 pb-10 pt-6">
+      <div ref={scrollRef} className="flex h-full w-full flex-col items-center overflow-y-auto px-4 pb-8 pt-4 md:px-6 md:pb-10 md:pt-6">
         <div className="flex w-full max-w-3xl flex-1 flex-col">
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false}>
             {view === 'chat' && showLanding && (
               <motion.div
                 key="landing"
@@ -303,7 +325,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                 transition={{ duration: 0.55, ease: [0.22, 0.61, 0.36, 1] }}
               >
                 <LayoutGroup id="landing-toggle">
-                  <div className="mb-10 flex  gap-2">
+                  <div className="mb-8 flex gap-2">
                     {(['chat', 'history'] as const).map((mode) => {
                       const isActive = view === mode;
                       return (
@@ -375,8 +397,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.6, delay: 0.4 }}
                     >
-                      <p className="text-2xl leading-relaxed text-[var(--text-secondary)]">Start your conversation with Axon</p>
-                      <p className="text-sm text-[var(--text-subtle)]">Draft a message below or pick one of the quick ideas.</p>
+                      <p className="text-2xl leading-relaxed text-[var(--text-secondary)]">What do you want to explore today?</p>
+                      <p className="text-sm text-[var(--text-subtle)]">Start with a prompt below or ask your own question.</p>
                     </motion.div>
                   </div>
 
@@ -404,7 +426,23 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
               </motion.div>
             )}
 
-            {view === 'chat' && !showLanding && (
+            {showConversationLoading && (
+              <motion.div
+                key="conversation-loading"
+                className="flex flex-1 items-center justify-center"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-3 text-sm text-[var(--text-muted)]">
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--accent)]" aria-hidden />
+                  Loading conversation...
+                </div>
+              </motion.div>
+            )}
+
+            {view === 'chat' && !showLanding && !showConversationLoading && (
               <motion.div
                 key="messages"
                 className="flex flex-1 flex-col gap-6"
@@ -660,8 +698,8 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                         <div className="flex items-center justify-between gap-3">
                           <h3 className="text-base font-semibold text-[var(--text-primary)]">{conversation.title}</h3>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs uppercase tracking-[0.2em] text-[var(--text-subtle)]">
-                              {conversation.updatedAt}
+                            <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-subtle)]">
+                              {formatHistoryTimestamp(conversation.updatedAt)}
                             </span>
                             <button
                               type="button"
@@ -695,7 +733,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
                         <div className="flex items-center gap-2 text-xs text-[var(--text-subtle)]">
                           <span>{conversation.messageCount ?? conversation.messages?.length ?? 0} messages</span>
                           <span>•</span>
-                          <span>Tap to reopen this chat</span>
+                          <span>Open conversation</span>
                         </div>
                       </motion.div>
                     );

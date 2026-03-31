@@ -272,7 +272,7 @@ const AuthModal = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -284,7 +284,7 @@ const AuthModal = ({
         >
           <motion.div
             ref={modalRef}
-            className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900/95 p-8 shadow-xl backdrop-blur"
+            className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)]/95 p-6 shadow-2xl backdrop-blur md:p-7"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -292,15 +292,15 @@ const AuthModal = ({
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{heading}</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{subheading}</p>
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">{heading}</h2>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">{subheading}</p>
                 {successMessage && (
-                  <p className="mt-2 text-xs text-blue-300">{successMessage}</p>
+                  <p className="mt-2 text-xs text-emerald-300">{successMessage}</p>
                 )}
               </div>
               <button
                 type="button"
-                className="grid h-8 w-8 place-items-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                className="grid h-8 w-8 place-items-center rounded-full text-[var(--text-subtle)] transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
                 onClick={onClose}
                 aria-label="Close authentication"
               >
@@ -314,7 +314,7 @@ const AuthModal = ({
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               {view === 'signup' && (
                 <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="auth-name">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-name">
                     Name
                   </label>
                   <input
@@ -322,7 +322,7 @@ const AuthModal = ({
                     ref={view === 'signup' ? firstInputRef : undefined}
                     type="text"
                     autoComplete="name"
-                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                     value={form.name}
                     onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                     disabled={isSubmitting}
@@ -333,7 +333,7 @@ const AuthModal = ({
 
               {view !== 'reset-confirm' && (
                 <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="auth-email">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-email">
                     Email
                   </label>
                   <input
@@ -341,7 +341,7 @@ const AuthModal = ({
                     ref={view !== 'signup' && (view as string) !== 'reset-confirm' ? firstInputRef : undefined}
                     type="email"
                     autoComplete="email"
-                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                     value={form.email}
                     onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
                     disabled={isSubmitting}
@@ -352,14 +352,14 @@ const AuthModal = ({
 
               {(view === 'signin' || view === 'signup') && (
                 <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="auth-password">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-password">
                     Password
                   </label>
                   <input
                     id="auth-password"
                     type="password"
                     autoComplete={view === 'signup' ? 'new-password' : 'current-password'}
-                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-400 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                     value={form.password}
                     onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
                     disabled={isSubmitting}
@@ -369,7 +369,7 @@ const AuthModal = ({
               )}
 
               {view === 'reset-request' && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--text-subtle)]">
                   We will generate a reset code for your account. In production this would be emailed to you.
                 </p>
               )}
@@ -377,14 +377,14 @@ const AuthModal = ({
               {view === 'reset-confirm' && (
                 <>
                   <div>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="auth-reset-token">
+                    <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-reset-token">
                       Reset code
                     </label>
                     <input
                       id="auth-reset-token"
                       ref={view === 'reset-confirm' ? firstInputRef : undefined}
                       type="text"
-                      className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-400 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                       value={form.resetToken}
                       onChange={(event) => setForm((prev) => ({ ...prev, resetToken: event.target.value }))}
                       disabled={isSubmitting}
@@ -393,14 +393,14 @@ const AuthModal = ({
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="auth-new-password">
+                    <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-new-password">
                       New password
                     </label>
                     <input
                       id="auth-new-password"
                       type="password"
                       autoComplete="new-password"
-                      className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-400 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                       value={form.password}
                       onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
                       disabled={isSubmitting}
@@ -409,14 +409,14 @@ const AuthModal = ({
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="auth-confirm-password">
+                    <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-confirm-password">
                       Confirm password
                     </label>
                     <input
                       id="auth-confirm-password"
                       type="password"
                       autoComplete="new-password"
-                      className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-400 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
                       value={form.confirmPassword}
                       onChange={(event) => setForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
                       disabled={isSubmitting}
@@ -431,7 +431,7 @@ const AuthModal = ({
               {view === 'signin' && (
                 <button
                   type="button"
-                  className="text-xs font-medium text-indigo-300 transition hover:text-indigo-200"
+                  className="text-xs font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
                   onClick={switchToResetRequest}
                   disabled={isSubmitting}
                 >
@@ -443,18 +443,18 @@ const AuthModal = ({
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full items-center justify-center rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Processing…' : primaryButtonLabel}
               </button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
+            <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
               {view === 'signup' ? (
                 <button
                   type="button"
-                  className="font-medium text-indigo-600 dark:text-indigo-300 transition hover:text-indigo-500 dark:hover:text-indigo-200"
+                  className="font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
                   onClick={switchToSignIn}
                   disabled={isSubmitting}
                 >
@@ -463,7 +463,7 @@ const AuthModal = ({
               ) : view === 'signin' ? (
                 <button
                   type="button"
-                  className="font-medium text-indigo-600 dark:text-indigo-300 transition hover:text-indigo-500 dark:hover:text-indigo-200"
+                  className="font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
                   onClick={switchToSignUp}
                   disabled={isSubmitting}
                 >
@@ -472,7 +472,7 @@ const AuthModal = ({
               ) : (
                 <button
                   type="button"
-                  className="font-medium text-indigo-600 dark:text-indigo-300 transition hover:text-indigo-500 dark:hover:text-indigo-200"
+                  className="font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
                   onClick={switchToSignIn}
                   disabled={isSubmitting}
                 >

@@ -15,10 +15,10 @@ interface ToastItemProps {
 }
 
 const typeStyles: Record<ToastType, string> = {
-  success: 'border-emerald-500/30 bg-emerald-950/90 text-emerald-200 dark:bg-emerald-950/90 dark:text-emerald-200',
-  error: 'border-rose-500/30 bg-rose-950/90 text-rose-200 dark:bg-rose-950/90 dark:text-rose-200',
-  info: 'border-blue-500/30 bg-blue-950/90 text-blue-200 dark:bg-blue-950/90 dark:text-blue-200',
-  warning: 'border-amber-500/30 bg-amber-950/90 text-amber-200 dark:bg-amber-950/90 dark:text-amber-200',
+  success: 'border-emerald-500/35 bg-emerald-500/12 text-emerald-800 dark:bg-emerald-500/18 dark:text-emerald-200',
+  error: 'border-rose-500/35 bg-rose-500/12 text-rose-800 dark:bg-rose-500/18 dark:text-rose-200',
+  info: 'border-blue-500/35 bg-blue-500/12 text-blue-800 dark:bg-blue-500/18 dark:text-blue-200',
+  warning: 'border-amber-500/35 bg-amber-500/12 text-amber-800 dark:bg-amber-500/18 dark:text-amber-200',
 };
 
 const typeIcons: Record<ToastType, React.ReactNode> = {
@@ -88,7 +88,7 @@ interface ToastContainerProps {
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismiss }) => {
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col-reverse gap-2 max-w-sm" role="status" aria-live="polite">
+    <div className="fixed bottom-5 right-5 z-[100] flex max-w-sm flex-col-reverse gap-2" role="status" aria-live="polite">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />

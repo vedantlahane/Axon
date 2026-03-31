@@ -113,6 +113,10 @@ const useSqlConsole = ({ canUseDatabaseTools, onRevealMessage }: UseSqlConsoleOp
 			try {
 				const result = await runSqlQuery({ query, limit });
 
+				if (result.type === "error") {
+					setSqlConsoleError(result.message || "Unable to execute SQL query.");
+				}
+
 				const historyEntry: SqlQueryHistoryEntry = {
 					id: `sql-${Date.now()}`,
 					query,

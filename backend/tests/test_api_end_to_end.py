@@ -1,8 +1,10 @@
 import tempfile
 import unittest
 import uuid
+from io import BytesIO
 
 from fastapi.testclient import TestClient
+from openpyxl import load_workbook
 
 import backend.tests.warnings_config  # noqa: F401
 from backend.main import app
@@ -88,6 +90,28 @@ class ApiEndToEndTests(unittest.TestCase):
             db_upload_payload = db_upload.json()
 
         self.assertTrue(db_upload_payload['path'])
+
+        export_xlsx = self.client.post(
+            '/api/database/export/',
+            json={
+                'query': 'SELECT 1 AS id, "Alice" AS name;',
+                'columns': ['id', 'name'],
+                'rows': [{'id': 1, 'name': 'Alice'}],
+            },
+        )
+        self.assertEqual(export_xlsx.status_code, 200, msg=export_xlsx.text)
+        self.assertIn(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            export_xlsx.headers.get('content-type', ''),
+        )
+
+        workbook = load_workbook(BytesIO(export_xlsx.content))
+        sheet = workbook.active
+        self.assertEqual(sheet.cell(1, 1).value, 'id')
+        self.assertEqual(sheet.cell(1, 2).value, 'name')
+        self.assertEqual(sheet.cell(2, 1).value, 1)
+        self.assertEqual(sheet.cell(2, 2).value, 'Alice')
+        workbook.close()
 
         delete_conversation = self.client.delete(f'/api/conversations/{conversation_id}/?delete_files=true')
         self.assertEqual(delete_conversation.status_code, 200, msg=delete_conversation.text)

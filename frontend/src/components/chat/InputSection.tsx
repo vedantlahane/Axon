@@ -231,7 +231,8 @@ const InputSection: React.FC<InputSectionProps> = ({
     // Validate file count (max 10 files per message)
     const totalFiles = files.length + selectedFiles.length;
     if (totalFiles > 10) {
-      console.warn('Maximum 10 files per message');
+      setSendError('You can attach up to 10 files per message.');
+      setTimeout(() => setSendError(null), 4000);
       event.target.value = '';
       return;
     }
@@ -353,10 +354,12 @@ const InputSection: React.FC<InputSectionProps> = ({
   const voiceButtonDisabled = isHistoryActive || isSending || !isSpeechSupported || !isAuthenticated;
   const isSendDisabled =
     isHistoryActive || isSending || hasUploadingFiles || !canSend || !isAuthenticated;
+  const uploadButtonDisabled = isHistoryActive || isSending;
   const databaseButtonDisabled = isHistoryActive || isSending;
-  const sideWindowDisabled = databaseButtonDisabled || (!canUseDatabaseTools && !isSideWindowOpen);
+  const sideWindowDisabled = databaseButtonDisabled;
   const sideWindowButtonLabel = isSideWindowOpen ? 'Hide window' : 'Side window';
   const sideWindowAriaLabel = isSideWindowOpen ? 'Hide SQL side window' : 'Open SQL side window';
+  const modelButtonLabel = isAuthenticated ? 'Change AI model' : 'Sign in to choose AI model';
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -368,7 +371,7 @@ const InputSection: React.FC<InputSectionProps> = ({
   };
 
   return (
-    <footer className="sticky bottom-10 z-30 flex flex-col items-center justify-center px-6 pt-4 backdrop-blur-xl">
+    <footer className="sticky bottom-0 z-30 flex flex-col items-center justify-center px-4 pb-4 pt-3 backdrop-blur-xl md:px-6">
       <AnimatePresence>
         {sendError && (
           <motion.div
@@ -482,15 +485,15 @@ const InputSection: React.FC<InputSectionProps> = ({
           )}
         </AnimatePresence>
 
-        <div className="flex items-center gap-3 rounded-2xl border border-white/10  px-4 py-3 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)]/85 px-3 py-2.5 shadow-[0_18px_35px_-26px_rgba(14,40,90,0.55)] backdrop-blur-sm">
           <motion.button
             type="button"
             className={`grid h-9 w-9 place-items-center rounded-lg transition ${
               isRecording
                 ? 'bg-red-500/20 text-red-600 dark:text-red-400'
                 : voiceButtonDisabled
-                  ? 'bg-white/5 text-[var(--text-subtle)] dark:text-white/30'
-                  : 'bg-white/5 text-[var(--text-muted)] hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white'
+                  ? 'bg-[var(--bg-soft)] text-[var(--text-subtle)]'
+                  : 'bg-[var(--bg-soft)] text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]'
             }`}
             aria-label="Voice input"
             whileHover={voiceButtonDisabled ? {} : { scale: 1.05 }}
@@ -517,12 +520,17 @@ const InputSection: React.FC<InputSectionProps> = ({
 
           <motion.button
             type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-[var(--text-muted)] transition hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
+            className={`grid h-9 w-9 place-items-center rounded-lg transition ${
+              uploadButtonDisabled
+                ? 'bg-[var(--bg-soft)] text-[var(--text-subtle)]'
+                : 'bg-[var(--bg-soft)] text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]'
+            }`}
             aria-label="Attach files"
             title="Attach PDF files"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={uploadButtonDisabled ? {} : { scale: 1.05 }}
+            whileTap={uploadButtonDisabled ? {} : { scale: 0.95 }}
             onClick={handleUploadTrigger}
+            disabled={uploadButtonDisabled}
           >
             <svg
               width="18"
@@ -547,16 +555,16 @@ const InputSection: React.FC<InputSectionProps> = ({
             onChange={(event) => setMessage(event.target.value)}
             placeholder={
               isHistoryActive
-                ? 'Switch back to Chat to send a message'
+                ? 'History view is read-only. Return to Chat to send messages.'
                 : isSending
                   ? 'Sending…'
                   : hasUploadingFiles
                     ? 'Waiting for files to upload…'
                     : isAuthenticated
-                      ? 'Ask Axon anything…'
+                      ? 'Ask Axon about your data, docs, or SQL...'
                       : 'Sign in to start chatting'
             }
-            className="flex-1 resize-none bg-transparent py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-white dark:placeholder:text-white/40"
+            className="flex-1 resize-none bg-transparent py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
             onKeyDown={handleKeyDown}
             disabled={isHistoryActive || !isAuthenticated}
             aria-label="Chat message"
@@ -564,7 +572,7 @@ const InputSection: React.FC<InputSectionProps> = ({
 
           <motion.button
             type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-[var(--text-muted)] transition hover:border-white/20 hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-muted)] transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
             aria-label="Configure database connection"
             title={databaseSummary}
             whileHover={databaseButtonDisabled ? {} : { scale: 1.03 }}
@@ -592,12 +600,21 @@ const InputSection: React.FC<InputSectionProps> = ({
           <div className="relative" ref={modelSelectorRef}>
             <motion.button
               type="button"
-              className={`flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 text-xs text-[var(--text-muted)] transition hover:border-white/20 hover:bg-white/10 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white ${isModelSwitching ? 'opacity-50' : ''}`}
+              className={`flex h-9 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-2.5 text-xs text-[var(--text-muted)] transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)] ${isModelSwitching ? 'opacity-50' : ''}`}
               aria-label="Select AI model"
-              title="Change AI model"
+              title={modelButtonLabel}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setShowModelSelector(!showModelSelector)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  onRequireAuth('signin');
+                  return;
+                }
+                if (availableModels.length === 0) {
+                  return;
+                }
+                setShowModelSelector(!showModelSelector);
+              }}
               disabled={isModelSwitching}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -617,13 +634,13 @@ const InputSection: React.FC<InputSectionProps> = ({
             <AnimatePresence>
               {showModelSelector && (
                 <motion.div
-                  className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-white/10 bg-white text-slate-700 dark:bg-[#0d1117] dark:text-white p-2 shadow-xl z-50"
+                  className="absolute bottom-full left-0 z-50 mb-2 min-w-[180px] rounded-xl border border-[var(--border)] bg-[var(--bg-panel)] p-2 text-[var(--text-primary)] shadow-xl"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <div className="text-[10px] uppercase tracking-wider text-[var(--text-subtle)] dark:text-white/40 px-2 py-1 mb-1">
+                  <div className="mb-1 px-2 py-1 text-[10px] uppercase tracking-wider text-[var(--text-subtle)]">
                     AI Model
                   </div>
                   {availableModels.map((model) => (
@@ -632,10 +649,10 @@ const InputSection: React.FC<InputSectionProps> = ({
                       type="button"
                       className={`w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition ${
                         currentModel === model.id
-                          ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                          ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
                           : model.available
-                            ? 'text-[var(--text-muted)] hover:bg-slate-200 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white'
-                            : 'text-[var(--text-subtle)] dark:text-white/30 cursor-not-allowed'
+                            ? 'text-[var(--text-muted)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]'
+                            : 'cursor-not-allowed text-[var(--text-subtle)]'
                       }`}
                       onClick={() => {
                         if (model.available && onModelChange) {
@@ -648,7 +665,7 @@ const InputSection: React.FC<InputSectionProps> = ({
                       <span className="flex items-center gap-2">
                         <span>{model.name}</span>
                         {model.isDefault && (
-                          <span className="text-[9px] uppercase bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-white/50 px-1 py-0.5 rounded">
+                          <span className="rounded bg-[var(--bg-soft)] px-1 py-0.5 text-[9px] uppercase text-[var(--text-subtle)]">
                             Default
                           </span>
                         )}
@@ -659,7 +676,7 @@ const InputSection: React.FC<InputSectionProps> = ({
                         </svg>
                       )}
                       {!model.available && (
-                        <span className="text-[9px] text-white/30">No API Key</span>
+                        <span className="text-[9px] text-[var(--text-subtle)]">Unavailable</span>
                       )}
                     </button>
                   ))}
@@ -670,7 +687,7 @@ const InputSection: React.FC<InputSectionProps> = ({
 
           <motion.button
             type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-muted)] transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
             aria-label={sideWindowAriaLabel}
             title={sideWindowButtonLabel}
             whileHover={sideWindowDisabled ? {} : { scale: 1.03 }}
@@ -696,7 +713,7 @@ const InputSection: React.FC<InputSectionProps> = ({
 
           <motion.button
             type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--accent)] text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-40"
             disabled={isSendDisabled}
             whileHover={isSendDisabled ? {} : { scale: 1.05 }}
             whileTap={isSendDisabled ? {} : { scale: 0.95 }}
