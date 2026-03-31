@@ -571,8 +571,11 @@ async def send_chat(
                 )
             )
             attached_documents = docs.scalars().all()
-            for doc in attached_documents:
-                user_message.attachments.append(doc)
+            if attached_documents:
+                await db.execute(
+                    message_attachments.insert(),
+                    [{'message_id': user_message.id, 'document_id': doc.id} for doc in attached_documents],
+                )
 
     history_rows = await db.execute(
         select(Message)
@@ -912,10 +915,16 @@ async def upload_database_file(
     safe_name = f"{uuid.uuid4().hex}_{original_name}"
     target_path = user_dir / safe_name
     content = await database.read()
-    if not content:
-        raise HTTPException(status_code=400, detail='Uploaded database file is empty')
 
     target_path.write_bytes(content)
+
+    try:
+        conn = sqlite3.connect(str(target_path))
+        conn.execute('PRAGMA schema_version')
+        conn.close()
+    except Exception as ex:
+        target_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail='Uploaded file is not a valid SQLite database') from ex
 
     return {
         'path': str(target_path.resolve()),

@@ -27,6 +27,23 @@ jobs:
       - name: Compile backend and MCP
         run: python -m compileall backend mcp
 
+      - name: Run backend API and agent tests
+        run: |
+          python -m unittest -v \
+            backend.tests.test_agent_pipeline \
+            backend.tests.test_agent_chat_api \
+            backend.tests.test_agent_model_preferences \
+            backend.tests.test_api_end_to_end
+
+      - name: Run live provider integration tests (optional)
+        if: ${{ secrets.OPENAI_API_KEY != '' || secrets.GEMINI_API_KEY != '' || secrets.GOOGLE_API_KEY != '' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          AXON_RUN_LIVE_PROVIDER_TESTS: '1'
+        run: python -m unittest -v backend.tests.test_agent_live_provider
+
   frontend:
     runs-on: ubuntu-latest
     steps:

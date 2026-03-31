@@ -1,4 +1,9 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+_DEFAULT_SQLITE_PATH = (Path(__file__).resolve().parent / 'axon.db').as_posix()
 
 
 class Settings(BaseSettings):
@@ -7,7 +12,7 @@ class Settings(BaseSettings):
     APP_NAME: str = 'Axon AI Platform'
     API_PREFIX: str = '/api'
 
-    DATABASE_URL: str = 'sqlite+aiosqlite:///./axon.db'
+    DATABASE_URL: str = f'sqlite+aiosqlite:///{_DEFAULT_SQLITE_PATH}'
 
     OPENAI_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None

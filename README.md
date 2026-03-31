@@ -267,6 +267,21 @@ source venv/bin/activate
 python -m compileall .
 ```
 
+```bash
+cd ..
+python -m unittest -v \
+  backend.tests.test_agent_pipeline \
+  backend.tests.test_agent_chat_api \
+  backend.tests.test_agent_model_preferences \
+  backend.tests.test_api_end_to_end
+```
+
+Optional live-provider verification (requires at least one key):
+
+```bash
+AXON_RUN_LIVE_PROVIDER_TESTS=1 python -m unittest -v backend.tests.test_agent_live_provider
+```
+
 ### Frontend
 
 ```bash

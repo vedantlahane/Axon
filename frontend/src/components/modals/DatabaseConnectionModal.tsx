@@ -23,6 +23,11 @@ interface DatabaseConnectionModalProps {
 
 const DEFAULT_MODES: DatabaseMode[] = ['sqlite', 'url'];
 
+type UploadFeedback = {
+  status: 'success' | 'error';
+  message: string;
+};
+
 const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
   isOpen,
   onClose,
@@ -42,6 +47,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
   const [connectionString, setConnectionString] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadFeedback, setUploadFeedback] = useState<UploadFeedback | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,6 +57,9 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
     setDisplayName(config?.displayName ?? '');
     setSqlitePath(config?.sqlitePath ?? config?.resolvedSqlitePath ?? '');
     setConnectionString(config?.connectionString ?? '');
+    setUploadedFile(null);
+    setUploadProgress(0);
+    setUploadFeedback(null);
   }, [isOpen, config]);
 
   const modes = useMemo<DatabaseMode[]>(
@@ -109,12 +118,20 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    setUploadFeedback(null);
+
     if (file) {
       // Validate it's a SQLite file
       if (!file.name.endsWith('.db') && !file.name.endsWith('.sqlite') && !file.name.endsWith('.sqlite3')) {
-        alert('Please select a valid SQLite database file (.db, .sqlite, or .sqlite3)');
+        setUploadProgress(0);
+        setUploadedFile(null);
+        setUploadFeedback({
+          status: 'error',
+          message: 'Please select a valid SQLite file (.db, .sqlite, or .sqlite3).',
+        });
         return;
       }
+
       setUploadedFile(file);
       // Auto-fill the path with the uploaded filename
       setSqlitePath(`uploaded_databases/${file.name}`);
@@ -125,16 +142,21 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
     if (!uploadedFile) return;
 
     try {
-      setUploadProgress(0);
+      setUploadFeedback(null);
+      setUploadProgress(20);
       const data = await uploadDatabaseFile(uploadedFile);
       setUploadProgress(100);
       setSqlitePath(data.path);
-
-      // Show success feedback
-      alert('Database uploaded successfully! Click "Save connection" to use it.');
+      setUploadFeedback({
+        status: 'success',
+        message: 'Database uploaded. Click Save Connection to apply it.',
+      });
     } catch (error) {
-      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setUploadProgress(0);
+      setUploadFeedback({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Upload failed. Please try again.',
+      });
     }
   };
 
@@ -316,6 +338,15 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                           style={{ width: `${uploadProgress}%` }}
                         />
                       </div>
+                    )}
+                    {uploadFeedback && (
+                      <p
+                        className={`mt-3 text-xs ${
+                          uploadFeedback.status === 'success' ? 'text-emerald-300' : 'text-rose-300'
+                        }`}
+                      >
+                        {uploadFeedback.message}
+                      </p>
                     )}
                   </div>
 
