@@ -200,6 +200,7 @@ All compatibility routes are under `/api/`.
 - `POST /api/database/connection/`
 - `DELETE /api/database/connection/`
 - `POST /api/database/connection/test/`
+- `POST /api/database/upload/`
 - `POST /api/database/query/`
 - `GET /api/database/schema/`
 - `POST /api/database/query/suggestions/`

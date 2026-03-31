@@ -101,6 +101,12 @@ export interface DatabaseConnectionTestResult {
   resolvedSqlitePath?: string | null;
 }
 
+export interface DatabaseUploadResult {
+  path: string;
+  filename: string;
+  size: number;
+}
+
 export interface SqlQueryRowsResult {
   type: 'rows';
   columns: string[];
@@ -449,6 +455,19 @@ export async function testDatabaseConnectionSettings(payload: UpdateDatabaseConn
   });
 
   return handleResponse<DatabaseConnectionTestResult>(response);
+}
+
+export async function uploadDatabaseFile(file: File): Promise<DatabaseUploadResult> {
+  const formData = new FormData();
+  formData.append('database', file);
+
+  const response = await fetch(`${API_BASE_URL}/database/upload/`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+
+  return handleResponse<DatabaseUploadResult>(response);
 }
 
 export async function runSqlQuery(payload: RunSqlQueryPayload): Promise<SqlQueryResult> {

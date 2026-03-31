@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { uploadDatabaseFile } from '../../services/chatApi';
 import type {
   DatabaseConnectionSettings,
   DatabaseMode,
@@ -123,26 +124,12 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
   const handleFileUpload = async () => {
     if (!uploadedFile) return;
 
-    const formData = new FormData();
-    formData.append('database', uploadedFile);
-
     try {
       setUploadProgress(0);
-      const response = await fetch('/api/database/upload/', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
-      }
-
-      const data = await response.json();
+      const data = await uploadDatabaseFile(uploadedFile);
       setUploadProgress(100);
       setSqlitePath(data.path);
-      
+
       // Show success feedback
       alert('Database uploaded successfully! Click "Save connection" to use it.');
     } catch (error) {

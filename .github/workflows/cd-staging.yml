@@ -1,0 +1,15 @@
+name: CD Staging
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Staging deployment placeholder
+        run: |
+          echo "Add staging deployment commands (e.g., SSH + docker compose pull/up)"

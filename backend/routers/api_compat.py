@@ -8,10 +8,10 @@ import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..agent import AgentContext, AxonAgentPipeline
@@ -20,13 +20,15 @@ from ..config import Settings
 from ..database import get_db
 from ..models.conversation import Conversation
 from ..models.document import Document
-from ..models.message import Message
+from ..models.message import Message, message_attachments
 from ..models.user import User
 
 settings = Settings()
 router = APIRouter(prefix=settings.API_PREFIX)
 uploads_root = Path(__file__).resolve().parents[1] / 'uploads'
 uploads_root.mkdir(parents=True, exist_ok=True)
+databases_root = Path(__file__).resolve().parents[1] / 'uploaded_databases'
+databases_root.mkdir(parents=True, exist_ok=True)
 
 # In-memory stores for lightweight UX features.
 _password_reset_tokens: dict[str, str] = {}
@@ -201,13 +203,22 @@ def _connection_for_user(user_id: int) -> dict[str, object] | None:
     return _user_db_connections.get(user_id)
 
 
+def _default_sqlite_path() -> Path:
+    db_url = (settings.DATABASE_URL or '').strip()
+    if db_url.startswith('sqlite+aiosqlite:///'):
+        return Path(db_url.replace('sqlite+aiosqlite:///', '', 1)).expanduser().resolve()
+    if db_url.startswith('sqlite:///'):
+        return Path(db_url.replace('sqlite:///', '', 1)).expanduser().resolve()
+    return Path('axon.db').resolve()
+
+
 def _resolve_sqlite_path(connection: dict[str, object] | None) -> Path:
     if not connection:
-        return Path('axon.db').resolve()
+        return _default_sqlite_path()
 
     mode = str(connection.get('mode') or 'sqlite')
     if mode == 'sqlite':
-        sqlite_path = str(connection.get('sqlitePath') or 'axon.db').strip()
+        sqlite_path = str(connection.get('sqlitePath') or _default_sqlite_path()).strip()
         return Path(sqlite_path).expanduser().resolve()
 
     connection_string = str(connection.get('connectionString') or '').strip()
@@ -218,8 +229,13 @@ def _resolve_sqlite_path(connection: dict[str, object] | None) -> Path:
 
 
 @router.get('/health/')
-async def api_health() -> dict[str, str]:
-    return {'status': 'ok'}
+async def api_health(db: AsyncSession = Depends(get_db)):
+    try:
+        await db.execute(text('SELECT 1'))
+    except Exception:
+        return {'status': 'degraded', 'database': 'error'}
+
+    return {'status': 'healthy', 'database': 'ok'}
 
 
 @router.post('/auth/register/')
@@ -373,6 +389,11 @@ async def update_preferences(payload: dict[str, str], user: User = Depends(_requ
     }
 
 
+@router.put('/preferences/')
+async def update_preferences_alias(payload: dict[str, str], user: User = Depends(_require_current_user)):
+    return await update_preferences(payload, user)
+
+
 @router.post('/messages/{message_id}/feedback/')
 async def add_feedback(message_id: str, payload: FeedbackPayload, user: User = Depends(_require_current_user)):
     user_feedback = _user_feedback.setdefault(user.id, {})
@@ -392,6 +413,11 @@ async def delete_feedback(message_id: str, user: User = Depends(_require_current
     user_feedback = _user_feedback.setdefault(user.id, {})
     user_feedback.pop(message_id, None)
     return {'success': True}
+
+
+@router.delete('/messages/{message_id}/feedback/')
+async def delete_feedback_alias(message_id: str, user: User = Depends(_require_current_user)):
+    return await delete_feedback(message_id, user)
 
 
 @router.get('/conversations/')
@@ -444,6 +470,7 @@ async def get_conversation(
 @router.delete('/conversations/{conversation_id}/')
 async def delete_conversation(
     conversation_id: str,
+    delete_files: bool = Query(default=False, alias='delete_files'),
     user: User = Depends(_require_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -459,9 +486,43 @@ async def delete_conversation(
     if conversation is None:
         raise HTTPException(status_code=404, detail='Conversation not found')
 
+    attached_docs: list[Document] = []
+    if delete_files:
+        attached_rows = await db.execute(
+            select(Document)
+            .join(message_attachments, message_attachments.c.document_id == Document.id)
+            .join(Message, message_attachments.c.message_id == Message.id)
+            .where(Message.conversation_id == conversation.id, Document.user_id == user.id)
+            .distinct()
+        )
+        attached_docs = attached_rows.scalars().all()
+
     await db.delete(conversation)
+    await db.flush()
+
+    files_deleted = 0
+    if delete_files and attached_docs:
+        for document in attached_docs:
+            remaining_refs = await db.scalar(
+                select(func.count(message_attachments.c.message_id))
+                .select_from(message_attachments.join(Message, message_attachments.c.message_id == Message.id))
+                .where(
+                    message_attachments.c.document_id == document.id,
+                    Message.conversation_id != conversation.id,
+                )
+            )
+            if int(remaining_refs or 0) > 0:
+                continue
+
+            file_path = Path(document.storage_path)
+            if file_path.exists():
+                file_path.unlink(missing_ok=True)
+
+            await db.delete(document)
+            files_deleted += 1
+
     await db.commit()
-    return {'status': 'deleted', 'files_deleted': 0}
+    return {'status': 'deleted', 'files_deleted': files_deleted}
 
 
 @router.post('/chat/')
@@ -772,13 +833,22 @@ async def get_database_connection(user: User = Depends(_require_current_user)):
 
 @router.post('/database/connection/')
 async def set_database_connection(payload: DatabaseConnectionPayload, user: User = Depends(_require_current_user)):
+    mode = payload.mode.strip().lower()
+    if mode not in {'sqlite', 'url'}:
+        raise HTTPException(status_code=400, detail='Connection mode must be either sqlite or url')
+
+    if mode == 'url' and not (payload.connectionString or '').strip():
+        raise HTTPException(status_code=400, detail='connectionString is required when mode=url')
+
+    sqlite_path = str(payload.sqlitePath or _default_sqlite_path()).strip()
+    display_name = payload.displayName or ('SQLite Database' if mode == 'sqlite' else 'Custom URL')
     connection = {
-        'mode': payload.mode,
-        'displayName': payload.displayName or ('SQLite Database' if payload.mode == 'sqlite' else 'Custom URL'),
-        'label': payload.displayName or ('SQLite Database' if payload.mode == 'sqlite' else 'Custom URL'),
-        'sqlitePath': payload.sqlitePath,
-        'resolvedSqlitePath': str(Path(payload.sqlitePath or 'axon.db').expanduser().resolve()) if payload.mode == 'sqlite' else None,
-        'connectionString': payload.connectionString,
+        'mode': mode,
+        'displayName': display_name,
+        'label': display_name,
+        'sqlitePath': sqlite_path if mode == 'sqlite' else None,
+        'resolvedSqlitePath': str(Path(sqlite_path).expanduser().resolve()) if mode == 'sqlite' else None,
+        'connectionString': payload.connectionString if mode == 'url' else None,
         'isDefault': False,
         'source': 'user',
     }
@@ -806,8 +876,12 @@ async def clear_database_connection(user: User = Depends(_require_current_user))
 @router.post('/database/connection/test/')
 async def test_database_connection(payload: DatabaseConnectionPayload, user: User = Depends(_require_current_user)):
     try:
+        mode = payload.mode.strip().lower()
+        if mode not in {'sqlite', 'url'}:
+            return {'ok': False, 'message': 'Connection mode must be either sqlite or url', 'resolvedSqlitePath': None}
+
         connection = {
-            'mode': payload.mode,
+            'mode': mode,
             'sqlitePath': payload.sqlitePath,
             'connectionString': payload.connectionString,
         }
@@ -820,6 +894,34 @@ async def test_database_connection(payload: DatabaseConnectionPayload, user: Use
         return {'ok': False, 'message': str(ex), 'resolvedSqlitePath': None}
 
     return {'ok': True, 'message': 'Connection successful', 'resolvedSqlitePath': str(sqlite_path)}
+
+
+@router.post('/database/upload/')
+async def upload_database_file(
+    database: UploadFile = File(...),
+    user: User = Depends(_require_current_user),
+):
+    original_name = Path(database.filename or 'database.db').name
+    extension = Path(original_name).suffix.lower()
+    if extension not in {'.db', '.sqlite', '.sqlite3'}:
+        raise HTTPException(status_code=400, detail='Only SQLite files are supported (.db, .sqlite, .sqlite3)')
+
+    user_dir = databases_root / str(user.id)
+    user_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_name = f"{uuid.uuid4().hex}_{original_name}"
+    target_path = user_dir / safe_name
+    content = await database.read()
+    if not content:
+        raise HTTPException(status_code=400, detail='Uploaded database file is empty')
+
+    target_path.write_bytes(content)
+
+    return {
+        'path': str(target_path.resolve()),
+        'filename': original_name,
+        'size': len(content),
+    }
 
 
 @router.post('/database/query/')

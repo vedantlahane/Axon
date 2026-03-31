@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 
-from axon.main import app as axon_app
-
 mcp_server = FastAPI(title='Axon MCP Bridge')
 
 
@@ -10,5 +8,12 @@ async def ping():
     return {'status': 'ok'}
 
 
-# mount the Axon API app under /axon for compatibility
-mcp_server.mount('/axon', axon_app)
+try:
+    # Mount the main backend app when the backend package is available.
+    from backend.main import app as axon_app
+
+    mcp_server.mount('/axon', axon_app)
+except Exception:
+    @mcp_server.get('/axon/health')
+    async def axon_unavailable():
+        return {'status': 'degraded', 'detail': 'Backend app mount unavailable in MCP runtime'}
