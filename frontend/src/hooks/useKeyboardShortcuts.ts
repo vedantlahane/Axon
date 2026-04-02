@@ -20,11 +20,19 @@ interface KeyboardShortcut {
 export default function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (typeof e.key !== 'string' || !e.key) {
+        return;
+      }
+
       // Don't fire shortcuts when user is typing in an input/textarea
       const tag = (e.target as HTMLElement)?.tagName;
       const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
 
       for (const shortcut of shortcuts) {
+        if (!shortcut?.key) {
+          continue;
+        }
+
         const ctrlMatch = shortcut.ctrl
           ? e.ctrlKey || e.metaKey
           : !e.ctrlKey && !e.metaKey;
