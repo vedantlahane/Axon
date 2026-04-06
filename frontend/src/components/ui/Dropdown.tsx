@@ -1,5 +1,5 @@
+// ─── Dropdown ────────────────────────────────────────────────────────────────
 import React, { useState, useRef, useEffect } from 'react';
-import { cn } from '../../utils/formatters';
 
 interface DropdownItem {
   id: string;
@@ -17,51 +17,47 @@ interface DropdownProps {
 
 const Dropdown: React.FC<DropdownProps> = ({ trigger, items, onSelect, align = 'left' }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
   return (
-    <div ref={dropdownRef} className="relative">
-      <button onClick={() => setIsOpen(!isOpen)} className="flex items-center">
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setIsOpen(!isOpen)} className="flex items-center">
         {trigger}
       </button>
-
       {isOpen && (
         <div
-          className={cn(
-            'absolute top-full mt-2 min-w-max z-40',
-            'liquid-glass rounded-lg border border-white/10 overflow-hidden',
+          className={`absolute top-full mt-2 min-w-max z-40 glass-strong rounded-lg overflow-hidden ${
             align === 'right' ? 'right-0' : 'left-0'
-          )}
+          }`}
         >
-          {items.map((item) => (
-            <div key={item.id}>
-              {item.divider ? (
-                <div className="h-px bg-white/10" />
-              ) : (
-                <button
-                  onClick={() => {
-                    onSelect(item.id);
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-on-surface hover:bg-white/10 transition-colors flex items-center gap-2"
-                >
-                  {item.icon && <span className="material-symbols-outlined text-base">{item.icon}</span>}
-                  {item.label}
-                </button>
-              )}
-            </div>
-          ))}
+          {items.map((item) =>
+            item.divider ? (
+              <div key={item.id} className="gradient-separator mx-2 my-1" />
+            ) : (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => { onSelect(item.id); setIsOpen(false); }}
+                className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-white/5 transition-colors min-h-[40px]"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {item.icon && (
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--text-ghost)' }}>
+                    {item.icon}
+                  </span>
+                )}
+                {item.label}
+              </button>
+            )
+          )}
         </div>
       )}
     </div>

@@ -47,10 +47,13 @@ export function truncate(str: string, maxLength: number): string {
 }
 
 export async function exportSqlResultsXlsx(
-  _queryText: string,
-  _columns: string[],
-  _rows: Array<Record<string, unknown>>
+  queryText: string,
+  columns: string[],
+  rows: Array<Record<string, unknown>>
 ): Promise<void> {
+  void queryText;
+  void columns;
+  void rows;
   // TODO: Implement XLSX export functionality
   console.warn('XLSX export not yet implemented');
 }

@@ -17,8 +17,8 @@ import TopBar from './components/layout/TopBar';
 import CommandPalette from './components/command/CommandPalette';
 import AuthModal from './components/modals/AuthModal';
 import ToastContainer from './components/ui/ToastContainer';
-import CanvasPanel from './components/Canvas/CanvasPanel';
-import { ErrorBoundary, ErrorFallback } from './components/errors/ErrorBoundary';
+import CanvasPanel from './components/canvas/CanvasPanel';
+import { ErrorBoundary, ErrorFallback } from './components/errors';
 import { ChatSkeleton, LibrarySkeleton, DocumentsSkeleton, SettingsSkeleton } from './components/skeletons';
 
 // Hooks

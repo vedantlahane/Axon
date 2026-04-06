@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+
 // ─── Toast Provider (Context) ────────────────────────────────────────────────
 // Manages toast notification stack. Max 5 visible at once.
 // Toast components use glass-success, glass-error, glass-warning, glass-info.

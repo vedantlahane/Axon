@@ -1,20 +1,22 @@
-import React from 'react';
-import Skeleton from '../ui/Skeleton';
+// ─── Library Skeleton ────────────────────────────────────────────────────────
 
-const LibrarySkeleton: React.FC = () => {
-  return (
-    <div className="grid grid-cols-2 gap-4 p-4">
-      {[1, 2, 3, 4, 5, 6].map((idx) => (
-        <div key={idx} className="liquid-glass rounded-lg p-4 border border-white/10">
-          <div className="mb-3 flex items-center gap-2">
-            <Skeleton variant="circle" />
-            <Skeleton variant="line" className="flex-1" />
-          </div>
-          <Skeleton variant="line" count={2} />
+import React from 'react';
+
+const LibrarySkeleton: React.FC = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+    {[...Array(6)].map((_, i) => (
+      <div key={i} className="liquid-glass rounded-xl p-5" style={{ minHeight: '140px' }}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="skeleton-pulse w-10 h-10 rounded-lg" />
+          <div className="skeleton-pulse h-3 flex-1 rounded" />
         </div>
-      ))}
-    </div>
-  );
-};
+        <div className="space-y-2">
+          <div className="skeleton-pulse h-3 w-full rounded" />
+          <div className="skeleton-pulse h-3 w-2/3 rounded" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 export default LibrarySkeleton;

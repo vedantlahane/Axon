@@ -1,72 +1,126 @@
+// ─── Database Section (Bug Fix) ──────────────────────────────────────────────
+// Fixed: connectionUrl → connectionString
+
 import React, { useState } from 'react';
-import Badge from '../ui/Badge';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
+import type { DatabaseConnectionSettings } from '../../types/database';
+import type { ConnectionTestResult } from '../../stores/databaseStore';
 
 interface DatabaseSectionProps {
-  connectionUrl?: string;
-  isConnected?: boolean;
-  onConnect?: (url: string) => Promise<void>;
-  onTest?: (url: string) => Promise<boolean>;
+  connection: DatabaseConnectionSettings | null;
+  onSave?: (settings: DatabaseConnectionSettings) => Promise<void>;
+  onTest?: (url?: string) => Promise<ConnectionTestResult>;
 }
 
 const DatabaseSection: React.FC<DatabaseSectionProps> = ({
-  connectionUrl = '',
-  isConnected = false,
-  onConnect,
+  connection,
+  onSave,
   onTest,
 }) => {
-  const [url, setUrl] = useState(connectionUrl);
+  // BUG FIX: was connection?.connectionUrl (doesn't exist)
+  const [url, setUrl] = useState(connection?.connectionString ?? '');
   const [isLoading, setIsLoading] = useState(false);
-  const [testResult, setTestResult] = useState<boolean | null>(null);
+  const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
 
   const handleTest = async () => {
+    if (!onTest) return;
     setIsLoading(true);
-    const result = await onTest?.(url);
-    setTestResult(result ?? false);
-    setIsLoading(false);
+    try {
+      const result = await onTest(url);
+      setTestResult(result);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleConnect = async () => {
+  const handleSave = async () => {
+    if (!onSave || !connection) return;
     setIsLoading(true);
-    await onConnect?.(url);
-    setIsLoading(false);
+    try {
+      await onSave({ ...connection, connectionString: url });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="liquid-glass rounded-xl p-6 border border-white/10">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-on-surface">Database Connection</h2>
-        <Badge variant={isConnected ? 'success' : 'warning'} size="md">
-          {isConnected ? 'Connected' : 'Disconnected'}
-        </Badge>
-      </div>
-      <div className="space-y-4">
-        <Input
-          label="Connection URL"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="postgresql://user:password@host:port/db"
-        />
-        {testResult !== null && (
-          <div
-            className={`p-3 rounded-lg text-sm ${
-              testResult ? 'bg-emerald-500/10 text-emerald-300' : 'bg-error/10 text-error'
-            }`}
+    <section className="liquid-glass rounded-2xl p-6">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <span
+            className="material-symbols-outlined"
+            style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: '20px' }}
           >
-            {testResult ? '✓ Connection successful' : '✗ Connection failed'}
+            database
+          </span>
+          <h2 className="text-lg font-semibold text-white">Database</h2>
+        </div>
+        <span
+          className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full font-medium"
+          style={{
+            background: connection
+              ? 'rgba(52, 211, 153, 0.10)'
+              : 'rgba(251, 191, 36, 0.10)',
+            color: connection
+              ? 'var(--color-success)'
+              : 'var(--color-warning)',
+            border: `1px solid ${
+              connection
+                ? 'rgba(52, 211, 153, 0.20)'
+                : 'rgba(251, 191, 36, 0.20)'
+            }`,
+          }}
+        >
+          {connection ? 'Connected' : 'Disconnected'}
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1.5">
+            Connection URL
+          </label>
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="input-glass font-mono text-xs"
+            placeholder="postgresql://user:password@host:port/db"
+          />
+        </div>
+
+        {testResult && (
+          <div
+            className={`${testResult.success ? 'glass-success' : 'glass-error'} rounded-lg p-3 text-xs`}
+            style={{
+              color: testResult.success
+                ? 'var(--color-success)'
+                : 'var(--color-error)',
+            }}
+          >
+            {testResult.success ? '✓' : '✗'} {testResult.message}
           </div>
         )}
-        <div className="flex gap-2">
-          <Button variant="ghost" loading={isLoading} onClick={handleTest}>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            className="btn-glass text-sm"
+            disabled={isLoading || !url}
+            onClick={() => void handleTest()}
+          >
             Test Connection
-          </Button>
-          <Button variant="primary" loading={isLoading} onClick={handleConnect}>
+          </button>
+          <button
+            type="button"
+            className="btn-primary text-sm"
+            disabled={isLoading || !url}
+            onClick={() => void handleSave()}
+          >
             Save Connection
-          </Button>
+          </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

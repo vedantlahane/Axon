@@ -12,6 +12,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
     "@tailwindcss/vite": "^4.1.13",
+    "css.gg": "^2.1.4",
     "framer-motion": "^11.11.6",
     "lucide-react": "^0.575.0",
     "monaco-editor": "^0.52.0",

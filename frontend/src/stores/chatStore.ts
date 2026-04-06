@@ -293,7 +293,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   updateStreamingState: (updates) => {
-    const current = get();
     set({
       ...(updates.content != null && { streamingContent: updates.content }),
       ...(updates.progress !== undefined && {

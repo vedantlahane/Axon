@@ -148,7 +148,8 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
     }
   },
 
-  testConnection: async (connectionUrl?: string) => {
+  testConnection: async (_connectionUrl?: string) => {
+    void _connectionUrl;
     set({ isTestingConnection: true, connectionTestResult: null });
     try {
       // If your service has a test endpoint:

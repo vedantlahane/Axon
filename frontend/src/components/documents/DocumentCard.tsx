@@ -1,5 +1,7 @@
+// ─── Document Card ───────────────────────────────────────────────────────────
+
 import React from 'react';
-import Badge from '../ui/Badge';
+import { formatFileSize } from '../../utils/formatters';
 
 interface DocumentCardProps {
   id: string;
@@ -11,6 +13,21 @@ interface DocumentCardProps {
   onDelete?: () => void;
 }
 
+const FILE_CONFIG: Record<string, { icon: string; color: string }> = {
+  pdf: { icon: 'description', color: '#FB7185' },
+  xlsx: { icon: 'table_chart', color: '#34D399' },
+  csv: { icon: 'table_chart', color: '#34D399' },
+  sql: { icon: 'database', color: '#60A5FA' },
+  txt: { icon: 'article', color: '#94A3B8' },
+  md: { icon: 'article', color: '#94A3B8' },
+  default: { icon: 'attachment', color: '#a78bfa' },
+};
+
+const getConfig = (name: string) => {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  return FILE_CONFIG[ext] ?? FILE_CONFIG.default;
+};
+
 const DocumentCard: React.FC<DocumentCardProps> = ({
   filename,
   size,
@@ -19,46 +36,74 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   onDownload,
   onDelete,
 }) => {
-  const getFileIcon = (name: string) => {
-    if (name.endsWith('.pdf')) return { icon: 'description', color: 'text-red-400' };
-    if (name.endsWith('.xlsx') || name.endsWith('.csv')) return { icon: 'table_chart', color: 'text-emerald-400' };
-    if (name.endsWith('.sql')) return { icon: 'database', color: 'text-blue-400' };
-    return { icon: 'attachment', color: 'text-violet-400' };
-  };
-
-  const { icon, color } = getFileIcon(filename);
-  const formattedDate = uploadDate.toLocaleDateString();
+  const { icon, color } = getConfig(filename);
 
   return (
-    <div className="liquid-glass rounded-lg p-4 border border-white/10 hover:border-white/20 transition-colors">
-      <div className="flex items-start gap-3 mb-3">
-        <span className={`material-symbols-outlined text-2xl ${color} flex-shrink-0`}>{icon}</span>
+    <div
+      className="glass-card p-5 flex flex-col gap-3 group"
+    >
+      {/* Icon + file info */}
+      <div className="flex items-start gap-3">
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: `${color}15` }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: '20px', color }}
+          >
+            {icon}
+          </span>
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-on-surface truncate">{filename}</p>
-          <p className="text-xs text-on-surface-variant">{(size / 1024 / 1024).toFixed(2)} MB</p>
+          <p className="text-sm font-medium text-white truncate">{filename}</p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {formatFileSize(size)} · {uploadDate.toLocaleDateString()}
+          </p>
         </div>
       </div>
-      <div className="flex items-center justify-between text-xs text-on-surface-variant mb-3">
-        <span>{formattedDate}</span>
-        <Badge variant="info" size="sm">{type.toUpperCase()}</Badge>
-      </div>
-      <div className="flex gap-2">
-        {onDownload && (
-          <button
-            onClick={onDownload}
-            className="flex-1 px-3 py-1 rounded-lg text-xs font-medium text-violet-400 hover:bg-white/5 transition-colors"
-          >
-            Download
-          </button>
-        )}
-        {onDelete && (
-          <button
-            onClick={onDelete}
-            className="flex-1 px-3 py-1 rounded-lg text-xs font-medium text-error/70 hover:bg-error/10 transition-colors"
-          >
-            Delete
-          </button>
-        )}
+
+      {/* Type badge */}
+      <div className="flex items-center justify-between">
+        <span
+          className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full"
+          style={{
+            background: `${color}15`,
+            color,
+            border: `1px solid ${color}30`,
+          }}
+        >
+          {type.toUpperCase()}
+        </span>
+
+        {/* Actions — visible on hover */}
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onDownload && (
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={onDownload}
+              aria-label={`Download ${filename}`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                download
+              </span>
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              className="btn-icon"
+              style={{ color: 'var(--color-error)' }}
+              onClick={onDelete}
+              aria-label={`Delete ${filename}`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                delete
+              </span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

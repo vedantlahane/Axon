@@ -1,5 +1,5 @@
+// ─── Tooltip (continued) ─────────────────────────────────────────────────────
 import React, { useState } from 'react';
-import { cn } from '../../utils/formatters';
 
 interface TooltipProps {
   content: string;
@@ -7,32 +7,28 @@ interface TooltipProps {
   children: React.ReactNode;
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ content, side = 'top', children }) => {
-  const [isVisible, setIsVisible] = useState(false);
+const POSITIONS = {
+  top: 'bottom-full mb-2 left-1/2 -translate-x-1/2',
+  bottom: 'top-full mt-2 left-1/2 -translate-x-1/2',
+  left: 'right-full mr-2 top-1/2 -translate-y-1/2',
+  right: 'left-full ml-2 top-1/2 -translate-y-1/2',
+};
 
-  const sideClasses = {
-    top: 'bottom-full mb-2 left-1/2 -translate-x-1/2',
-    bottom: 'top-full mt-2 left-1/2 -translate-x-1/2',
-    left: 'right-full mr-2 top-1/2 -translate-y-1/2',
-    right: 'left-full ml-2 top-1/2 -translate-y-1/2',
-  };
+const Tooltip: React.FC<TooltipProps> = ({ content, side = 'top', children }) => {
+  const [visible, setVisible] = useState(false);
 
   return (
     <div className="relative inline-block">
       <div
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
-        className="cursor-help"
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
       >
         {children}
       </div>
-      {isVisible && (
+      {visible && (
         <div
-          className={cn(
-            'absolute z-50 px-2 py-1 text-xs font-medium text-on-surface',
-            'liquid-glass rounded-lg whitespace-nowrap pointer-events-none',
-            sideClasses[side]
-          )}
+          className={`absolute z-50 px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap pointer-events-none glass-strong rounded-lg ${POSITIONS[side]}`}
+          style={{ color: 'var(--text-primary)' }}
         >
           {content}
         </div>

@@ -1,84 +1,115 @@
+// ─── Danger Section ──────────────────────────────────────────────────────────
+// Red-tinted glass card with destructive actions.
+// Matches FRONTEND_CONTEXT.md §5.5 "Settings — Danger Zone"
+
 import React, { useState } from 'react';
-import Button from '../ui/Button';
 
 interface DangerSectionProps {
   onClearHistory?: () => void;
   onDeleteAccount?: () => void;
 }
 
-const DangerSection: React.FC<DangerSectionProps> = ({ onClearHistory, onDeleteAccount }) => {
-  const [showConfirmClear, setShowConfirmClear] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+const DangerSection: React.FC<DangerSectionProps> = ({
+  onClearHistory,
+  onDeleteAccount,
+}) => {
+  const [confirmAction, setConfirmAction] = useState<'clear' | 'delete' | null>(null);
+
+  const handleConfirm = () => {
+    if (confirmAction === 'clear') onClearHistory?.();
+    if (confirmAction === 'delete') onDeleteAccount?.();
+    setConfirmAction(null);
+  };
 
   return (
-    <div className="liquid-glass rounded-xl p-6 border border-error/30 bg-error/5">
-      <h2 className="text-xl font-semibold text-error mb-6">Danger Zone</h2>
-      <div className="space-y-4">
-        {/* Clear History */}
-        <div>
-          {showConfirmClear ? (
-            <div className="space-y-2">
-              <p className="text-on-surface">Are you sure? This cannot be undone.</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    onClearHistory?.();
-                    setShowConfirmClear(false);
-                  }}
-                >
-                  Yes, Delete
-                </Button>
-                <Button variant="ghost" onClick={() => setShowConfirmClear(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              variant="danger"
-              onClick={() => setShowConfirmClear(true)}
-              className="w-full"
-            >
-              Clear All Conversations
-            </Button>
-          )}
-        </div>
-
-        {/* Delete Account */}
-        <div>
-          {showConfirmDelete ? (
-            <div className="space-y-2">
-              <p className="text-on-surface">
-                This will permanently delete your account and all associated data.
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    onDeleteAccount?.();
-                    setShowConfirmDelete(false);
-                  }}
-                >
-                  Yes, Delete Account
-                </Button>
-                <Button variant="ghost" onClick={() => setShowConfirmDelete(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              variant="danger"
-              onClick={() => setShowConfirmDelete(true)}
-              className="w-full"
-            >
-              Delete Account
-            </Button>
-          )}
-        </div>
+    <section className="glass-error rounded-2xl p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <span
+          className="material-symbols-outlined"
+          style={{
+            color: 'var(--color-error, #FB7185)',
+            fontSize: '20px',
+            fontVariationSettings: "'FILL' 1",
+          }}
+        >
+          warning
+        </span>
+        <h2 className="text-lg font-semibold" style={{ color: '#FB7185' }}>
+          Danger Zone
+        </h2>
       </div>
-    </div>
+
+      <div className="space-y-4">
+        {confirmAction ? (
+          /* ── Confirmation State ──────────────────────────────────────── */
+          <div className="space-y-3">
+            <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+              {confirmAction === 'clear'
+                ? 'This will permanently delete all your conversations. This cannot be undone.'
+                : 'This will permanently delete your account and all associated data. This cannot be undone.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                className="btn-glass text-sm"
+                style={{
+                  color: 'var(--color-error)',
+                  borderColor: 'rgba(251, 113, 133, 0.30)',
+                }}
+                onClick={handleConfirm}
+              >
+                {confirmAction === 'clear' ? 'Yes, Delete All' : 'Yes, Delete Account'}
+              </button>
+              <button
+                type="button"
+                className="btn-glass text-sm"
+                onClick={() => setConfirmAction(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* ── Default State ───────────────────────────────────────────── */
+          <>
+            {/* Clear History */}
+            <button
+              type="button"
+              className="w-full p-3 rounded-xl text-left text-sm font-medium transition-colors hover:bg-white/5 flex items-center gap-3"
+              style={{ color: 'var(--color-error)' }}
+              onClick={() => setConfirmAction('clear')}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                delete_sweep
+              </span>
+              Clear All Conversations
+            </button>
+
+            {/* Gradient separator */}
+            <div
+              className="h-px"
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.15), transparent)',
+              }}
+            />
+
+            {/* Delete Account */}
+            <button
+              type="button"
+              className="w-full p-3 rounded-xl text-left text-sm font-medium transition-colors hover:bg-white/5 flex items-center gap-3"
+              style={{ color: 'var(--color-error)' }}
+              onClick={() => setConfirmAction('delete')}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                person_remove
+              </span>
+              Delete Account
+            </button>
+          </>
+        )}
+      </div>
+    </section>
   );
 };
 

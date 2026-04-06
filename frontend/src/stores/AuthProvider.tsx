@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+
 // ─── Auth Provider (Context) ─────────────────────────────────────────────────
 // Manages authentication state, modal control, and auth actions.
 // Used by: TopBar (avatar), ChatInput (send guard), AuthModal, Settings.

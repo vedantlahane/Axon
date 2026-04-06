@@ -1,46 +1,100 @@
+// ─── Profile Section ─────────────────────────────────────────────────────────
+
 import React, { useState } from 'react';
-import Avatar from '../ui/Avatar';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
 
 interface ProfileSectionProps {
   displayName?: string;
   email?: string;
-  onSave?: (displayName: string) => void;
+  isAuthenticated?: boolean;
+  onSave?: (displayName: string) => Promise<void>;
+  onSignIn?: () => void;
 }
 
-const ProfileSection: React.FC<ProfileSectionProps> = ({ displayName = '', email = '', onSave }) => {
+const ProfileSection: React.FC<ProfileSectionProps> = ({
+  displayName = '',
+  email = '',
+  isAuthenticated = true,
+  onSave,
+  onSignIn,
+}) => {
   const [name, setName] = useState(displayName);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
+    if (!onSave) return;
     setIsSaving(true);
-    await onSave?.(name);
-    setIsSaving(false);
+    try {
+      await onSave(name);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div className="liquid-glass rounded-xl p-6 border border-white/10">
-      <h2 className="text-xl font-semibold text-on-surface mb-6">Profile</h2>
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Avatar fallback={name.charAt(0)} size="lg" />
-          <div>
-            <p className="font-medium text-on-surface">{name}</p>
-            <p className="text-sm text-on-surface-variant">{email}</p>
-          </div>
-        </div>
-        <Input
-          label="Display Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter your name"
-        />
-        <Button variant="primary" loading={isSaving} onClick={handleSave}>
-          Save Changes
-        </Button>
+    <section className="liquid-glass rounded-2xl p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <span
+          className="material-symbols-outlined"
+          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: '20px' }}
+        >
+          person
+        </span>
+        <h2 className="text-lg font-semibold text-white">Profile</h2>
       </div>
-    </div>
+
+      {isAuthenticated ? (
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold shrink-0"
+              style={{
+                background: 'var(--accent-violet-muted, rgba(124, 58, 237, 0.15))',
+                color: 'var(--accent-violet-light, #a78bfa)',
+              }}
+            >
+              {(name || 'U').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">{name || 'User'}</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {email}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">
+              Display Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input-glass"
+              placeholder="Enter your name"
+            />
+          </div>
+
+          <button
+            type="button"
+            className="btn-primary text-sm"
+            disabled={isSaving || name === displayName}
+            onClick={() => void handleSave()}
+          >
+            {isSaving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      ) : (
+        <div className="text-center py-4">
+          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Sign in to access your profile settings.
+          </p>
+          <button type="button" className="btn-primary text-sm" onClick={onSignIn}>
+            Sign In
+          </button>
+        </div>
+      )}
+    </section>
   );
 };
 

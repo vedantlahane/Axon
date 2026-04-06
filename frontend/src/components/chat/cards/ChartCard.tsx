@@ -9,6 +9,8 @@ interface ChartCardProps {
   onFullscreen?: () => void;
 }
 
+const chartTypes: ChartCardProps['type'][] = ['bar', 'line', 'pie'];
+
 const ChartCard: React.FC<ChartCardProps> = ({ type, title, data, onExport, onFullscreen }) => {
   const [displayType, setDisplayType] = useState(type);
   const maxValue = Math.max(...data.map((d) => d.value));
@@ -19,10 +21,10 @@ const ChartCard: React.FC<ChartCardProps> = ({ type, title, data, onExport, onFu
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-on-surface text-lg">{title}</h3>
         <div className="flex gap-2">
-          {['bar', 'line', 'pie'].map((t) => (
+          {chartTypes.map((t) => (
             <button
               key={t}
-              onClick={() => setDisplayType(t as any)}
+              onClick={() => setDisplayType(t)}
               className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                 displayType === t ? 'bg-violet-500 text-white' : 'bg-surface-variant text-on-surface-variant'
               }`}

@@ -1,12 +1,17 @@
+// ─── useChat Hook ────────────────────────────────────────────────────────────
+// Thin convenience wrapper around chatStore Zustand selectors.
+
 import { useCallback } from 'react';
 import { useChatStore } from '../stores/chatStore';
+import type { FileTile } from '../stores/chatStore';
 
 export const useChat = () => {
-  const messages = useChatStore((state) => state.messages);
-  const isSending = useChatStore((state) => state.isSending);
-  const selectedConversationId = useChatStore((state) => state.selectedConversationId);
-  const inputValue = useChatStore((state) => state.inputValue);
-  const files = useChatStore((state) => state.files);
+  const messages = useChatStore((s) => s.messages);
+  const isSending = useChatStore((s) => s.isSending);
+  const isStreaming = useChatStore((s) => s.isStreaming);
+  const selectedConversationId = useChatStore((s) => s.selectedConversationId);
+  const inputValue = useChatStore((s) => s.inputValue);
+  const files = useChatStore((s) => s.files);
 
   const sendMessage = useCallback(
     async (content: string, documentIds?: string[]) => {
@@ -15,8 +20,8 @@ export const useChat = () => {
     []
   );
 
-  const selectConversation = useCallback((conversationId: string) => {
-    return useChatStore.getState().selectConversation(conversationId);
+  const selectConversation = useCallback((id: string) => {
+    return useChatStore.getState().selectConversation(id);
   }, []);
 
   const loadConversations = useCallback(() => {
@@ -31,7 +36,7 @@ export const useChat = () => {
     useChatStore.getState().setInputValue(value);
   }, []);
 
-  const addFile = useCallback((file: any) => {
+  const addFile = useCallback((file: FileTile) => {
     useChatStore.getState().addFile(file);
   }, []);
 
@@ -42,6 +47,7 @@ export const useChat = () => {
   return {
     messages,
     isSending,
+    isStreaming,
     selectedConversationId,
     inputValue,
     files,

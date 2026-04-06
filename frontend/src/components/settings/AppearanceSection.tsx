@@ -1,63 +1,68 @@
+// ─── Appearance Section ──────────────────────────────────────────────────────
+// Dark-only. No theme toggle. Font size + send behavior.
+
 import React, { useState } from 'react';
 import Toggle from '../ui/Toggle';
 
 interface AppearanceSectionProps {
-  theme?: 'dark' | 'light' | 'system';
   fontSize?: 'small' | 'medium' | 'large';
-  onThemeChange?: (theme: string) => void;
+  sendWithEnter?: boolean;
   onFontSizeChange?: (size: string) => void;
+  onSendWithEnterChange?: (enabled: boolean) => void;
 }
 
+const FONT_SIZES = ['small', 'medium', 'large'] as const;
+
 const AppearanceSection: React.FC<AppearanceSectionProps> = ({
-  theme = 'dark',
   fontSize = 'medium',
-  onThemeChange,
+  sendWithEnter = true,
   onFontSizeChange,
+  onSendWithEnterChange,
 }) => {
-  const [localTheme, setLocalTheme] = useState(theme);
   const [localFontSize, setLocalFontSize] = useState(fontSize);
+  const [localSendEnter, setLocalSendEnter] = useState(sendWithEnter);
 
   return (
-    <div className="liquid-glass rounded-xl p-6 border border-white/10">
-      <h2 className="text-xl font-semibold text-on-surface mb-6">Appearance</h2>
-      <div className="space-y-6">
-        <div>
-          <p className="text-on-surface-variant text-sm mb-3">Theme</p>
-          <div className="flex gap-2">
-            {['dark', 'light', 'system'].map((t) => (
-              <button
-                key={t}
-                onClick={() => {
-                  setLocalTheme(t as 'dark' | 'light' | 'system');
-                  onThemeChange?.(t);
-                }}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  localTheme === t
-                    ? 'bg-violet-500 text-white'
-                    : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+    <section className="liquid-glass rounded-2xl p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <span
+          className="material-symbols-outlined"
+          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: '20px' }}
+        >
+          palette
+        </span>
+        <h2 className="text-lg font-semibold text-white">Appearance</h2>
+      </div>
 
+      <div className="space-y-6">
+        {/* Font Size */}
         <div>
-          <p className="text-on-surface-variant text-sm mb-3">Font Size</p>
+          <p className="text-xs font-medium text-slate-400 mb-3">Font Size</p>
           <div className="flex gap-2">
-            {['small', 'medium', 'large'].map((size) => (
+            {FONT_SIZES.map((size) => (
               <button
                 key={size}
+                type="button"
                 onClick={() => {
-                  setLocalFontSize(size as 'small' | 'medium' | 'large');
+                  setLocalFontSize(size);
                   onFontSizeChange?.(size);
                 }}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                  localFontSize === size
-                    ? 'bg-violet-500 text-white'
-                    : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
-                }`}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                style={{
+                  background:
+                    localFontSize === size
+                      ? 'var(--accent-violet-muted, rgba(124, 58, 237, 0.15))'
+                      : 'var(--glass-bg, rgba(255, 255, 255, 0.05))',
+                  color:
+                    localFontSize === size
+                      ? 'var(--accent-violet-light, #a78bfa)'
+                      : 'var(--text-secondary)',
+                                    border: `1px solid ${
+                    localFontSize === size
+                      ? 'rgba(124, 58, 237, 0.25)'
+                      : 'var(--glass-border, rgba(255, 255, 255, 0.06))'
+                  }`,
+                }}
               >
                 {size.charAt(0).toUpperCase() + size.slice(1)}
               </button>
@@ -65,11 +70,43 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
           </div>
         </div>
 
+        {/* Send with Enter */}
         <div>
-          <Toggle label="Send message with Enter" checked={true} onChange={() => {}} />
+          <Toggle
+            label="Send message with Enter"
+            checked={localSendEnter}
+            onChange={(checked) => {
+              setLocalSendEnter(checked);
+              onSendWithEnterChange?.(checked);
+            }}
+          />
+          <p className="text-xs mt-1.5 ml-14" style={{ color: 'var(--text-muted)' }}>
+            When disabled, use Shift+Enter to send.
+          </p>
+        </div>
+
+        {/* Theme indicator (dark-only, informational) */}
+        <div className="flex items-center gap-3 pt-2">
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: 'var(--bg-surface-high, #222a3d)' }}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ color: 'var(--text-ghost)', fontSize: '20px' }}
+            >
+              dark_mode
+            </span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">Dark Mode</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Axon uses a dark-only liquid glass design system.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

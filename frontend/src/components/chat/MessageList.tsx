@@ -57,7 +57,10 @@ const MessageList: React.FC<MessageListProps> = ({
             {messages.map((message) => (
               <motion.div
                 key={message.id}
-                {...fadeUp}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={fadeUp}
                 layout
               >
                 {message.sender === 'user' ? (

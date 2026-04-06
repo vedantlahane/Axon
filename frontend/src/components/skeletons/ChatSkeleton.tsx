@@ -1,24 +1,26 @@
-import React from 'react';
-import Skeleton from '../ui/Skeleton';
+// ─── Chat Skeleton ───────────────────────────────────────────────────────────
 
-const ChatSkeleton: React.FC = () => {
-  return (
-    <div className="space-y-4 p-4">
-      {[1, 2, 3].map((idx) => (
-        <div
-          key={idx}
-          className={`flex gap-3 ${idx % 2 === 0 ? 'justify-start' : 'justify-end'}`}
-        >
-          {idx % 2 === 0 && <div className="w-10 h-10 rounded-full bg-gradient-to-r from-surface-variant to-surface-container flex-shrink-0 animate-pulse" />}
-          <div className={`flex-1 ${idx % 2 === 0 ? '' : 'text-right'}`}>
-            <div className="liquid-glass rounded-lg p-4 inline-block">
-              <Skeleton variant="line" count={2} />
-            </div>
+import React from 'react';
+
+const ChatSkeleton: React.FC = () => (
+  <div className="space-y-6 p-4 max-w-[720px] mx-auto">
+    {[1, 2, 3].map((idx) => (
+      <div
+        key={idx}
+        className={`flex gap-3 ${idx % 2 === 0 ? 'justify-start' : 'justify-end'}`}
+      >
+        {idx % 2 === 0 && (
+          <div className="skeleton-pulse w-8 h-8 rounded-full shrink-0" />
+        )}
+        <div className={`flex-1 max-w-[70%] ${idx % 2 !== 0 ? 'ml-auto' : ''}`}>
+          <div className="liquid-glass rounded-2xl p-4 space-y-2">
+            <div className="skeleton-pulse h-3 w-full rounded" />
+            <div className="skeleton-pulse h-3 w-3/4 rounded" />
           </div>
         </div>
-      ))}
-    </div>
-  );
-};
+      </div>
+    ))}
+  </div>
+);
 
 export default ChatSkeleton;

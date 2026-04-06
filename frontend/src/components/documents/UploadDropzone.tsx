@@ -1,3 +1,5 @@
+// ─── Upload Dropzone ─────────────────────────────────────────────────────────
+
 import React, { useState, useRef } from 'react';
 
 interface UploadDropzoneProps {
@@ -9,64 +11,70 @@ interface UploadDropzoneProps {
 const UploadDropzone: React.FC<UploadDropzoneProps> = ({
   onUpload,
   isUploading = false,
-  accept = '.pdf,.xlsx,.csv,.sql',
+  accept = '.pdf,.csv,.xlsx,.sql,.txt,.md',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    if (e.dataTransfer.files) {
-      onUpload(e.dataTransfer.files);
-    }
-  };
-
   return (
     <div
-      onDragOver={handleDrag}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      className={`rounded-2xl p-8 text-center cursor-pointer transition-all ${
+        isUploading ? 'opacity-50 pointer-events-none' : ''
+      }`}
+      style={{
+        background: isDragging
+          ? 'rgba(124, 58, 237, 0.06)'
+          : 'transparent',
+        border: `2px dashed ${
+          isDragging
+            ? 'var(--accent-violet-light)'
+            : 'rgba(255, 255, 255, 0.08)'
+        }`,
+        minHeight: '160px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
       onClick={() => inputRef.current?.click()}
-      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-        isDragging
-          ? 'border-violet-400 bg-violet-500/10'
-          : 'border-surface-variant bg-surface-container-lowest hover:border-violet-400'
-      } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files) onUpload(e.dataTransfer.files);
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label="Drop files here or click to upload"
     >
       <input
         ref={inputRef}
         type="file"
         multiple
-        hidden
         accept={accept}
-        onChange={(e) => e.target.files && onUpload(e.target.files)}
+        className="sr-only"
+        onChange={(e) => {
+          if (e.target.files) onUpload(e.target.files);
+          e.target.value = '';
+        }}
       />
-
-      <div className="flex flex-col items-center gap-3">
-        <span className="material-symbols-outlined text-4xl text-violet-400">
-          {isUploading ? 'sync' : 'cloud_upload'}
-        </span>
-        <div>
-          <p className="font-semibold text-on-surface">
-            {isUploading ? 'Uploading...' : 'Drag and drop files here'}
-          </p>
-          <p className="text-sm text-on-surface-variant">or click to select</p>
-        </div>
-      </div>
+      <span
+        className="material-symbols-outlined text-3xl mb-3"
+        style={{
+          color: isDragging
+            ? 'var(--accent-violet-light)'
+            : 'var(--text-ghost)',
+        }}
+      >
+        {isUploading ? 'progress_activity' : 'cloud_upload'}
+      </span>
+      <p className="text-sm font-medium text-white mb-1">
+        {isUploading ? 'Uploading…' : 'Drop files here or click to upload'}
+      </p>
+      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        or click to select files
+      </p>
     </div>
   );
 };

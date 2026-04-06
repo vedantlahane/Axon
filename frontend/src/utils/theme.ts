@@ -1,18 +1,25 @@
 // ─── Theme Utilities ─────────────────────────────────────────────────────────
+// Dark-only design system. Light mode tokens don't exist.
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark';
 
+/**
+ * Always returns 'dark'. The liquid glass design system has no light tokens.
+ * Kept for backward compatibility with any code that calls it.
+ */
 export function resolveInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  const stored = localStorage.getItem('axon-theme');
-  if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  return 'dark';
 }
 
-export function applyTheme(theme: Theme): void {
+/**
+ * Applies the dark theme to the document root.
+ * Light mode is a no-op — there are no light tokens.
+ */
+export function applyTheme(_theme: Theme = 'dark'): void {
+  void _theme;
   const root = document.documentElement;
-  root.classList.remove('dark', 'light');
-  root.classList.add(theme);
-  root.style.colorScheme = theme;
-  localStorage.setItem('axon-theme', theme);
+  root.classList.remove('light');
+  root.classList.add('dark');
+  root.style.colorScheme = 'dark';
+  // Don't persist to localStorage — it's always dark
 }

@@ -1,15 +1,22 @@
-// ─── Hooks ───────────────────────────────────────────────────────────────────
-// Re-export all hooks for convenience.
+// ─── Hooks Barrel Export ─────────────────────────────────────────────────────
+// Active hooks that components should import from.
 
+// ── From stores (canonical source) ──────────────────────────────────────────
 export { useAuth } from '../stores/AuthProvider';
-export { useTheme } from '../stores/ThemeProvider';
 export { useToast } from '../stores/ToastProvider';
-export { useChatStore } from '../stores/chatStore';
-export { useDatabaseStore } from '../stores/databaseStore';
+export { useTheme } from '../stores/ThemeProvider';
 
-// Custom hooks
+// ── Thin wrappers around Zustand stores ─────────────────────────────────────
 export { useChat } from './useChat';
 export { useDatabase } from './useDatabase';
+
+// ── Utility hooks ───────────────────────────────────────────────────────────
 export { useCommandPalette } from './useCommandPalette';
-export { useMediaQuery } from './useMediaQuery';
 export { useKeyboardShortcuts } from './useKeyboardShortcuts';
+export { useMediaQuery } from './useMediaQuery';
+
+// ── DEPRECATED — Do not use in new code ─────────────────────────────────────
+// hooks/useAuth.ts           → use stores/AuthProvider
+// hooks/useConversationManager.ts → use stores/chatStore
+// hooks/useDatabaseSettings.ts    → use stores/databaseStore
+// hooks/useSqlConsole.ts          → use stores/databaseStore

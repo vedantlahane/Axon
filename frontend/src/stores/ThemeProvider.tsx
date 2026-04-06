@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+
 // ─── Theme Provider (Context) ────────────────────────────────────────────────
 // Currently dark-only. The liquid glass design system has no light tokens.
 // Kept as a provider for future extensibility (e.g., accent color themes).
@@ -24,7 +26,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function applyTheme(theme: Theme): void {
+function applyTheme(): void {
   const root = document.documentElement;
   root.classList.remove('light');
   root.classList.add('dark');
@@ -37,8 +39,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const [theme] = useState<Theme>('dark');
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+    applyTheme();
+  }, []);
 
   // No-op — dark only. Preserved for backward compatibility.
   const toggleTheme = useCallback(() => {
@@ -47,7 +49,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     // and create a full light token set in tokens.css.
   }, []);
 
-  const setTheme = useCallback((_t: Theme) => {
+  const setTheme = useCallback((t: Theme) => {
+    void t;
     // Always dark. No-op.
   }, []);
 

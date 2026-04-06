@@ -19,7 +19,9 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
 }) => (
   <motion.div
     className="flex flex-col items-start mb-8 relative"
-    {...fadeUp}
+    initial="initial"
+    animate="animate"
+    variants={fadeUp}
     aria-label="Axon is thinking"
     role="status"
   >

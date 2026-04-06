@@ -1,42 +1,78 @@
+// ─── Error Fallback ──────────────────────────────────────────────────────────
+
 import React from 'react';
-import Button from '../ui/Button';
 
 interface ErrorFallbackProps {
-  error?: Error;
+  error?: Error | null;
   resetError?: () => void;
 }
 
-const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError }) => {
-  return (
-    <div className="h-screen flex items-center justify-center bg-surface p-4">
-      <div className="max-w-md w-full">
-        <div className="liquid-glass rounded-xl border border-error/30 bg-error/5 p-8 text-center">
-          <span className="material-symbols-outlined text-6xl text-error block mb-4">error_outline</span>
-          <h1 className="text-2xl font-bold text-error mb-2">Something went wrong</h1>
-          <p className="text-on-surface-variant mb-6">We encountered an unexpected error. Please try again.</p>
-          {error && (
-            <div className="bg-surface-container rounded-lg p-3 mb-6 text-left">
-              <p className="text-xs font-mono text-on-surface-variant break-words">{error.message}</p>
-            </div>
-          )}
-          <div className="flex gap-3">
-            {resetError && (
-              <Button variant="primary" onClick={resetError} className="flex-1">
-                Reload
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              onClick={() => (window.location.href = '/')}
-              className="flex-1"
-            >
-              Go Home
-            </Button>
-          </div>
-        </div>
-      </div>
+export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+  error,
+  resetError,
+}) => (
+  <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-6 text-center">
+    {/* Icon */}
+    <div className="liquid-glass w-20 h-20 rounded-2xl flex items-center justify-center">
+      <span
+        className="material-symbols-outlined text-4xl"
+        style={{
+          color: 'var(--color-error, #FB7185)',
+          fontVariationSettings: "'FILL' 1",
+        }}
+      >
+        error_outline
+      </span>
     </div>
-  );
-};
+
+    {/* Text */}
+    <div className="space-y-2">
+      <h2 className="text-xl font-semibold text-white">Something went wrong</h2>
+      <p
+        className="text-sm leading-relaxed"
+        style={{ maxWidth: '400px', color: 'var(--text-secondary)' }}
+      >
+        {error?.message || 'An unexpected error occurred. Please try again.'}
+      </p>
+    </div>
+
+    {/* Error detail */}
+    {error?.message && (
+      <div
+        className="rounded-lg p-3 text-left max-w-md w-full"
+        style={{
+          background: 'var(--bg-surface-lowest, #060e20)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+        }}
+      >
+        <p className="text-xs font-mono break-words" style={{ color: 'var(--text-muted)' }}>
+          {error.message}
+        </p>
+      </div>
+    )}
+
+    {/* Actions */}
+    <div className="flex gap-3">
+      {resetError && (
+        <button type="button" className="btn-primary" onClick={resetError}>
+          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+            refresh
+          </span>
+          Try Again
+        </button>
+      )}
+      <button
+        type="button"
+        className="btn-glass"
+        onClick={() => (window.location.href = '/')}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+          home
+        </span>
+        Go Home
+      </button>
+    </div>
+  </div>
+);
 
 export default ErrorFallback;

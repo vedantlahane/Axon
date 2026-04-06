@@ -6,7 +6,7 @@ import React from 'react';
 
 interface QueryResultsTableProps {
   columns: string[];
-  rows: Array<Record<string, any>>;
+  rows: Array<Record<string, unknown>>;
   executionTime: number;
   rowCount: number;
   onExportCSV?: () => void;

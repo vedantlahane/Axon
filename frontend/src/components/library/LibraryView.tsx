@@ -1,12 +1,35 @@
 // ─── Library View ────────────────────────────────────────────────────────────
+// Conversation history with search, filters, and pin support.
+// Matches FRONTEND_CONTEXT.md §5.5 "Library (/library)"
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { fadeUp, staggerContainer } from '../../lib/animations';
 import { useChatStore } from '../../stores/chatStore';
 import PageContainer from '../layout/PageContainer';
 import ConversationCard from './ConversationCard';
+import LibrarySearch from './LibrarySearch';
 import { formatRelativeTime } from '../../utils/formatters';
+
+const isToday = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.toDateString() === now.toDateString();
+};
+
+const isThisWeek = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  return d >= weekAgo;
+};
+
+const isThisMonth = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+};
 
 const LibraryView: React.FC = () => {
   const navigate = useNavigate();
@@ -14,66 +37,99 @@ const LibraryView: React.FC = () => {
   const loadConversations = useChatStore((s) => s.loadConversations);
   const deleteConversation = useChatStore((s) => s.deleteConversation);
   const selectConversation = useChatStore((s) => s.selectConversation);
+  const pinnedIds = useChatStore((s) => s.pinnedIds);
+  const togglePinConversation = useChatStore((s) => s.togglePinConversation);
   const isLoading = useChatStore((s) => s.isLoadingConversations);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All');
 
   useEffect(() => {
     void loadConversations();
   }, [loadConversations]);
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return conversations;
-    const q = searchQuery.toLowerCase();
-    return conversations.filter(
-      (c) => c.title.toLowerCase().includes(q) || c.summary.toLowerCase().includes(q)
-    );
-  }, [conversations, searchQuery]);
+    let result = conversations;
+
+    // Text search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.summary.toLowerCase().includes(q)
+      );
+    }
+
+    // Time/pin filter
+    const dateField = (c: typeof result[0]) => c.updatedAtISO || c.updatedAt;
+
+    switch (activeFilter) {
+      case 'Today':
+        result = result.filter((c) => isToday(dateField(c)));
+        break;
+      case 'This Week':
+        result = result.filter((c) => isThisWeek(dateField(c)));
+        break;
+      case 'This Month':
+        result = result.filter((c) => isThisMonth(dateField(c)));
+        break;
+      case 'Pinned':
+        result = result.filter((c) => pinnedIds.has(c.id));
+        break;
+    }
+
+    return result;
+  }, [conversations, searchQuery, activeFilter, pinnedIds]);
 
   const handleOpen = (id: string) => {
     void selectConversation(id);
     navigate(`/chat/${id}`);
   };
 
-  const handleDelete = async (id: string) => {
-    await deleteConversation(id);
-  };
-
   return (
-    <PageContainer maxWidth="960px">
+    <PageContainer maxWidth="900px">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        initial="initial"
+        animate="animate"
+        variants={staggerContainer}
       >
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="display-sm text-white mb-2">Library</h1>
-          <p className="body-md" style={{ color: 'var(--text-secondary)' }}>Your conversation history and saved artifacts.</p>
-        </div>
+        {/* ── Header ──────────────────────────────────────────────────── */}
+        <motion.div className="mb-8" variants={fadeUp}>
+          <h1 className="text-2xl font-semibold tracking-tight text-white mb-1">
+            Library
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Your conversation history and saved artifacts.
+          </p>
+        </motion.div>
 
-        {/* Search */}
-        <div className="mb-8 relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-lg" style={{ color: 'var(--text-ghost)' }}>search</span>
-          <input
-            type="text"
-            placeholder="Search conversations…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-glass pl-10"
-            aria-label="Search conversations"
+        {/* ── Search + Filters ─────────────────────────────────────────── */}
+        <motion.div variants={fadeUp}>
+          <LibrarySearch
+            query={searchQuery}
+            onSearch={setSearchQuery}
+            activeFilter={activeFilter}
+            onFilter={setActiveFilter}
           />
-        </div>
+        </motion.div>
 
-        {/* Section label */}
-        <div className="flex items-center gap-3 mb-8">
-          <span className="label-md" style={{ color: 'var(--text-secondary)' }}>
-            {searchQuery ? `Results (${filtered.length})` : 'Recent Conversations'}
+        {/* ── Section Label ────────────────────────────────────────────── */}
+        <motion.div className="flex items-center gap-3 mb-6" variants={fadeUp}>
+          <span
+            className="text-[10px] uppercase tracking-[0.15em] font-medium"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {searchQuery
+              ? `Results (${filtered.length})`
+              : activeFilter === 'All'
+              ? 'Recent Conversations'
+              : activeFilter}
           </span>
-          <div className="h-px flex-grow" style={{ background: 'rgba(68,71,73,0.15)' }} />
-        </div>
+          <div className="gradient-separator flex-grow" />
+        </motion.div>
 
-        {/* Content */}
+        {/* ── Content ──────────────────────────────────────────────────── */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[...Array(4)].map((_, i) => (
@@ -81,32 +137,44 @@ const LibraryView: React.FC = () => {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="liquid-glass rounded-xl p-12 text-center">
-            <span className="material-symbols-outlined text-4xl mb-4 block" style={{ color: 'var(--text-ghost)' }}>
-              {searchQuery ? 'search_off' : 'inbox'}
+          <motion.div
+            variants={fadeUp}
+            className="liquid-glass rounded-xl p-12 text-center"
+          >
+            <span
+              className="material-symbols-outlined text-4xl mb-4 block"
+              style={{ color: 'var(--text-ghost)' }}
+            >
+              {searchQuery ? 'search_off' : activeFilter === 'Pinned' ? 'push_pin' : 'inbox'}
             </span>
             <p style={{ color: 'var(--text-secondary)' }}>
-              {searchQuery ? 'No conversations match your search.' : 'No conversations yet. Your chats will appear here.'}
+              {searchQuery
+                ? 'No conversations match your search.'
+                : activeFilter === 'Pinned'
+                ? 'No pinned conversations yet.'
+                : 'No conversations yet. Your chats will appear here.'}
             </p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((conversation, i) => (
-              <motion.div
-                key={conversation.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            variants={staggerContainer}
+          >
+            {filtered.map((conversation) => (
+              <motion.div key={conversation.id} variants={fadeUp}>
                 <ConversationCard
                   conversation={conversation}
-                  timeLabel={formatRelativeTime(conversation.updatedAt)}
+                  timeLabel={formatRelativeTime(
+                    conversation.updatedAtISO || conversation.updatedAt
+                  )}
+                  isPinned={pinnedIds.has(conversation.id)}
                   onOpen={() => handleOpen(conversation.id)}
-                  onDelete={() => void handleDelete(conversation.id)}
+                  onDelete={() => void deleteConversation(conversation.id)}
+                  onTogglePin={() => togglePinConversation(conversation.id)}
                 />
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </motion.div>
     </PageContainer>

@@ -1,5 +1,6 @@
+// ─── Modal ───────────────────────────────────────────────────────────────────
+
 import React, { useEffect } from 'react';
-import { cn } from '../../utils/formatters';
 
 interface ModalProps {
   isOpen: boolean;
@@ -19,46 +20,51 @@ const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
 }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      document.addEventListener('keydown', handleEscape);
-      return () => {
-        document.removeEventListener('keydown', handleEscape);
-        document.body.style.overflow = 'unset';
-      };
-    }
+    if (!isOpen) return;
+    document.body.style.overflow = 'hidden';
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Modal */}
-      <div className={cn('relative z-10 w-full', maxWidth)}>
-        <div className="liquid-glass rounded-xl border border-white/10 p-6 shadow-2xl">
-          {/* Header */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'rgba(0, 0, 0, 0.60)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        }}
+        onClick={onClose}
+      />
+      <div className={`relative z-10 w-full ${maxWidth}`}>
+        <div className="glass-strong rounded-xl p-6">
           {title && (
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-on-surface">{title}</h2>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
               {showCloseButton && (
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="text-on-surface-variant hover:text-on-surface transition-colors"
+                  className="btn-icon"
+                  aria-label="Close"
                 >
-                  <span className="material-symbols-outlined">close</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                    close
+                  </span>
                 </button>
               )}
             </div>
           )}
-
-          {/* Content */}
-          <div className="text-on-surface">{children}</div>
+          <div style={{ color: 'var(--on-surface)' }}>{children}</div>
         </div>
       </div>
     </div>
