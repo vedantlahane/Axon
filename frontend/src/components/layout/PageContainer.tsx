@@ -17,7 +17,9 @@ const PageContainer: React.FC<PageContainerProps> = ({
   noPadding = false,
 }) => (
   <div
-    className={`mx-auto w-full flex-1 ${noPadding ? '' : 'px-4 pt-20 pb-8'} ${className}`}
+    className={`mx-auto w-full flex-1 ${
+      noPadding ? '' : 'px-4 md:px-6 pt-24 pb-8'
+    } ${className}`}
     style={{ maxWidth }}
   >
     {children}

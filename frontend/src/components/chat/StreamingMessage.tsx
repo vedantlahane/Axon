@@ -1,13 +1,18 @@
+// ─── Streaming Message ───────────────────────────────────────────────────────
+// Character-by-character streaming display for in-progress AI responses.
+
 import React, { useEffect, useState } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
-import Avatar from '../ui/Avatar';
 
 interface StreamingMessageProps {
   content: string;
   isComplete?: boolean;
 }
 
-const StreamingMessage: React.FC<StreamingMessageProps> = ({ content, isComplete = false }) => {
+const StreamingMessage: React.FC<StreamingMessageProps> = ({
+  content,
+  isComplete = false,
+}) => {
   const [displayedContent, setDisplayedContent] = useState('');
 
   useEffect(() => {
@@ -30,25 +35,45 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({ content, isComplete
       } else {
         clearInterval(timer);
       }
-    }, 10); // 10ms per character for smooth streaming
+    }, 10);
 
     return () => clearInterval(timer);
   }, [content, isComplete]);
 
   return (
-    <div className="flex gap-3 mb-4 animate-in fade-in-50 slide-in-from-bottom-2">
-      {/* Avatar */}
-      <Avatar fallback="AI" size="md" className="mt-1 flex-shrink-0" />
+    <div className="flex flex-col items-start mb-8 fade-in-up">
+      {/* ── Avatar Row ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center border border-white/10">
+          <span
+            className="material-symbols-outlined text-sm"
+            style={{ color: 'var(--accent-violet-light, #a78bfa)' }}
+          >
+            psychology
+          </span>
+        </div>
+        <span
+          className="text-[11px] uppercase font-medium text-slate-300"
+          style={{ letterSpacing: '0.15em' }}
+        >
+          Axon
+        </span>
+      </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="liquid-glass rounded-lg px-4 py-3">
-          <div className="text-on-surface prose prose-invert max-w-none">
-            <MarkdownRenderer content={displayedContent} />
-            {!isComplete && (
-              <span className="inline-block w-2 h-5 ml-1 bg-violet-400 rounded-sm animate-pulse" />
-            )}
-          </div>
+      {/* ── Content ───────────────────────────────────────────────────── */}
+      <div
+        className="w-full text-lg leading-relaxed"
+        style={{ color: 'var(--on-surface-variant)' }}
+      >
+        <div className="prose-content">
+          <MarkdownRenderer content={displayedContent} />
+          {!isComplete && (
+            <span
+              className="inline-block w-0.5 h-5 ml-1 rounded-sm animate-pulse"
+              style={{ background: 'var(--accent-violet-light, #a78bfa)' }}
+              aria-hidden="true"
+            />
+          )}
         </div>
       </div>
     </div>

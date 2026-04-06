@@ -2,8 +2,9 @@
 
 /* ─── Tailwind v4 Theme Configuration ──────────────────────────────────── */
 @theme {
-  /* Surface Hierarchy */
-  --color-background: #0b1326;
+  /* Background / Surface Hierarchy */
+  --color-background: #08080C;
+  --color-surface-void: #08080C;
   --color-surface: #0b1326;
   --color-surface-dim: #0b1326;
   --color-surface-bright: #31394d;
@@ -54,10 +55,20 @@
   --color-on-tertiary-fixed-variant: #3a485c;
 
   /* Error */
-  --color-error: #ffb4ab;
+  --color-error: #FB7185;
+  --color-error-muted: #ffb4ab;
   --color-on-error: #690005;
   --color-error-container: #93000a;
   --color-on-error-container: #ffdad6;
+
+  /* Accent */
+  --color-accent-violet: #7C3AED;
+  --color-accent-violet-light: #8B5CF6;
+
+  /* Semantic */
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-info: #60A5FA;
 
   /* Borders / Outlines */
   --color-outline: #8e9193;
@@ -76,24 +87,7 @@
   --radius-3xl: 2rem;
 }
 
-/* ─── Global Base Setup ────────────────────────────────────────────────── */
-@layer base {
-  html {
-    color-scheme: dark;
-  }
-  body {
-    background-color: var(--color-background);
-    color: var(--color-on-surface);
-    font-family: var(--font-body);
-    /* Set default selection color */
-    ::selection {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-  }
-}
-
 /* ─── Import Custom Design System Files ────────────────────────────────── */
-/* Ensure these files exist in your src/styles/ folder */
 @import "./styles/tokens.css";
 @import "./styles/base.css";
 @import "./styles/glass.css";

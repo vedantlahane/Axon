@@ -1,3 +1,6 @@
+// ─── Message Actions ─────────────────────────────────────────────────────────
+// Copy, like, dislike, report buttons. Shown on hover in AssistantMessage.
+
 import React from 'react';
 import type { FeedbackType } from '../../types/chat';
 
@@ -8,18 +11,28 @@ interface MessageActionsProps {
   onFeedback: (type: FeedbackType) => void;
 }
 
-const actions: { type: 'copy' | FeedbackType; icon: string; activeIcon?: string; title: string }[] = [
+const actions: Array<{
+  type: 'copy' | FeedbackType;
+  icon: string;
+  activeIcon?: string;
+  title: string;
+}> = [
   { type: 'copy', icon: 'content_copy', activeIcon: 'check', title: 'Copy' },
-  { type: 'like', icon: 'thumb_up', title: 'Good' },
-  { type: 'dislike', icon: 'thumb_down', title: 'Bad' },
-  { type: 'report', icon: 'flag', title: 'Report' },
+  { type: 'like', icon: 'thumb_up', title: 'Good response' },
+  { type: 'dislike', icon: 'thumb_down', title: 'Bad response' },
 ];
 
-const MessageActions: React.FC<MessageActionsProps> = ({ isCopied, feedback, onCopy, onFeedback }) => (
+const MessageActions: React.FC<MessageActionsProps> = ({
+  isCopied,
+  feedback,
+  onCopy,
+  onFeedback,
+}) => (
   <div className="flex items-center gap-1">
     {actions.map(({ type, icon, activeIcon, title }) => {
       const isActive = type === 'copy' ? isCopied : feedback === type;
-      const displayIcon = type === 'copy' && isCopied ? (activeIcon ?? icon) : icon;
+      const displayIcon =
+        type === 'copy' && isCopied ? (activeIcon ?? icon) : icon;
 
       return (
         <button
@@ -27,14 +40,25 @@ const MessageActions: React.FC<MessageActionsProps> = ({ isCopied, feedback, onC
           type="button"
           title={title}
           aria-label={title}
-          className="btn-icon"
+          className="btn-icon transition-all"
           style={{
-            color: isActive ? 'var(--violet-bright)' : 'var(--text-ghost)',
-            background: isActive ? 'var(--violet-soft)' : 'transparent',
+            color: isActive
+              ? 'var(--accent-violet-light, #a78bfa)'
+              : 'var(--text-ghost)',
+            background: isActive
+              ? 'var(--accent-violet-muted, rgba(124, 58, 237, 0.15))'
+              : 'transparent',
           }}
-          onClick={() => (type === 'copy' ? onCopy() : onFeedback(type))}
+          onClick={() =>
+            type === 'copy' ? onCopy() : onFeedback(type as FeedbackType)
+          }
         >
-          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{displayIcon}</span>
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: '16px' }}
+          >
+            {displayIcon}
+          </span>
         </button>
       );
     })}

@@ -1,3 +1,4 @@
+// cards/SuggestionChips.tsx — updated hover
 import React from 'react';
 
 interface SuggestionChipsProps {
@@ -5,20 +6,23 @@ interface SuggestionChipsProps {
   onSelect: (suggestion: string) => void;
 }
 
-const SuggestionChips: React.FC<SuggestionChipsProps> = ({ suggestions, onSelect }) => {
-  return (
-    <div className="flex flex-wrap gap-2 my-3">
-      {suggestions.map((suggestion, idx) => (
-        <button
-          key={idx}
-          onClick={() => onSelect(suggestion)}
-          className="liquid-glass rounded-full px-4 py-2 text-sm text-on-surface hover:bg-white/[0.08] transition-all active:scale-95"
-        >
-          {suggestion}
-        </button>
-      ))}
-    </div>
-  );
-};
+const SuggestionChips: React.FC<SuggestionChipsProps> = ({
+  suggestions,
+  onSelect,
+}) => (
+  <div className="flex flex-wrap gap-2 my-3">
+    {suggestions.map((suggestion, idx) => (
+      <button
+        key={idx}
+        type="button"
+        onClick={() => onSelect(suggestion)}
+        className="liquid-glass rounded-full px-4 py-2 text-sm hover:bg-white/10 transition-all active:scale-[0.98]"
+        style={{ color: 'var(--on-surface)' }}
+      >
+        {suggestion}
+      </button>
+    ))}
+  </div>
+);
 
 export default SuggestionChips;

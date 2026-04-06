@@ -1,80 +1,93 @@
+// ─── Empty State ─────────────────────────────────────────────────────────────
+// Hero state when no messages exist.
+// Matches FRONTEND_CONTEXT.md §5.2 "EmptyState"
+
 import React from 'react';
+import { motion } from 'framer-motion';
+import { fadeUp, staggerContainer } from '../../lib/animations';
 
 interface EmptyStateProps {
   onSuggestClick?: (suggestion: string) => void;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({ onSuggestClick }) => {
-  const suggestions = [
-    { title: 'Analyze trends', description: 'Examine data patterns' },
-    { title: 'Generate report', description: 'Create comprehensive summary' },
-    { title: 'Compare metrics', description: 'Analyze key statistics' },
-    { title: 'Export analysis', description: 'Download results' },
-  ];
+const suggestions = [
+  { icon: 'terminal',    text: 'Optimize SQL' },
+  { icon: 'description', text: 'Analyze a document' },
+  { icon: 'database',    text: 'Explore schema' },
+  { icon: 'code',        text: 'Write Python' },
+];
 
-  return (
-    <div className="h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background orbs */}
-      <div className="absolute ambient-orb-1" />
-      <div className="absolute ambient-orb-2" />
-      <div className="ai-pulse" />
-
-      {/* Center content */}
-      <div className="relative z-10 text-center max-w-2xl px-4">
-        {/* Icon with pulse */}
-        <div className="flex justify-center mb-6">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 to-transparent rounded-full blur-3xl" />
-            <span className="relative material-symbols-outlined text-7xl text-violet-400">
-              auto_awesome
-            </span>
-          </div>
-        </div>
-
-        {/* Main text */}
-        <h1 className="text-4xl md:text-5xl font-bold text-on-surface mb-4">
-          Ask anything.
-          <br />
-          Upload anything.
-        </h1>
-
-        <p className="text-on-surface-variant text-lg mb-12">
-          Get insights from your data instantly with AI-powered analysis.
-        </p>
-
-        {/* Suggestion grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-8">
-          {suggestions.map((suggestion, idx) => (
-            <button
-              key={idx}
-              onClick={() => onSuggestClick?.(suggestion.title)}
-              className="group liquid-glass rounded-lg p-4 text-left hover:bg-white/[0.08] transition-all active:scale-95"
-            >
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-violet-400 mt-1">
-                  {idx === 0 && 'trending_up'}
-                  {idx === 1 && 'description'}
-                  {idx === 2 && 'compare_arrows'}
-                  {idx === 3 && 'cloud_download'}
-                </span>
-                <div>
-                  <p className="font-semibold text-on-surface group-hover:text-white transition-colors">
-                    {suggestion.title}
-                  </p>
-                  <p className="text-sm text-on-surface-variant">{suggestion.description}</p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <p className="text-sm text-on-surface-variant mt-12">
-          💡 Tip: Use <span className="font-mono bg-surface-container px-1.5 py-0.5">⌘K</span> to search or run commands
-        </p>
+const EmptyState: React.FC<EmptyStateProps> = ({ onSuggestClick }) => (
+  <motion.div
+    className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-6"
+    initial="initial"
+    animate="animate"
+    variants={staggerContainer}
+  >
+    {/* ── Icon with AI pulse ──────────────────────────────────────────── */}
+    <motion.div className="relative mb-10" variants={fadeUp}>
+      {/* Glow behind icon */}
+      <div
+        className="absolute inset-0 rounded-full -z-10 pulse-glow"
+        style={{
+          background: 'rgba(224, 227, 229, 0.20)',
+          filter: 'blur(48px)',
+          width: '120%',
+          height: '120%',
+          top: '-10%',
+          left: '-10%',
+        }}
+        aria-hidden="true"
+      />
+      <div className="liquid-glass w-20 h-20 rounded-2xl flex items-center justify-center">
+        <span
+          className="material-symbols-outlined text-4xl"
+          style={{
+            color: 'var(--primary-container)',
+            fontVariationSettings: "'FILL' 1",
+          }}
+        >
+          bolt
+        </span>
       </div>
-    </div>
-  );
-};
+    </motion.div>
+
+    {/* ── Tagline ─────────────────────────────────────────────────────── */}
+    <motion.h1
+      className="text-4xl md:text-5xl font-light tracking-tight text-center mb-10"
+      variants={fadeUp}
+    >
+      <span className="text-white">Ask anything.</span>
+      <br />
+      <span className="text-slate-400">Upload anything.</span>
+    </motion.h1>
+
+    {/* ── Suggestion Grid ─────────────────────────────────────────────── */}
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-xl"
+      variants={staggerContainer}
+    >
+      {suggestions.map((s) => (
+        <motion.button
+          key={s.text}
+          type="button"
+          className="liquid-glass px-5 py-3 rounded-xl flex items-center gap-3 text-left group cursor-pointer active:scale-[0.98] transition-transform"
+          variants={fadeUp}
+          whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.10)' }}
+          onClick={() => onSuggestClick?.(s.text)}
+        >
+          <span
+            className="material-symbols-outlined text-xl text-slate-500 group-hover:text-violet-400 transition-colors"
+          >
+            {s.icon}
+          </span>
+          <span className="text-sm font-medium text-slate-300">
+            {s.text}
+          </span>
+        </motion.button>
+      ))}
+    </motion.div>
+  </motion.div>
+);
 
 export default EmptyState;

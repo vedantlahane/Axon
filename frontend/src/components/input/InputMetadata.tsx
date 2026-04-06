@@ -1,30 +1,51 @@
+// ─── Input Metadata ──────────────────────────────────────────────────────────
+// Subtle metadata row below the input bar.
+// Matches FRONTEND_CONTEXT.md §5.1 "ChatInput — Metadata row"
+
 import React from 'react';
 
 interface InputMetadataProps {
   modelName: string;
   documentCount: number;
+  hasDatabase?: boolean;
 }
 
-const InputMetadata: React.FC<InputMetadataProps> = ({ modelName, documentCount }) => {
-  return (
-    <div className="flex items-center justify-between px-4 py-2 text-xs text-on-surface-variant opacity-40 hover:opacity-100 transition-opacity">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1">
-          <span className="material-symbols-outlined text-base">smart_toy</span>
-          <span>Model: {modelName}</span>
-        </div>
-        {documentCount > 0 && (
-          <div className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-base">attachment</span>
-            <span>{documentCount} docs</span>
-          </div>
-        )}
-      </div>
-      <div className="flex items-center gap-1">
-        <span className="font-mono bg-surface-container px-1.5 py-0.5 rounded">⌘K</span>
-      </div>
-    </div>
-  );
-};
+const InputMetadata: React.FC<InputMetadataProps> = ({
+  modelName,
+  documentCount,
+  hasDatabase,
+}) => (
+  <div
+    className="flex items-center justify-center gap-6 font-mono text-[10px] uppercase tracking-widest"
+    style={{ opacity: 0.4, color: 'var(--text-muted)' }}
+  >
+    {/* Model */}
+    <span className="flex items-center gap-1.5">
+      <span style={{ color: 'var(--accent-violet-light)', fontSize: '8px' }}>●</span>
+      Model: {modelName}
+    </span>
+
+    {/* Documents */}
+    <span className="flex items-center gap-1.5">
+      📎 {documentCount} document{documentCount !== 1 ? 's' : ''}
+    </span>
+
+    {/* Database (optional) */}
+    {hasDatabase && (
+      <span className="flex items-center gap-1.5">
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: '12px' }}
+        >
+          database
+        </span>
+        Connected
+      </span>
+    )}
+
+    {/* Command palette shortcut */}
+    <span>⌘K</span>
+  </div>
+);
 
 export default InputMetadata;

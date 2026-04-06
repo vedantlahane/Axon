@@ -1,7 +1,21 @@
-/* ─── Liquid Glass — Base Styles ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE.CSS — Global resets, element defaults, accessibility
+   
+   This file sets up the document-level foundations.
+   No component styles. No utilities. No glass surfaces.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
-  html, body, #root { height: 100%; }
+
+  /* ── Document Reset ──────────────────────────────────────────────────── */
+
+  html {
+    color-scheme: dark;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
 
   * {
     box-sizing: border-box;
@@ -12,77 +26,92 @@
   body {
     margin: 0;
     overflow-x: hidden;
-    background-color: var(--body-bg);
+    background-color: var(--bg-void);
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 0.875rem;
     line-height: 1.6;
   }
 
-  code, pre, .font-mono { font-family: var(--font-mono); }
-  button, input, textarea, select { font: inherit; color: inherit; }
+
+  /* ── Element Defaults ────────────────────────────────────────────────── */
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  button, input, textarea, select {
+    font: inherit;
+    color: inherit;
+  }
 
   ::selection {
     background: rgba(124, 58, 237, 0.3);
     color: #ffffff;
   }
-}
 
-/* ─── App Shell ────────────────────────────────────────────────────────────── */
 
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  position: relative;
-  background-color: var(--body-bg);
-  color: var(--on-surface);
-}
+  /* ── App Shell ───────────────────────────────────────────────────────── */
 
-/* ─── Material Symbols ─────────────────────────────────────────────────────── */
-
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  -webkit-font-feature-settings: 'liga';
-  font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
-
-/* ─── Focus ring ───────────────────────────────────────────────────────────── */
-
-:focus-visible {
-  outline: 2px solid rgba(124, 58, 237, 0.4);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-/* ─── Reduced motion ──────────────────────────────────────────────────────── */
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+    background-color: var(--bg-void);
+    color: var(--on-surface);
   }
+
+
+  /* ── Material Symbols Outlined ───────────────────────────────────────── */
+
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+  }
+
+
+  /* ── Scrollbar ───────────────────────────────────────────────────────── */
+
+  ::-webkit-scrollbar       { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+
+  /* ── Focus Ring ──────────────────────────────────────────────────────── */
+
+  :focus-visible {
+    outline: 2px solid rgba(124, 58, 237, 0.4);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+
+  /* ── Reduced Motion ──────────────────────────────────────────────────── */
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
 }

@@ -1,94 +1,165 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOKENS.CSS — Single Source of Truth for Design Variables
+   
+   Tailwind utility tokens are mirrored in index.css @theme block.
+   For custom CSS, reference values here via var(--*).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-/* ─── Liquid Glass Editorial — Design Tokens ──────────────────────────────── */
-
 :root {
-  color-scheme: dark;
 
-  /* Typography */
-  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  /* ── Typography ──────────────────────────────────────────────────────── */
+  --font-sans:      'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-body:      'Inter', system-ui, -apple-system, sans-serif;
+  --font-headline:  'Inter', sans-serif;
+  --font-mono:      'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ── Surface Hierarchy (Stitch M3 extended) ──────────────────────────── */
-  --surface: #0b1326;
-  --surface-dim: #0b1326;
-  --surface-container-lowest: #060e20;
-  --surface-container-low: #131b2e;
-  --surface-container: #171f33;
-  --surface-container-high: #222a3d;
-  --surface-container-highest: #2d3449;
-  --surface-bright: #31394d;
-  --surface-variant: #2d3449;
-  --background: #0b1326;
-  --body-bg: #08080C;
 
-  /* ── On-Surface / Text ───────────────────────────────────────────────── */
-  --on-surface: #dae2fd;
-  --on-surface-variant: #c4c7c9;
-  --on-background: #dae2fd;
-  --text-primary: #e2e8f0;
-  --text-secondary: #c4c7c9;
-  --text-muted: rgba(148, 163, 184, 0.6);
-  --text-subtle: rgba(148, 163, 184, 0.4);
-  --text-ghost: rgba(100, 116, 139, 1);
+  /* ── Background Layers (darkest → lightest) ──────────────────────────── 
+     Matches context doc §2 "Base Palette"                                  */
+  --bg-void:                  #08080C;   /* Body background                */
+  --bg-surface:               #0b1326;   /* Primary surface                */
+  --bg-surface-lowest:        #060e20;   /* Recessed areas (code blocks)   */
+  --bg-surface-low:           #131b2e;   /* Low container                  */
+  --bg-surface-container:     #171f33;   /* Elevated container             */
+  --bg-surface-high:          #222a3d;   /* Higher elevation               */
+  --bg-surface-highest:       #2d3449;   /* Highest elevation              */
 
-  /* ── Primary / Accent ────────────────────────────────────────────────── */
-  --primary: #ffffff;
-  --primary-container: #e0e3e5;
-  --on-primary: #2d3133;
+  /* M3-style aliases (backward compat) */
+  --body-bg:                    var(--bg-void);
+  --background:                 var(--bg-surface);
+  --surface:                    var(--bg-surface);
+  --surface-dim:                var(--bg-surface);
+  --surface-bright:             #31394d;
+  --surface-variant:            var(--bg-surface-highest);
+  --surface-container-lowest:   var(--bg-surface-lowest);
+  --surface-container-low:      var(--bg-surface-low);
+  --surface-container:          var(--bg-surface-container);
+  --surface-container-high:     var(--bg-surface-high);
+  --surface-container-highest:  var(--bg-surface-highest);
+
+
+  /* ── Text / Content ──────────────────────────────────────────────────── 
+     Matches context doc §2 "Text"                                          */
+  --text-primary:     #E2E8F0;                    /* slate-200             */
+  --text-secondary:   #c4c7c9;                    /* secondary             */
+  --text-muted:       #64748B;                    /* slate-500             */
+  --text-faint:       #475569;                    /* slate-600             */
+  --text-ghost:       rgba(100, 116, 139, 1);     /* hints, icons         */
+  --text-subtle:      rgba(148, 163, 184, 0.4);   /* barely visible       */
+
+  /* M3 aliases */
+  --on-surface:           #dae2fd;
+  --on-surface-variant:   #c4c7c9;
+  --on-background:        #dae2fd;
+  --inverse-surface:      #dae2fd;
+  --inverse-on-surface:   #283044;
+
+
+  /* ── Primary / Brand ─────────────────────────────────────────────────── */
+  --primary:              #ffffff;
+  --on-primary:           #2d3133;
+  --primary-container:    #e0e3e5;
   --on-primary-container: #626567;
+  --inverse-primary:      #5c5f61;
+  --primary-fixed:        #e0e3e5;
+  --primary-fixed-dim:    #c4c7c9;
+  --on-primary-fixed:     #191c1e;
+  --on-primary-fixed-variant: #444749;
+
 
   /* ── Secondary ───────────────────────────────────────────────────────── */
-  --secondary: #b9c8de;
-  --secondary-container: #39485a;
-  --on-secondary: #233143;
+  --secondary:              #b9c8de;
+  --on-secondary:           #233143;
+  --secondary-container:    #39485a;
   --on-secondary-container: #a7b6cc;
+  --secondary-fixed:        #d4e4fa;
+  --secondary-fixed-dim:    #b9c8de;
+  --on-secondary-fixed:     #0d1c2d;
+  --on-secondary-fixed-variant: #39485a;
 
-  /* ── Violet Accent ───────────────────────────────────────────────────── */
-  --violet: #7C3AED;
-  --violet-glow: rgba(124, 58, 237, 0.3);
-  --violet-soft: rgba(124, 58, 237, 0.1);
-  --violet-bright: #a78bfa;
+
+   /* ── Accent — Violet ─────────────────────────────────────────────────── 
+     Matches context doc §2 "Accent"                                        */
+  --accent-violet:          #7C3AED;                       /* violet-600    */
+  --accent-violet-light:    #8B5CF6;                       /* violet-500    */
+  --accent-violet-muted:    rgba(124, 58, 237, 0.15);     /* 15% opacity   */
+
+  /* Legacy violet aliases (backward compat) */
+  --violet:                 var(--accent-violet);
+  --violet-bright:          #a78bfa;
+  --violet-glow:            rgba(124, 58, 237, 0.3);
+  --violet-soft:            rgba(124, 58, 237, 0.1);
+
+
+  /* ── Tertiary ────────────────────────────────────────────────────────── */
+  --tertiary:               #ffffff;
+  --on-tertiary:            #233144;
+  --tertiary-container:     #d5e3fd;
+  --on-tertiary-container:  #57657b;
+  --tertiary-fixed:         #d5e3fd;
+  --tertiary-fixed-dim:     #b9c7e0;
+  --on-tertiary-fixed:      #0d1c2f;
+  --on-tertiary-fixed-variant: #3a485c;
+
 
   /* ── Outline / Border ────────────────────────────────────────────────── */
-  --outline: #8e9193;
-  --outline-variant: #444749;
+  --outline:          #8e9193;
+  --outline-variant:  #444749;
 
-  /* ── Semantic ────────────────────────────────────────────────────────── */
-  --error: #ffb4ab;
-  --error-container: #93000a;
-  --on-error: #690005;
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --info: #7dd3fc;
 
-  /* ── Liquid Glass Surface ────────────────────────────────────────────── */
-  --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-bg-hover: rgba(255, 255, 255, 0.08);
-  --glass-bg-active: rgba(255, 255, 255, 0.12);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-border-strong: rgba(255, 255, 255, 0.10);
-  --glass-inner-glow: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(24px) saturate(180%);
+  /* ── Semantic Colors ─────────────────────────────────────────────────── 
+     Matches context doc §2 "Semantic"                                      */
+  --color-success:      #34D399;   /* emerald-400  (was #4ade80)           */
+  --color-error:        #FB7185;   /* rose-400                             */
+  --color-error-muted:  #ffb4ab;   /* error text (M3 error token)         */
+  --color-warning:      #FBBF24;   /* amber-400                           */
+  --color-info:         #60A5FA;   /* blue-400    (was #7dd3fc)           */
+
+  /* Legacy aliases */
+  --success:          var(--color-success);
+  --error:            var(--color-error-muted);       /* M3 surfaces use muted */
+  --error-container:  #93000a;
+  --on-error:         #690005;
+  --on-error-container: #ffdad6;
+  --warning:          var(--color-warning);
+  --info:             var(--color-info);
+
+
+  /* ── Glass Surface Tokens ────────────────────────────────────────────── 
+     Matches context doc §2 "Glass"                                         */
+  --glass-bg:             rgba(255, 255, 255, 0.05);   /* was 0.04         */
+  --glass-bg-hover:       rgba(255, 255, 255, 0.10);
+  --glass-bg-active:      rgba(255, 255, 255, 0.12);
+  --glass-border:         rgba(255, 255, 255, 0.06);
+  --glass-border-strong:  rgba(255, 255, 255, 0.10);
+  --glass-inner-glow:     rgba(255, 255, 255, 0.10);
+  --glass-blur:           blur(24px) saturate(180%);
+
 
   /* ── Radii ───────────────────────────────────────────────────────────── */
-  --radius-xs: 0.125rem;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-full: 9999px;
+  --radius-xs:    0.125rem;
+  --radius-sm:    0.25rem;
+  --radius-md:    0.5rem;
+  --radius-lg:    0.75rem;
+  --radius-xl:    1rem;
+  --radius-2xl:   1.5rem;
+  --radius-3xl:   2rem;
+  --radius-full:  9999px;
 
-  /* ── Elevation ───────────────────────────────────────────────────────── */
-  --shadow-ambient: 0px 20px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glass: 0px 8px 32px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 15px var(--violet-glow);
+
+  /* ── Elevation / Shadows ─────────────────────────────────────────────── */
+  --shadow-ambient:   0px 20px 40px rgba(0, 0, 0, 0.4);
+  --shadow-glass:     0px 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-glow:      0 0 15px var(--violet-glow);
+  --shadow-strong:    0 25px 60px rgba(0, 0, 0, 0.6);
+
 
   /* ── Motion ──────────────────────────────────────────────────────────── */
-  --ease-liquid: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
+  --ease-liquid:      cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast:    150ms;
+  --duration-normal:  300ms;
+  --duration-slow:    500ms;
 }

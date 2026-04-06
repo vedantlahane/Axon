@@ -3,10 +3,16 @@
 // Selective subscriptions prevent MessageList re-renders during input typing.
 
 import { create } from 'zustand';
-import type { ChatMessage, ConversationSummary, RawConversationDetail } from '../types/chat';
+import type {
+  ChatMessage,
+  ConversationSummary,
+  RawConversationDetail,
+} from '../types/chat';
 import * as chatService from '../services/chatService';
 
-interface FileTile {
+/* ── Types ──────────────────────────────────────────────────────────────── */
+
+export interface FileTile {
   id: string;
   file: File;
   preview?: string;
@@ -15,38 +21,72 @@ interface FileTile {
   error?: string;
 }
 
+export interface StreamingStep {
+  label: string;
+  status: 'done' | 'active' | 'pending';
+}
+
 interface ChatState {
-  // Conversations
+  // ── Conversations ────────────────────────────────────────────────────
   conversations: ConversationSummary[];
   selectedConversationId: string | null;
   messages: ChatMessage[];
   isLoadingConversations: boolean;
   isLoadingMessages: boolean;
-  isSending: boolean;
 
-  // Input
+  // ── Sending / Streaming ──────────────────────────────────────────────
+  isSending: boolean;
+  isStreaming: boolean;
+  streamingContent: string;
+  streamingProgress: number | null;
+  streamingSteps: StreamingStep[];
+
+  // ── Input ────────────────────────────────────────────────────────────
   inputValue: string;
   files: FileTile[];
   inputSessionKey: string;
 
-  // Actions — conversations
+  // ── Library ──────────────────────────────────────────────────────────
+  pinnedIds: Set<string>;
+  searchQuery: string;
+
+  // ── Actions — Conversations ──────────────────────────────────────────
   loadConversations: () => Promise<void>;
   selectConversation: (id: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
+  renameConversation: (id: string, title: string) => Promise<void>;
   clearConversations: () => void;
 
-  // Actions — messaging
+  // ── Actions — Messaging ──────────────────────────────────────────────
   sendMessage: (content: string, documentIds?: string[]) => Promise<void>;
   appendMessage: (message: ChatMessage) => void;
   startNewChat: () => void;
 
-  // Actions — input
+  // ── Actions — Streaming ──────────────────────────────────────────────
+  startStreaming: () => void;
+  updateStreamingContent: (content: string) => void;
+  updateStreamingState: (updates: {
+    progress?: number | null;
+    steps?: StreamingStep[];
+    content?: string;
+  }) => void;
+  finishStreaming: (finalMessage?: ChatMessage) => void;
+
+  // ── Actions — Input ──────────────────────────────────────────────────
   setInputValue: (value: string) => void;
   addFile: (tile: FileTile) => void;
   updateFile: (id: string, updates: Partial<FileTile>) => void;
   removeFile: (id: string) => void;
   clearFiles: () => void;
+
+  // ── Actions — Library ────────────────────────────────────────────────
+  pinConversation: (id: string) => void;
+  unpinConversation: (id: string) => void;
+  togglePinConversation: (id: string) => void;
+  setSearchQuery: (query: string) => void;
 }
+
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
 
 function mapConversationDetail(detail: RawConversationDetail): {
   summary: ConversationSummary;
@@ -71,16 +111,27 @@ function mapConversationDetail(detail: RawConversationDetail): {
   };
 }
 
+/* ── Store ────────────────────────────────────────────────────────────────── */
+
 export const useChatStore = create<ChatState>((set, get) => ({
+  // ── Initial State ──────────────────────────────────────────────────────
   conversations: [],
   selectedConversationId: null,
   messages: [],
   isLoadingConversations: false,
   isLoadingMessages: false,
   isSending: false,
+  isStreaming: false,
+  streamingContent: '',
+  streamingProgress: null,
+  streamingSteps: [],
   inputValue: '',
   files: [],
   inputSessionKey: `session-${Date.now()}`,
+  pinnedIds: new Set<string>(),
+  searchQuery: '',
+
+  // ── Conversations ──────────────────────────────────────────────────────
 
   loadConversations: async () => {
     set({ isLoadingConversations: true });
@@ -118,8 +169,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       await chatService.deleteConversation(id);
       const state = get();
+      const pinnedIds = new Set(state.pinnedIds);
+      pinnedIds.delete(id);
       set({
         conversations: state.conversations.filter((c) => c.id !== id),
+        pinnedIds,
         ...(state.selectedConversationId === id
           ? { selectedConversationId: null, messages: [] }
           : {}),
@@ -129,17 +183,36 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  renameConversation: async (id: string, title: string) => {
+    // Optimistic update
+    set({
+      conversations: get().conversations.map((c) =>
+        c.id === id ? { ...c, title } : c
+      ),
+    });
+    try {
+      // If your chatService has a rename endpoint, call it here:
+      // await chatService.renameConversation(id, title);
+    } catch (err) {
+      console.error('Failed to rename conversation:', err);
+      // Could rollback here if needed
+    }
+  },
+
   clearConversations: () => {
     set({
       conversations: [],
       selectedConversationId: null,
       messages: [],
+      pinnedIds: new Set(),
     });
   },
 
+  // ── Messaging ──────────────────────────────────────────────────────────
+
   sendMessage: async (content: string, documentIds?: string[]) => {
     const state = get();
-    if (state.isSending) return;
+    if (state.isSending || state.isStreaming) return;
 
     const userMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
@@ -196,9 +269,55 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: [],
       inputValue: '',
       files: [],
+      isStreaming: false,
+      streamingContent: '',
+      streamingProgress: null,
+      streamingSteps: [],
       inputSessionKey: `session-${Date.now()}`,
     });
   },
+
+  // ── Streaming ──────────────────────────────────────────────────────────
+
+  startStreaming: () => {
+    set({
+      isStreaming: true,
+      streamingContent: '',
+      streamingProgress: 0,
+      streamingSteps: [],
+    });
+  },
+
+  updateStreamingContent: (content: string) => {
+    set({ streamingContent: content });
+  },
+
+  updateStreamingState: (updates) => {
+    const current = get();
+    set({
+      ...(updates.content != null && { streamingContent: updates.content }),
+      ...(updates.progress !== undefined && {
+        streamingProgress: updates.progress,
+      }),
+      ...(updates.steps && { streamingSteps: updates.steps }),
+    });
+  },
+
+  finishStreaming: (finalMessage?: ChatMessage) => {
+    const state = get();
+    set({
+      isStreaming: false,
+      streamingContent: '',
+      streamingProgress: null,
+      streamingSteps: [],
+      isSending: false,
+      ...(finalMessage
+        ? { messages: [...state.messages, finalMessage] }
+        : {}),
+    });
+  },
+
+  // ── Input ──────────────────────────────────────────────────────────────
 
   setInputValue: (value: string) => set({ inputValue: value }),
 
@@ -208,7 +327,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   updateFile: (id: string, updates: Partial<FileTile>) => {
     set({
-      files: get().files.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+      files: get().files.map((f) =>
+        f.id === id ? { ...f, ...updates } : f
+      ),
     });
   },
 
@@ -217,4 +338,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   clearFiles: () => set({ files: [] }),
+
+  // ── Library ────────────────────────────────────────────────────────────
+
+  pinConversation: (id: string) => {
+    const pinnedIds = new Set(get().pinnedIds);
+    pinnedIds.add(id);
+    set({ pinnedIds });
+  },
+
+  unpinConversation: (id: string) => {
+    const pinnedIds = new Set(get().pinnedIds);
+    pinnedIds.delete(id);
+    set({ pinnedIds });
+  },
+
+  togglePinConversation: (id: string) => {
+    const pinnedIds = new Set(get().pinnedIds);
+    if (pinnedIds.has(id)) {
+      pinnedIds.delete(id);
+    } else {
+      pinnedIds.add(id);
+    }
+    set({ pinnedIds });
+  },
+
+  setSearchQuery: (query: string) => set({ searchQuery: query }),
 }));

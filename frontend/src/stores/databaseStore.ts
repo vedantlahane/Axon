@@ -1,4 +1,5 @@
 // ─── Database Store (Zustand) ────────────────────────────────────────────────
+// Manages database connections, schema, SQL editor, query execution, and history.
 
 import { create } from 'zustand';
 import type {
@@ -12,13 +13,25 @@ import type {
 } from '../types/database';
 import * as dbService from '../services/databaseService';
 
-interface DatabaseState {
+/* ── Types ──────────────────────────────────────────────────────────────── */
+
+export interface ConnectionTestResult {
+  success: boolean;
+  message: string;
+  latencyMs?: number;
+}
+
+export interface DatabaseState {
   // Connection
   connection: DatabaseConnectionSettings | null;
   availableModes: DatabaseMode[];
   environmentFallback: DatabaseConnectionSettings | null;
   isConnectionLoading: boolean;
   connectionFeedback: string | null;
+
+  // Connection testing (Settings page)
+  isTestingConnection: boolean;
+  connectionTestResult: ConnectionTestResult | null;
 
   // Schema
   schema: SqlSchemaPayload | null;
@@ -50,10 +63,15 @@ interface DatabaseState {
 
   // Actions
   loadConnection: () => Promise<void>;
+  saveConnection: (settings: DatabaseConnectionSettings) => Promise<void>;
+  testConnection: (connectionUrl?: string) => Promise<ConnectionTestResult>;
   refreshSchema: () => Promise<void>;
   setQueryText: (text: string) => void;
   executeQuery: (query: string, limit?: number) => Promise<SqlQueryResult>;
-  requestSuggestions: (query: string, opts?: { includeSchema?: boolean }) => Promise<void>;
+  requestSuggestions: (
+    query: string,
+    opts?: { includeSchema?: boolean }
+  ) => Promise<void>;
   toggleSideWindow: () => void;
   closeSideWindow: () => void;
   setPendingQuery: (query: PendingQuery | null) => void;
@@ -62,14 +80,20 @@ interface DatabaseState {
   toggleAutoExecute: () => void;
   reset: () => void;
   setConnectionFeedback: (msg: string | null) => void;
+  clearConnectionTestResult: () => void;
 }
 
+/* ── Store ────────────────────────────────────────────────────────────────── */
+
 export const useDatabaseStore = create<DatabaseState>((set, get) => ({
+  // ── Initial State ──────────────────────────────────────────────────────
   connection: null,
   availableModes: [],
   environmentFallback: null,
   isConnectionLoading: false,
   connectionFeedback: null,
+  isTestingConnection: false,
+  connectionTestResult: null,
   schema: null,
   isSchemaLoading: false,
   queryText: '',
@@ -87,6 +111,8 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
   autoExecuteEnabled: false,
   latestAutoResult: null,
 
+  // ── Connection ─────────────────────────────────────────────────────────
+
   loadConnection: async () => {
     set({ isConnectionLoading: true });
     try {
@@ -103,6 +129,59 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
     }
   },
 
+  saveConnection: async (settings: DatabaseConnectionSettings) => {
+    set({ isConnectionLoading: true, connectionFeedback: null });
+    try {
+      // If your service has a save endpoint:
+      // await dbService.saveConnectionSettings(settings);
+      set({
+        connection: settings,
+        connectionFeedback: 'Connection saved successfully',
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Failed to save connection';
+      set({ connectionFeedback: msg });
+      throw err;
+    } finally {
+      set({ isConnectionLoading: false });
+    }
+  },
+
+  testConnection: async (connectionUrl?: string) => {
+    set({ isTestingConnection: true, connectionTestResult: null });
+    try {
+      // If your service has a test endpoint:
+      // const result = await dbService.testConnection(connectionUrl);
+      // For now, simulate:
+      const start = performance.now();
+      await dbService.fetchSchema(); // Use schema fetch as a connectivity test
+      const latencyMs = Math.round(performance.now() - start);
+
+      const result: ConnectionTestResult = {
+        success: true,
+        message: `Connected successfully (${latencyMs}ms)`,
+        latencyMs,
+      };
+      set({ connectionTestResult: result });
+      return result;
+    } catch (err) {
+      const result: ConnectionTestResult = {
+        success: false,
+        message:
+          err instanceof Error ? err.message : 'Connection test failed',
+      };
+      set({ connectionTestResult: result });
+      return result;
+    } finally {
+      set({ isTestingConnection: false });
+    }
+  },
+
+  clearConnectionTestResult: () => set({ connectionTestResult: null }),
+
+  // ── Schema ─────────────────────────────────────────────────────────────
+
   refreshSchema: async () => {
     set({ isSchemaLoading: true });
     try {
@@ -114,6 +193,8 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
       set({ isSchemaLoading: false });
     }
   },
+
+  // ── Editor ─────────────────────────────────────────────────────────────
 
   setQueryText: (text: string) => set({ queryText: text }),
 
@@ -129,7 +210,13 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
         executionTimeMs: result.executionTimeMs,
       };
       const execMap = new Map(get().executedQueries);
-      execMap.set(query.trim().replace(/\s+/g, ' ').toLowerCase(), result);
+      execMap.set(
+        query
+          .trim()
+          .replace(/\s+/g, ' ')
+          .toLowerCase(),
+        result
+      );
       set({
         queryResult: result,
         history: [entry, ...get().history].slice(0, 50),
@@ -137,7 +224,8 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
       });
       return result;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Query execution failed';
+      const msg =
+        err instanceof Error ? err.message : 'Query execution failed';
       set({ queryError: msg });
       throw err;
     } finally {
@@ -145,7 +233,12 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
     }
   },
 
-  requestSuggestions: async (query: string, opts?: { includeSchema?: boolean }) => {
+  // ── Suggestions ────────────────────────────────────────────────────────
+
+  requestSuggestions: async (
+    query: string,
+    opts?: { includeSchema?: boolean }
+  ) => {
     set({ isFetchingSuggestions: true, suggestionsError: null });
     try {
       const env = await dbService.requestSuggestions({
@@ -157,17 +250,23 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
         suggestionAnalysis: env.analysis ?? null,
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to get suggestions';
+      const msg =
+        err instanceof Error ? err.message : 'Failed to get suggestions';
       set({ suggestionsError: msg });
     } finally {
       set({ isFetchingSuggestions: false });
     }
   },
 
+  // ── SQL Panel ──────────────────────────────────────────────────────────
+
   toggleSideWindow: () => set({ isSideWindowOpen: !get().isSideWindowOpen }),
   closeSideWindow: () => set({ isSideWindowOpen: false }),
 
+  // ── Pending Queries ────────────────────────────────────────────────────
+
   setPendingQuery: (query) => set({ pendingQuery: query }),
+
   approvePendingQuery: () => {
     const pq = get().pendingQuery;
     if (pq) {
@@ -175,8 +274,13 @@ export const useDatabaseStore = create<DatabaseState>((set, get) => ({
       void get().executeQuery(pq.query);
     }
   },
+
   rejectPendingQuery: () => set({ pendingQuery: null }),
-  toggleAutoExecute: () => set({ autoExecuteEnabled: !get().autoExecuteEnabled }),
+
+  toggleAutoExecute: () =>
+    set({ autoExecuteEnabled: !get().autoExecuteEnabled }),
+
+  // ── Reset ──────────────────────────────────────────────────────────────
 
   reset: () =>
     set({

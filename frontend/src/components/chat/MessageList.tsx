@@ -1,7 +1,9 @@
 // ─── Message List ────────────────────────────────────────────────────────────
+// Scrollable message container with auto-scroll and typing indicator.
 
 import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { fadeUp } from '../../lib/animations';
 import type { ChatMessage } from '../../types/chat';
 import type { SqlQueryResult } from '../../types/database';
 import UserMessage from './UserMessage';
@@ -26,9 +28,13 @@ const MessageList: React.FC<MessageListProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-scroll on new messages
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     }
   }, [messages]);
 
@@ -45,29 +51,27 @@ const MessageList: React.FC<MessageListProps> = ({
         aria-live="polite"
         aria-label="Chat messages"
       >
-        <div className="w-full max-w-[720px] mx-auto px-4 pt-20 pb-48">
+        {/* Message column — max-w-[720px] centered, with TopBar + InputBar clearance */}
+        <div className="w-full max-w-[720px] mx-auto px-4 md:px-6 pt-24 pb-52">
           <AnimatePresence initial={false}>
-            <motion.div
-              key="messages"
-              className="flex flex-col"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-            >
-              {messages.map((message) =>
-                message.sender === 'user' ? (
-                  <UserMessage key={message.id} message={message} />
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                {...fadeUp}
+                layout
+              >
+                {message.sender === 'user' ? (
+                  <UserMessage message={message} />
                 ) : (
                   <AssistantMessage
-                    key={message.id}
                     message={message}
                     isAuthenticated={isAuthenticated}
                     executedQueries={executedQueries}
                     onViewSqlInCanvas={onViewSqlInCanvas}
                   />
-                )
-              )}
-            </motion.div>
+                )}
+              </motion.div>
+            ))}
           </AnimatePresence>
 
           {showTyping && <TypingIndicator />}

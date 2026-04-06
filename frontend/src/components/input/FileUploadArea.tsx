@@ -1,38 +1,82 @@
-import React from 'react';
+// ─── File Upload Area ────────────────────────────────────────────────────────
+// Standalone file chips display. Used in UserMessage for sent files (static).
+// For input-attached files, ChatInput renders its own chips internally.
 
-interface FileUploadAreaProps {
-  files: Array<{ id: string; name: string; size: number }>;
-  onRemove: (fileId: string) => void;
+import React from 'react';
+import { formatFileSize } from '../../utils/formatters';
+
+interface FileItem {
+  id: string;
+  name: string;
+  size: number;
 }
 
-const FileUploadArea: React.FC<FileUploadAreaProps> = ({ files, onRemove }) => {
+interface FileUploadAreaProps {
+  files: FileItem[];
+  onRemove?: (fileId: string) => void;
+  readonly?: boolean;
+}
+
+const FILE_ICONS: Record<string, { icon: string; color: string }> = {
+  pdf:  { icon: 'description',  color: 'text-rose-400' },
+  xlsx: { icon: 'table_chart',  color: 'text-emerald-400' },
+  csv:  { icon: 'table_chart',  color: 'text-emerald-400' },
+  sql:  { icon: 'database',     color: 'text-blue-400' },
+  default: { icon: 'attachment', color: 'text-violet-400' },
+};
+
+const getFileIcon = (name: string) => {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  return FILE_ICONS[ext] ?? FILE_ICONS.default;
+};
+
+const FileUploadArea: React.FC<FileUploadAreaProps> = ({
+  files,
+  onRemove,
+  readonly = false,
+}) => {
   if (files.length === 0) return null;
 
-  const getFileIcon = (name: string) => {
-    if (name.endsWith('.pdf')) return { icon: 'description', color: 'text-red-400' };
-    if (name.endsWith('.xlsx') || name.endsWith('.csv')) return { icon: 'table_chart', color: 'text-emerald-400' };
-    if (name.endsWith('.sql')) return { icon: 'database', color: 'text-blue-400' };
-    return { icon: 'attachment', color: 'text-violet-400' };
-  };
-
   return (
-    <div className="flex flex-wrap gap-2 mb-2 p-2 bg-surface-container-lowest rounded-lg">
+    <div className="flex flex-wrap gap-2">
       {files.map((file) => {
         const { icon, color } = getFileIcon(file.name);
         return (
           <div
             key={file.id}
-            className="liquid-glass rounded-lg px-3 py-2 flex items-center gap-2 text-sm"
+            className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+            }}
           >
-            <span className={`material-symbols-outlined text-base ${color}`}>{icon}</span>
-            <span className="text-on-surface max-w-[120px] truncate">{file.name}</span>
-            <span className="text-xs text-on-surface-variant">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-            <button
-              onClick={() => onRemove(file.id)}
-              className="ml-1 text-on-surface-variant hover:text-on-surface transition-colors"
+            <span
+              className={`material-symbols-outlined ${color}`}
+              style={{ fontSize: '14px' }}
             >
-              <span className="material-symbols-outlined text-base">close</span>
-            </button>
+              {icon}
+            </span>
+            <span className="text-slate-300 max-w-[120px] truncate">
+              {file.name}
+            </span>
+            <span className="text-slate-500">
+              {formatFileSize(file.size)}
+            </span>
+            {!readonly && onRemove && (
+              <button
+                type="button"
+                onClick={() => onRemove(file.id)}
+                className="ml-1 text-slate-500 hover:text-white transition-colors"
+                aria-label={`Remove ${file.name}`}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: '12px' }}
+                >
+                  close
+                </span>
+              </button>
+            )}
           </div>
         );
       })}

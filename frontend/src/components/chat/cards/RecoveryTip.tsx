@@ -1,18 +1,23 @@
+// ─── Recovery Tip ────────────────────────────────────────────────────────────
+
 import React from 'react';
 
 interface RecoveryTipProps {
   message: string;
 }
 
-const RecoveryTip: React.FC<RecoveryTipProps> = ({ message }) => {
-  return (
-    <div className="flex justify-center my-3">
-      <div className="liquid-glass rounded-full px-4 py-2 flex items-center gap-2">
-        <span className="material-symbols-outlined text-amber-400 text-base">lightbulb</span>
-        <p className="text-sm text-on-surface-variant">{message}</p>
-      </div>
+const RecoveryTip: React.FC<RecoveryTipProps> = ({ message }) => (
+  <div className="flex justify-center my-3">
+    <div className="glass-info rounded-full px-4 py-2 flex items-center gap-2">
+      <span
+        className="material-symbols-outlined"
+        style={{ fontSize: '14px', color: 'var(--color-warning)' }}
+      >
+        lightbulb
+      </span>
+      <p className="text-xs text-slate-500 italic">{message}</p>
     </div>
-  );
-};
+  </div>
+);
 
 export default RecoveryTip;
