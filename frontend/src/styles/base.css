@@ -1,4 +1,4 @@
-/* ─── Liquid Glass — Base Styles (from Stitch source) ──────────────── */
+/* ─── Liquid Glass — Base Styles ───────────────────────────────────────────── */
 
 @layer base {
   html, body, #root { height: 100%; }
@@ -13,7 +13,7 @@
     margin: 0;
     overflow-x: hidden;
     background-color: var(--body-bg);
-    color: #E2E8F0;
+    color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 0.875rem;
     line-height: 1.6;
@@ -23,12 +23,12 @@
   button, input, textarea, select { font: inherit; color: inherit; }
 
   ::selection {
-    background: rgba(224, 227, 229, 0.3);
+    background: rgba(124, 58, 237, 0.3);
     color: #ffffff;
   }
 }
 
-/* ─── App Shell (no sidebar — full-screen canvas) ──────────────────── */
+/* ─── App Shell ────────────────────────────────────────────────────────────── */
 
 .app-shell {
   display: flex;
@@ -41,56 +41,7 @@
   color: var(--on-surface);
 }
 
-/* ─── Liquid Glass (exact Stitch class) ────────────────────────────── */
-
-.liquid-glass {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
-}
-
-.liquid-glass-hover:hover {
-  backdrop-filter: blur(24px) saturate(250%);
-  -webkit-backdrop-filter: blur(24px) saturate(250%);
-  box-shadow: 0 0 20px rgba(185, 200, 222, 0.1);
-}
-
-/* ─── Light Leak (violet gradient line on top edge) ────────────────── */
-
-.light-leak-top {
-  position: relative;
-}
-
-.light-leak-top::after {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: 20%;
-  right: 20%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #7C3AED, transparent);
-  z-index: 10;
-}
-
-/* ─── Ambient Orbs (atmospheric depth behind content) ──────────────── */
-
-.ambient-orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(120px);
-  z-index: -1;
-  pointer-events: none;
-}
-
-/* ─── Ambient Background (radial gradient) ─────────────────────────── */
-
-.ambient-bg {
-  background: radial-gradient(circle at 50% -20%, #171f33 0%, #0b1326 70%);
-}
-
-/* ─── Material Symbols ─────────────────────────────────────────────── */
+/* ─── Material Symbols ─────────────────────────────────────────────────────── */
 
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
@@ -110,24 +61,28 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Label Typography (Stitch pattern) ────────────────────────────── */
-
-.label-meta {
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 500;
-}
-
-.label-section {
-  font-size: 0.625rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-}
-
-/* ─── Scrollbar ────────────────────────────────────────────────────── */
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ─── Focus ring ───────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid rgba(124, 58, 237, 0.4);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

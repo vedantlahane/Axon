@@ -1,58 +1,32 @@
+// ─── Keyboard Shortcuts Hook ─────────────────────────────────────────────────
+
 import { useEffect } from 'react';
 
-interface KeyboardShortcut {
-  /** Key to listen for (e.g., 'n', 'k', 'Escape') */
-  key: string;
-  /** Whether Ctrl/Cmd must be held */
-  ctrl?: boolean;
-  /** Whether Shift must be held */
-  shift?: boolean;
-  /** Handler to call when the shortcut is triggered */
-  handler: () => void;
-  /** Whether to prevent default browser behaviour */
-  preventDefault?: boolean;
+interface ShortcutMap {
+  [key: string]: () => void;
 }
 
-/**
- * Global keyboard shortcuts hook.
- * Binds keydown listeners for each shortcut and cleans up on unmount.
- */
-export default function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
+export function useKeyboardShortcuts(shortcuts: ShortcutMap): void {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (typeof e.key !== 'string' || !e.key) {
-        return;
-      }
+    const handler = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
 
-      // Don't fire shortcuts when user is typing in an input/textarea
-      const tag = (e.target as HTMLElement)?.tagName;
-      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+      // Build key string
+      let key = '';
+      if (meta) key += 'mod+';
+      if (e.shiftKey) key += 'shift+';
+      key += e.key.toLowerCase();
 
-      for (const shortcut of shortcuts) {
-        if (!shortcut?.key) {
-          continue;
-        }
-
-        const ctrlMatch = shortcut.ctrl
-          ? e.ctrlKey || e.metaKey
-          : !e.ctrlKey && !e.metaKey;
-        const shiftMatch = shortcut.shift ? e.shiftKey : !e.shiftKey;
-        const keyMatch = e.key.toLowerCase() === shortcut.key.toLowerCase();
-
-        if (keyMatch && ctrlMatch && shiftMatch) {
-          // Escape should always work; other shortcuts skip if user is typing
-          if (shortcut.key !== 'Escape' && isInput && !shortcut.ctrl) continue;
-
-          if (shortcut.preventDefault !== false) {
-            e.preventDefault();
-          }
-          shortcut.handler();
-          return;
-        }
+      const action = shortcuts[key];
+      if (action) {
+        e.preventDefault();
+        action();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [shortcuts]);
 }
+
+export default useKeyboardShortcuts;

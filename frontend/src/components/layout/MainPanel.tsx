@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ChatDisplay from "../chat/ChatDisplay";
 import InputSection from "../chat/InputSection";
@@ -118,10 +118,8 @@ const MainPanel: React.FC<MainPanelProps> = ({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showSettingsMenu]);
 
-  const selectedHistory = useMemo(
-    () => historyConversations.find((c) => c.id === selectedHistoryId) ?? null,
-    [historyConversations, selectedHistoryId]
-  );
+  // selectedHistory disabled — replaced by Zustand store in new architecture
+  // const selectedHistory = useMemo(...)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

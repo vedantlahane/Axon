@@ -61,7 +61,7 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   historyConversations,
   selectedHistoryId,
   onSelectHistory,
-  onViewChange,
+  onViewChange: _onViewChange,
   onDeleteConversation,
   isChatLoading,
   onViewSqlInCanvas,

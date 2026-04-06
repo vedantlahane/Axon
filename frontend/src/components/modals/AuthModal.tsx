@@ -1,487 +1,165 @@
+// ─── Auth Modal ──────────────────────────────────────────────────────────────
+// Refactored sign in/up/reset modal using glass design system.
+
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '../../stores/AuthProvider';
+import type { AuthModalMode } from '../../types/auth';
 
-import type {
-  ConfirmPasswordResetPayload,
-  SignInPayload,
-  SignUpPayload,
-} from '../../services/chatApi';
+const AuthModal: React.FC = () => {
+  const {
+    authModalState,
+    closeAuthModal,
+    openAuthModal,
+    signIn,
+    signUp,
+    requestPasswordReset,
+    confirmPasswordReset,
+    authError,
+    authSuccessMessage,
+    isAuthSubmitting,
+  } = useAuth();
 
-type AuthView = 'signin' | 'signup' | 'reset-request' | 'reset-confirm';
+  const { open, mode } = authModalState;
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
-interface AuthModalProps {
-  isOpen: boolean;
-  mode: 'signin' | 'signup';
-  onClose: () => void;
-  onModeChange: (mode: 'signin' | 'signup') => void;
-  onSignIn: (payload: SignInPayload) => Promise<void>;
-  onSignUp: (payload: SignUpPayload) => Promise<void>;
-  onRequestPasswordReset: (email: string) => Promise<string | null>;
-  onConfirmPasswordReset: (payload: ConfirmPasswordResetPayload) => Promise<void>;
-  isSubmitting: boolean;
-  errorMessage?: string | null;
-  successMessage?: string | null;
-}
-
-interface FormState {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  resetToken: string;
-}
-
-interface FormErrors {
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-  name?: string;
-  resetToken?: string;
-}
-
-const PASSWORD_MIN_LENGTH = 8;
-
-const emptyForm: FormState = {
-  name: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-  resetToken: '',
-};
-
-const AuthModal = ({
-  isOpen,
-  mode,
-  onClose,
-  onModeChange,
-  onSignIn,
-  onSignUp,
-  onRequestPasswordReset,
-  onConfirmPasswordReset,
-  isSubmitting,
-  errorMessage,
-  successMessage,
-}: AuthModalProps) => {
-  const [view, setView] = useState<AuthView>(mode);
-  const [form, setForm] = useState<FormState>(emptyForm);
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [resetEmail, setResetEmail] = useState<string>('');
-  const modalRef = useRef<HTMLDivElement>(null);
-  const firstInputRef = useRef<HTMLInputElement>(null);
-
+  // Reset form on mode change
   useEffect(() => {
-    if (isOpen) {
-      setView(mode);
-      setForm(emptyForm);
-      setFormErrors({});
-      setResetEmail('');
-      // Auto-focus first input after modal animation
-      setTimeout(() => firstInputRef.current?.focus(), 100);
-    }
-  }, [isOpen, mode]);
+    setName('');
+    setEmail('');
+    setPassword('');
+    setResetToken('');
+  }, [mode]);
 
-  // Focus trap
-  useEffect(() => {
-    if (!isOpen || !modalRef.current) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-        return;
-      }
-      if (e.key !== 'Tab' || !modalRef.current) return;
-
-      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-        'input:not([disabled]), button:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      );
-      const firstEl = focusableElements[0];
-      const lastEl = focusableElements[focusableElements.length - 1];
-
-      if (e.shiftKey && document.activeElement === firstEl) {
-        e.preventDefault();
-        lastEl?.focus();
-      } else if (!e.shiftKey && document.activeElement === lastEl) {
-        e.preventDefault();
-        firstEl?.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  const heading = useMemo(() => {
-    switch (view) {
-      case 'signup':
-        return 'Create your account';
-      case 'reset-request':
-        return 'Reset your password';
-      case 'reset-confirm':
-        return 'Choose a new password';
-      case 'signin':
-      default:
-        return 'Welcome back';
-    }
-  }, [view]);
-
-  const subheading = useMemo(() => {
-    switch (view) {
-      case 'signup':
-        return 'Sign up with your email to get started.';
-      case 'reset-request':
-        return 'Enter your email and we will send a reset code.';
-      case 'reset-confirm':
-        return resetEmail
-          ? `Enter the reset code for ${resetEmail} and set a new password.`
-          : 'Enter your reset code and pick a new password.';
-      case 'signin':
-      default:
-        return 'Sign in with your email to continue.';
-    }
-  }, [view, resetEmail]);
-
-  const primaryButtonLabel = useMemo(() => {
-    switch (view) {
-      case 'signup':
-        return 'Create account';
-      case 'reset-request':
-        return 'Send reset code';
-      case 'reset-confirm':
-        return 'Update password';
-      case 'signin':
-      default:
-        return 'Sign in';
-    }
-  }, [view]);
-
-  const validate = () => {
-    const errors: FormErrors = {};
-
-    const shouldValidateEmail = view === 'signin' || view === 'signup' || view === 'reset-request';
-    if (shouldValidateEmail) {
-      if (!form.email.trim()) {
-        errors.email = 'Email is required.';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        errors.email = 'Enter a valid email address.';
-      }
-    }
-
-    if (view === 'signin' || view === 'signup') {
-      if (!form.password) {
-        errors.password = 'Password is required.';
-      } else if (form.password.length < PASSWORD_MIN_LENGTH) {
-        errors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
-      }
-    }
-
-    if (view === 'signup' && !form.name.trim()) {
-      errors.name = 'Name is required.';
-    }
-
-    if (view === 'reset-confirm') {
-      if (!form.resetToken.trim()) {
-        errors.resetToken = 'Reset code is required.';
-      }
-
-      if (!form.password) {
-        errors.password = 'New password is required.';
-      } else if (form.password.length < PASSWORD_MIN_LENGTH) {
-        errors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
-      }
-
-      if (!form.confirmPassword) {
-        errors.confirmPassword = 'Please confirm your new password.';
-      } else if (form.confirmPassword !== form.password) {
-        errors.confirmPassword = 'Passwords do not match.';
-      }
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
-
-    try {
-      if (view === 'signup') {
-        await onSignUp({
-          name: form.name.trim(),
-          email: form.email.trim(),
-          password: form.password,
-        });
-      } else if (view === 'signin') {
-        await onSignIn({
-          email: form.email.trim(),
-          password: form.password,
-        });
-      } else if (view === 'reset-request') {
-        const token = await onRequestPasswordReset(form.email.trim());
-        setResetEmail(form.email.trim());
-        setForm({
-          ...emptyForm,
-          email: form.email.trim(),
-          resetToken: token ?? '',
-        });
-        setFormErrors({});
-        setView('reset-confirm');
-      } else if (view === 'reset-confirm') {
-        await onConfirmPasswordReset({
-          token: form.resetToken.trim(),
-          password: form.password,
-        });
-        setForm(emptyForm);
-        setFormErrors({});
-        setView('signin');
-      }
-    } catch (error) {
-      console.error('Authentication error', error);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mode === 'signin') {
+      await signIn(email, password);
+    } else if (mode === 'signup') {
+      await signUp(name, email, password);
+    } else if (mode === 'forgot') {
+      const token = await requestPasswordReset(email);
+      if (token) setResetToken(token);
+    } else if (mode === 'reset') {
+      await confirmPasswordReset(resetToken, password);
     }
   };
 
-  const switchToResetRequest = () => {
-    setView('reset-request');
-    setForm((prev) => ({ ...emptyForm, email: prev.email }));
-    setFormErrors({});
-    setResetEmail('');
-  };
 
-  const switchToSignIn = () => {
-    onModeChange('signin');
-    setView('signin');
-    setForm(emptyForm);
-    setFormErrors({});
+  const titles: Record<AuthModalMode, string> = {
+    signin: 'Welcome back',
+    signup: 'Create account',
+    forgot: 'Reset password',
+    reset: 'New password',
   };
-
-  const switchToSignUp = () => {
-    onModeChange('signup');
-    setView('signup');
-    setForm(emptyForm);
-    setFormErrors({});
-  };
-
-  if (!isOpen) {
-    return null;
-  }
 
   return (
     <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) onClose();
-          }}
-        >
+      {open && (
+        <>
           <motion.div
-            ref={modalRef}
-            className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)]/95 p-6 shadow-2xl backdrop-blur md:p-7"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeAuthModal}
+          />
+          <motion.div
+            className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-[var(--text-primary)]">{heading}</h2>
-                <p className="mt-1 text-sm text-[var(--text-muted)]">{subheading}</p>
-                {successMessage && (
-                  <p className="mt-2 text-xs text-emerald-300">{successMessage}</p>
+            <div className="modal-content pointer-events-auto p-8" onClick={(e) => e.stopPropagation()}>
+              {/* Close button */}
+              <button type="button" className="absolute top-4 right-4 btn-icon" onClick={closeAuthModal} aria-label="Close">
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+              </button>
+
+              {/* Header */}
+              <div className="mb-8 text-center">
+                <div className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'var(--violet-soft)' }}>
+                  <span className="material-symbols-outlined text-2xl" style={{ color: 'var(--violet-bright)', fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                </div>
+                <h2 className="headline-sm text-white">{titles[mode]}</h2>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+                {mode === 'signup' && (
+                  <div>
+                    <label className="label-sm block mb-1.5" style={{ color: 'var(--text-secondary)' }}>Name</label>
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-glass" placeholder="Your name" required autoComplete="name" />
+                  </div>
+                )}
+
+                {(mode === 'signin' || mode === 'signup' || mode === 'forgot') && (
+                  <div>
+                    <label className="label-sm block mb-1.5" style={{ color: 'var(--text-secondary)' }}>Email</label>
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-glass" placeholder="you@example.com" required autoComplete="email" />
+                  </div>
+                )}
+
+                {mode === 'reset' && (
+                  <div>
+                    <label className="label-sm block mb-1.5" style={{ color: 'var(--text-secondary)' }}>Reset Token</label>
+                    <input type="text" value={resetToken} onChange={(e) => setResetToken(e.target.value)} className="input-glass" placeholder="Enter reset token" required />
+                  </div>
+                )}
+
+                {(mode === 'signin' || mode === 'signup' || mode === 'reset') && (
+                  <div>
+                    <label className="label-sm block mb-1.5" style={{ color: 'var(--text-secondary)' }}>Password</label>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-glass" placeholder="••••••••" required autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
+                  </div>
+                )}
+
+                {/* Error */}
+                {authError && (
+                  <div className="rounded-lg p-3 text-xs" style={{ background: 'rgba(255,180,171,0.1)', border: '1px solid rgba(255,180,171,0.15)', color: 'var(--error)' }}>
+                    {authError}
+                  </div>
+                )}
+
+                {/* Success */}
+                {authSuccessMessage && (
+                  <div className="rounded-lg p-3 text-xs" style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.15)', color: 'var(--success)' }}>
+                    {authSuccessMessage}
+                  </div>
+                )}
+
+                <button type="submit" className="btn-primary w-full py-3" disabled={isAuthSubmitting}>
+                  {isAuthSubmitting ? 'Please wait…' : mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : mode === 'forgot' ? 'Send Reset Link' : 'Reset Password'}
+                </button>
+              </form>
+
+              {/* Footer links */}
+              <div className="mt-6 text-center space-y-2">
+                {mode === 'signin' && (
+                  <>
+                    <button type="button" onClick={() => { closeAuthModal(); setTimeout(() => openAuthModal('forgot'), 150); }} className="text-xs transition-colors" style={{ color: 'var(--text-ghost)' }}>
+                      Forgot password?
+                    </button>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      Don't have an account?{' '}
+                      <button type="button" onClick={() => { closeAuthModal(); setTimeout(() => openAuthModal('signup'), 150); }} className="font-medium" style={{ color: 'var(--violet-bright)' }}>Sign up</button>
+                    </p>
+                  </>
+                )}
+                {mode === 'signup' && (
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    Already have an account?{' '}
+                    <button type="button" onClick={() => { closeAuthModal(); setTimeout(() => openAuthModal('signin'), 150); }} className="font-medium" style={{ color: 'var(--violet-bright)' }}>Sign in</button>
+                  </p>
                 )}
               </div>
-              <button
-                type="button"
-                className="grid h-8 w-8 place-items-center rounded-full text-[var(--text-subtle)] transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                onClick={onClose}
-                aria-label="Close authentication"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              {view === 'signup' && (
-                <div>
-                  <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-name">
-                    Name
-                  </label>
-                  <input
-                    id="auth-name"
-                    ref={view === 'signup' ? firstInputRef : undefined}
-                    type="text"
-                    autoComplete="name"
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
-                    value={form.name}
-                    onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                    disabled={isSubmitting}
-                  />
-                  {formErrors.name && <p className="mt-1 text-xs text-rose-400">{formErrors.name}</p>}
-                </div>
-              )}
-
-              {view !== 'reset-confirm' && (
-                <div>
-                  <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-email">
-                    Email
-                  </label>
-                  <input
-                    id="auth-email"
-                    ref={view !== 'signup' && (view as string) !== 'reset-confirm' ? firstInputRef : undefined}
-                    type="email"
-                    autoComplete="email"
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
-                    value={form.email}
-                    onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-                    disabled={isSubmitting}
-                  />
-                  {formErrors.email && <p className="mt-1 text-xs text-rose-400">{formErrors.email}</p>}
-                </div>
-              )}
-
-              {(view === 'signin' || view === 'signup') && (
-                <div>
-                  <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-password">
-                    Password
-                  </label>
-                  <input
-                    id="auth-password"
-                    type="password"
-                    autoComplete={view === 'signup' ? 'new-password' : 'current-password'}
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
-                    value={form.password}
-                    onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-                    disabled={isSubmitting}
-                  />
-                  {formErrors.password && <p className="mt-1 text-xs text-rose-400">{formErrors.password}</p>}
-                </div>
-              )}
-
-              {view === 'reset-request' && (
-                <p className="text-xs text-[var(--text-subtle)]">
-                  We will generate a reset code for your account. In production this would be emailed to you.
-                </p>
-              )}
-
-              {view === 'reset-confirm' && (
-                <>
-                  <div>
-                    <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-reset-token">
-                      Reset code
-                    </label>
-                    <input
-                      id="auth-reset-token"
-                      ref={view === 'reset-confirm' ? firstInputRef : undefined}
-                      type="text"
-                      className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
-                      value={form.resetToken}
-                      onChange={(event) => setForm((prev) => ({ ...prev, resetToken: event.target.value }))}
-                      disabled={isSubmitting}
-                    />
-                    {formErrors.resetToken && <p className="mt-1 text-xs text-rose-400">{formErrors.resetToken}</p>}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-new-password">
-                      New password
-                    </label>
-                    <input
-                      id="auth-new-password"
-                      type="password"
-                      autoComplete="new-password"
-                      className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
-                      value={form.password}
-                      onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-                      disabled={isSubmitting}
-                    />
-                    {formErrors.password && <p className="mt-1 text-xs text-rose-400">{formErrors.password}</p>}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-[var(--text-secondary)]" htmlFor="auth-confirm-password">
-                      Confirm password
-                    </label>
-                    <input
-                      id="auth-confirm-password"
-                      type="password"
-                      autoComplete="new-password"
-                      className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none"
-                      value={form.confirmPassword}
-                      onChange={(event) => setForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                      disabled={isSubmitting}
-                    />
-                    {formErrors.confirmPassword && (
-                      <p className="mt-1 text-xs text-rose-400">{formErrors.confirmPassword}</p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {view === 'signin' && (
-                <button
-                  type="button"
-                  className="text-xs font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-                  onClick={switchToResetRequest}
-                  disabled={isSubmitting}
-                >
-                  Forgot password?
-                </button>
-              )}
-
-              {errorMessage && <p className="text-sm text-rose-300">{errorMessage}</p>}
-
-              <button
-                type="submit"
-                className="flex w-full items-center justify-center rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Processing…' : primaryButtonLabel}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
-              {view === 'signup' ? (
-                <button
-                  type="button"
-                  className="font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-                  onClick={switchToSignIn}
-                  disabled={isSubmitting}
-                >
-                  Already have an account? Sign in instead
-                </button>
-              ) : view === 'signin' ? (
-                <button
-                  type="button"
-                  className="font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-                  onClick={switchToSignUp}
-                  disabled={isSubmitting}
-                >
-                  Need an account? Create one
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="font-medium text-[var(--accent)] transition hover:text-[var(--accent-strong)]"
-                  onClick={switchToSignIn}
-                  disabled={isSubmitting}
-                >
-                  Back to sign in
-                </button>
-              )}
             </div>
           </motion.div>
-        </motion.div>
+        </>
       )}
     </AnimatePresence>
   );

@@ -40,25 +40,26 @@ const InputSection: React.FC<InputSectionProps> = ({
   isSending = false,
   isAuthenticated,
   onRequireAuth,
-  onOpenDatabaseSettings,
-  databaseSummary,
+  onOpenDatabaseSettings: _onOpenDatabaseSettings,
+  databaseSummary: _databaseSummary,
   onToggleSideWindow,
   isSideWindowOpen,
   canUseDatabaseTools,
   availableModels = [],
   currentModel,
-  onModelChange,
-  isModelSwitching = false,
+  onModelChange: _onModelChange,
+  isModelSwitching: _isModelSwitching = false,
 }) => {
   const [message, setMessage] = useState('');
   const [files, setFiles] = useState<FileTile[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  // Voice capture disabled in refactored architecture
+  // const [isRecording, setIsRecording] = useState(false);
+  // const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
   const previewsRef = useRef(new Map<string, string>());
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const revokePreview = useCallback((id: string) => {
     const url = previewsRef.current.get(id);
@@ -70,7 +71,6 @@ const InputSection: React.FC<InputSectionProps> = ({
     return () => {
       previews.forEach((url) => URL.revokeObjectURL(url));
       previews.clear();
-      if (recognitionRef.current) { recognitionRef.current.onresult = null; recognitionRef.current.onend = null; recognitionRef.current.onerror = null; recognitionRef.current.stop(); recognitionRef.current = null; }
     };
   }, []);
 
@@ -82,24 +82,17 @@ const InputSection: React.FC<InputSectionProps> = ({
     setFiles([]);
   }, [files, isHistoryActive, revokePreview]);
 
+  /* Speech recognition disabled in refactored architecture
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const speechWindow = window as unknown as SpeechRecognitionWindow;
     const Ctor = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
-    if (!Ctor) { setIsSpeechSupported(false); return; }
+    if (!Ctor) return;
     const recognition = new Ctor();
     recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = true; recognition.maxAlternatives = 1;
-    recognition.onstart = () => setIsRecording(true);
-    recognition.onend = () => setIsRecording(false);
-    recognition.onerror = () => setIsRecording(false);
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcripts: string[] = [];
-      for (let i = event.resultIndex; i < event.results.length; i++) { const t = event.results[i][0]?.transcript ?? ''; if (t) transcripts.push(t); }
-      if (transcripts.length > 0) setMessage((prev) => `${prev} ${transcripts.join(' ')}`.trim());
-    };
     recognitionRef.current = recognition;
-    setIsSpeechSupported(true);
   }, []);
+  */
 
   const uploadedFileIds = useMemo(() => files.filter((t) => t.status === 'uploaded' && t.document).map((t) => t.document!.id), [files]);
 
@@ -140,11 +133,8 @@ const InputSection: React.FC<InputSectionProps> = ({
 
   const removeFile = (id: string) => { const tile = files.find((e) => e.id === id); revokePreview(id); setFiles((prev) => prev.filter((e) => e.id !== id)); if (tile?.document) void deleteDocument(tile.document.id); };
 
-  const handleVoiceCapture = () => {
-    if (!isSpeechSupported || isHistoryActive || isSending || !isAuthenticated) return;
-    const r = recognitionRef.current; if (!r) return;
-    if (isRecording) r.stop(); else { try { r.start(); } catch (e) { console.error('Speech error', e); } }
-  };
+  // Voice capture disabled in refactored architecture
+  // const handleVoiceCapture = () => { ... };
 
   const hasUploadingFiles = files.some((t) => t.status === 'uploading');
   const canSend = message.trim().length > 0;

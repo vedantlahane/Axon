@@ -1,124 +1,93 @@
-/* ─── Liquid Glass Editorial — Animations ──────────────────────────── */
+/* ─── Liquid Glass Editorial — Animations ──────────────────────────────────── */
 
-/* AI Pulse — breathing radial gradient for processing states */
+/* AI Pulse — breathing radial gradient for processing */
 @keyframes ai-pulse {
-  0%, 100% {
-    opacity: 0.06;
-    transform: scale(0.96);
-  }
-  50% {
-    opacity: 0.14;
-    transform: scale(1.04);
-  }
+  0%, 100% { opacity: 0.06; transform: scale(0.96); }
+  50% { opacity: 0.14; transform: scale(1.04); }
 }
+.ai-pulse { animation: ai-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
-.ai-pulse {
-  animation: ai-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Glass shimmer — subtle light movement across glass surfaces */
+/* Glass shimmer */
 @keyframes glass-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
-
 .glass-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.03) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: glass-shimmer 8s ease-in-out infinite;
 }
 
-/* Breathing dot — for loading/thinking indicators */
+/* Breathing dot */
 @keyframes breathe {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
 }
-
-.breathe {
-  animation: breathe 2s ease-in-out infinite;
-}
+.breathe { animation: breathe 2s ease-in-out infinite; }
 
 /* Gentle float */
 @keyframes gentle-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
+.gentle-float { animation: gentle-float 6s ease-in-out infinite; }
 
-.gentle-float {
-  animation: gentle-float 6s ease-in-out infinite;
-}
-
-/* Surface glow pulse for active states */
+/* Surface glow */
 @keyframes surface-glow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(185, 200, 222, 0);
-  }
-  50% {
-    box-shadow: 0 0 20px 2px rgba(185, 200, 222, 0.08);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(185, 200, 222, 0); }
+  50% { box-shadow: 0 0 20px 2px rgba(185, 200, 222, 0.08); }
 }
-
-.surface-glow {
-  animation: surface-glow 3s ease-in-out infinite;
-}
+.surface-glow { animation: surface-glow 3s ease-in-out infinite; }
 
 /* Fade in up */
 @keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+.fade-in-up { animation: fade-in-up 0.45s var(--ease-liquid) forwards; }
 
-.fade-in-up {
-  animation: fade-in-up 0.45s var(--ease-liquid) forwards;
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
+.fade-in { animation: fade-in 0.3s var(--ease-liquid) forwards; }
 
 /* Typing dots */
 @keyframes typing-dot {
-  0%, 60%, 100% {
-    opacity: 0.25;
-    transform: scale(0.8);
-  }
-  30% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0%, 60%, 100% { opacity: 0.25; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1); }
 }
 
-/* Icon logo spin for branding */
+/* Logo breathe */
 @keyframes logo-breathe {
-  0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(185, 200, 222, 0.2));
-  }
-  50% {
-    filter: drop-shadow(0 0 16px rgba(185, 200, 222, 0.4));
-  }
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.2)); }
+  50% { filter: drop-shadow(0 0 16px rgba(124, 58, 237, 0.4)); }
+}
+.logo-breathe { animation: logo-breathe 4s ease-in-out infinite; }
+
+/* Skeleton pulse */
+@keyframes skeleton-pulse {
+  0% { opacity: 0.04; }
+  50% { opacity: 0.08; }
+  100% { opacity: 0.04; }
+}
+.skeleton-pulse {
+  background: rgba(255, 255, 255, 0.06);
+  animation: skeleton-pulse 2s ease-in-out infinite;
+  border-radius: var(--radius-md);
 }
 
-.logo-breathe {
-  animation: logo-breathe 4s ease-in-out infinite;
+/* Slide in from right */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
 }
+.slide-in-right { animation: slide-in-right 0.35s var(--ease-liquid) forwards; }
+
+/* Scale in */
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.scale-in { animation: scale-in 0.25s var(--ease-liquid) forwards; }
