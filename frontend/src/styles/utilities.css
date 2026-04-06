@@ -1,5 +1,9 @@
+/* ─── Liquid Glass Editorial — Utilities ────────────────────────────── */
+
+/* Prose Content */
 .prose-content {
-  line-height: 1.6;
+  line-height: 1.7;
+  color: var(--text-secondary);
 }
 
 .prose-content > *:first-child {
@@ -13,46 +17,57 @@
 .prose-content pre {
   max-width: 100%;
   overflow-x: auto;
+  background: var(--surface-lowest);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  border: 1px solid var(--border-ghost);
 }
 
 .prose-content code {
   word-break: break-word;
+  color: var(--accent-secondary);
 }
 
-/* Keep light mode readable where legacy components still rely on white utility classes. */
-:root:not(.dark) .text-white {
-  color: var(--text-primary) !important;
+.prose-content p + p {
+  margin-top: 0.75rem;
 }
 
-:root:not(.dark) .text-white\/80,
-:root:not(.dark) .text-white\/70,
-:root:not(.dark) .text-white\/60 {
-  color: var(--text-muted) !important;
+.prose-content h1,
+.prose-content h2,
+.prose-content h3 {
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
-:root:not(.dark) .text-white\/50,
-:root:not(.dark) .text-white\/40,
-:root:not(.dark) .text-white\/30 {
-  color: var(--text-subtle) !important;
+.prose-content ul,
+.prose-content ol {
+  padding-left: 1.25rem;
 }
 
-:root:not(.dark) .bg-white\/5 {
-  background-color: rgba(15, 24, 40, 0.04) !important;
+.prose-content li + li {
+  margin-top: 0.25rem;
 }
 
-:root:not(.dark) .bg-white\/10 {
-  background-color: rgba(15, 24, 40, 0.08) !important;
+.prose-content a {
+  color: var(--accent-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-:root:not(.dark) .border-white\/10,
-:root:not(.dark) .border-white\/15,
-:root:not(.dark) .border-white\/20 {
-  border-color: var(--border) !important;
+.prose-content blockquote {
+  border-left: 2px solid var(--border-subtle);
+  padding-left: 1rem;
+  color: var(--text-muted);
+  margin: 1rem 0;
 }
+
+/* ─── Scrollbar — atmospheric style ─────────────────────────────────── */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -60,10 +75,83 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 999px;
+  background: var(--border-subtle);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-strong);
+  background: var(--border-visible);
+}
+
+/* ─── Focus ring (glass-compliant) ──────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid rgba(185, 200, 222, 0.3);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Glass Button base ─────────────────────────────────────────────── */
+
+.btn-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px) var(--glass-saturate);
+  border: 1px solid var(--border-ghost);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-liquid);
+  box-shadow: inset 0 0.5px 0 0 var(--glass-inner-glow);
+}
+
+.btn-glass:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.btn-glass:active {
+  background: var(--glass-bg-active);
+  transform: scale(0.98);
+}
+
+/* Primary action button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--surface-base);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--duration-fast) var(--ease-liquid);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: scale(0.98) translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }

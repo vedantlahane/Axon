@@ -1,45 +1,99 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+/* ─── Liquid Glass — Stitch Design Tokens ─────────────────────────── */
 
 :root {
-  color-scheme: light;
-  --font-sans: 'Space Grotesk', 'Segoe UI', 'Helvetica Neue', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Menlo, Consolas, monospace;
-
-  --bg-base: #f4f7fb;
-  --bg-panel: #ffffff;
-  --bg-soft: #eef3fb;
-  --bg-glass: rgba(12, 26, 50, 0.05);
-
-  --border: #d6dfeb;
-  --border-strong: #bac8dd;
-
-  --text-primary: #101a2d;
-  --text-secondary: #26344c;
-  --text-muted: #4f5e78;
-  --text-subtle: #7a879f;
-
-  --accent: #1363ff;
-  --accent-strong: #0a47b5;
-  --accent-soft: rgba(19, 99, 255, 0.14);
-}
-
-.dark {
   color-scheme: dark;
 
-  --bg-base: #060b14;
-  --bg-panel: #0f1828;
-  --bg-soft: rgba(255, 255, 255, 0.06);
-  --bg-glass: rgba(255, 255, 255, 0.08);
+  /* Typography — Stitch specifies Inter across headline, body, label */
+  --font-sans: 'Inter', 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
-  --border: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.24);
+  /* ── Surface Hierarchy (Material 3 extended palette from Stitch) ── */
+  --surface: #0b1326;
+  --surface-dim: #0b1326;
+  --surface-container-lowest: #060e20;
+  --surface-container-low: #131b2e;
+  --surface-container: #171f33;
+  --surface-container-high: #222a3d;
+  --surface-container-highest: #2d3449;
+  --surface-bright: #31394d;
+  --surface-variant: #2d3449;
+  --background: #0b1326;
 
-  --text-primary: #e8eef9;
-  --text-secondary: #cad6eb;
-  --text-muted: rgba(232, 238, 249, 0.78);
-  --text-subtle: rgba(232, 238, 249, 0.52);
+  /* Body — Stitch uses #08080C as actual body bg */
+  --body-bg: #08080C;
 
-  --accent: #63a0ff;
-  --accent-strong: #2d74ff;
-  --accent-soft: rgba(99, 160, 255, 0.2);
+  /* ── On-Surface / Text ───────────────────────────────────────────── */
+  --on-surface: #dae2fd;
+  --on-surface-variant: #c4c7c9;
+  --on-background: #dae2fd;
+  --text-primary: #dae2fd;
+  --text-secondary: #c4c7c9;
+  --text-muted: rgba(148, 163, 184, 0.6);
+  --text-subtle: rgba(148, 163, 184, 0.4);
+
+  /* ── Primary / Accent ────────────────────────────────────────────── */
+  --primary: #ffffff;
+  --primary-container: #e0e3e5;
+  --on-primary: #2d3133;
+  --on-primary-container: #626567;
+
+  /* ── Secondary ───────────────────────────────────────────────────── */
+  --secondary: #b9c8de;
+  --secondary-container: #39485a;
+  --on-secondary: #233143;
+  --on-secondary-container: #a7b6cc;
+
+  /* ── Violet Accent (the signature Stitch glow) ───────────────────── */
+  --violet: #7C3AED;
+  --violet-glow: rgba(124, 58, 237, 0.3);
+  --violet-soft: rgba(124, 58, 237, 0.1);
+
+  /* ── Outline / Border ────────────────────────────────────────────── */
+  --outline: #8e9193;
+  --outline-variant: #444749;
+
+  /* ── Semantic ────────────────────────────────────────────────────── */
+  --error: #ffb4ab;
+  --error-container: #93000a;
+  --on-error: #690005;
+  --on-error-container: #ffdad6;
+
+  /* ── Liquid Glass Surface ────────────────────────────────────────── */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-hover: rgba(255, 255, 255, 0.10);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-strong: rgba(255, 255, 255, 0.10);
+  --glass-inner-glow: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(24px) saturate(180%);
+
+  /* ── Radii (Stitch M3 tokens) ────────────────────────────────────── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+
+  /* ── Elevation ───────────────────────────────────────────────────── */
+  --shadow-ambient: 0px 20px 40px rgba(0, 0, 0, 0.4);
+
+  /* ── Legacy compatibility aliases ────────────────────────────────── */
+  --bg-base: var(--body-bg);
+  --bg-panel: var(--surface-container);
+  --bg-soft: var(--surface-container-high);
+  --bg-glass: var(--glass-bg);
+  --border: var(--glass-border);
+  --border-strong: var(--glass-border-strong);
+  --accent: var(--primary);
+  --accent-soft: rgba(185, 200, 222, 0.12);
+  --accent-strong: #a0b4d0;
+  --border-ghost: var(--glass-border);
+  --border-subtle: var(--glass-border-strong);
+  --border-visible: rgba(142, 145, 147, 0.20);
+
+  /* ease */
+  --ease-liquid: cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -22,7 +22,6 @@ interface InputSectionProps {
   onToggleSideWindow: () => void;
   isSideWindowOpen: boolean;
   canUseDatabaseTools: boolean;
-  // Model selection
   availableModels?: LLMModel[];
   currentModel?: string;
   onModelChange?: (modelId: string) => void;
@@ -55,20 +54,15 @@ const InputSection: React.FC<InputSectionProps> = ({
   const [files, setFiles] = useState<FileTile[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
-  const [showModelSelector, setShowModelSelector] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const modelSelectorRef = useRef<HTMLDivElement | null>(null);
   const previewsRef = useRef(new Map<string, string>());
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const revokePreview = useCallback((id: string) => {
     const url = previewsRef.current.get(id);
-    if (url) {
-      URL.revokeObjectURL(url);
-      previewsRef.current.delete(id);
-    }
+    if (url) { URL.revokeObjectURL(url); previewsRef.current.delete(id); }
   }, []);
 
   useEffect(() => {
@@ -76,656 +70,203 @@ const InputSection: React.FC<InputSectionProps> = ({
     return () => {
       previews.forEach((url) => URL.revokeObjectURL(url));
       previews.clear();
-      if (recognitionRef.current) {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.onend = null;
-        recognitionRef.current.onerror = null;
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
-      }
+      if (recognitionRef.current) { recognitionRef.current.onresult = null; recognitionRef.current.onend = null; recognitionRef.current.onerror = null; recognitionRef.current.stop(); recognitionRef.current = null; }
     };
   }, []);
 
-  // When switching to history mode, clear files only (message already disabled via textarea)
-  useEffect(() => {
-    const element = messageInputRef.current;
-    if (!element) {
-      return;
-    }
-    element.style.height = 'auto';
-    const maxHeight = 200;
-    element.style.height = `${Math.min(element.scrollHeight, maxHeight)}px`;
-  }, [message]);
+  useEffect(() => { const el = messageInputRef.current; if (!el) return; el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 200)}px`; }, [message]);
 
   useEffect(() => {
-    if (!isHistoryActive || files.length === 0) {
-      return;
-    }
-    files.forEach((tile) => {
-      revokePreview(tile.id);
-      if (tile.document) {
-        void deleteDocument(tile.document.id);
-      }
-    });
+    if (!isHistoryActive || files.length === 0) return;
+    files.forEach((tile) => { revokePreview(tile.id); if (tile.document) void deleteDocument(tile.document.id); });
     setFiles([]);
   }, [files, isHistoryActive, revokePreview]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
+    if (typeof window === 'undefined') return;
     const speechWindow = window as unknown as SpeechRecognitionWindow;
-    const SpeechRecognitionConstructor =
-      speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
-
-    if (!SpeechRecognitionConstructor) {
-      setIsSpeechSupported(false);
-      return;
-    }
-
-    const recognition = new SpeechRecognitionConstructor();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      setIsRecording(true);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognition.onerror = (event: Event) => {
-      setIsRecording(false);
-      console.warn('Speech recognition error:', (event as unknown as { error?: string }).error);
-    };
-
+    const Ctor = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    if (!Ctor) { setIsSpeechSupported(false); return; }
+    const recognition = new Ctor();
+    recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = true; recognition.maxAlternatives = 1;
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onend = () => setIsRecording(false);
+    recognition.onerror = () => setIsRecording(false);
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcripts: string[] = [];
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        const transcript = result[0]?.transcript ?? '';
-        if (transcript) {
-          transcripts.push(transcript);
-        }
-      }
-      if (transcripts.length > 0) {
-        setMessage((prev) => `${prev} ${transcripts.join(' ')}`.trim());
-      }
+      for (let i = event.resultIndex; i < event.results.length; i++) { const t = event.results[i][0]?.transcript ?? ''; if (t) transcripts.push(t); }
+      if (transcripts.length > 0) setMessage((prev) => `${prev} ${transcripts.join(' ')}`.trim());
     };
-
     recognitionRef.current = recognition;
     setIsSpeechSupported(true);
   }, []);
 
-  // Click outside handler for model selector
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        modelSelectorRef.current &&
-        !modelSelectorRef.current.contains(event.target as Node)
-      ) {
-        setShowModelSelector(false);
-      }
-    };
-
-    if (showModelSelector) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showModelSelector]);
-
-  const uploadedFileIds = useMemo(
-    () => files.filter((tile) => tile.status === 'uploaded' && tile.document).map((tile) => tile.document!.id),
-    [files],
-  );
+  const uploadedFileIds = useMemo(() => files.filter((t) => t.status === 'uploaded' && t.document).map((t) => t.document!.id), [files]);
 
   const handleSend = async () => {
     const trimmed = message.trim();
-    if (!trimmed) return;
-    if (isSending) return;
-    if (files.some((tile) => tile.status === 'uploading')) return;
-    if (!isAuthenticated) {
-      onRequireAuth('signin');
-      return;
-    }
-
+    if (!trimmed || isSending) return;
+    if (files.some((t) => t.status === 'uploading')) return;
+    if (!isAuthenticated) { onRequireAuth('signin'); return; }
     const currentFiles = [...files];
-    setMessage('');
-    setSendError(null);
+    setMessage(''); setSendError(null);
     try {
       const result = onSend(trimmed, { documentIds: uploadedFileIds });
-      // Handle both Promise and void returns
-      if (result instanceof Promise) {
-        await result;
-      }
+      if (result instanceof Promise) await result;
     } catch (error) {
-      console.error('Failed to send message', error);
       setMessage(trimmed);
-      setSendError(error instanceof Error ? error.message : 'Failed to send message. Please try again.');
+      setSendError(error instanceof Error ? error.message : 'Failed to send.');
       setTimeout(() => setSendError(null), 5000);
       return;
-    } finally {
-      currentFiles.forEach((tile) => revokePreview(tile.id));
-      setFiles([]);
-    }
+    } finally { currentFiles.forEach((t) => revokePreview(t.id)); setFiles([]); }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
-    if (!selectedFiles.length) {
-      // User cancelled the file picker — do nothing
-      event.target.value = '';
-      return;
-    }
-
-    if (!isAuthenticated) {
-      event.target.value = '';
-      onRequireAuth('signup');
-      return;
-    }
-
-    // Validate file count (max 10 files per message)
-    const totalFiles = files.length + selectedFiles.length;
-    if (totalFiles > 10) {
-      setSendError('You can attach up to 10 files per message.');
-      setTimeout(() => setSendError(null), 4000);
-      event.target.value = '';
-      return;
-    }
-
+    if (!selectedFiles.length) { event.target.value = ''; return; }
+    if (!isAuthenticated) { event.target.value = ''; onRequireAuth('signup'); return; }
+    if (files.length + selectedFiles.length > 10) { setSendError('Max 10 files.'); setTimeout(() => setSendError(null), 4000); event.target.value = ''; return; }
     selectedFiles.forEach((file, index) => {
       const id = `${file.name}-${Date.now()}-${index}`;
       let preview: string | undefined;
-      if (file.type.startsWith('image/')) {
-        preview = URL.createObjectURL(file);
-        previewsRef.current.set(id, preview);
-      }
-
-      const newTile: FileTile = {
-        id,
-        file,
-        preview,
-        status: 'uploading',
-      };
-
-      setFiles((prev) => [...prev, newTile]);
-
+      if (file.type.startsWith('image/')) { preview = URL.createObjectURL(file); previewsRef.current.set(id, preview); }
+      setFiles((prev) => [...prev, { id, file, preview, status: 'uploading' }]);
       uploadDocument(file)
-        .then((document) => {
-          setFiles((prev) =>
-            prev.map((tile) =>
-              tile.id === id
-                ? {
-                    ...tile,
-                    status: 'uploaded',
-                    document,
-                  }
-                : tile,
-            ),
-          );
-        })
-        .catch((error) => {
-          console.error('Failed to upload document', error);
-          setFiles((prev) =>
-            prev.map((tile) =>
-              tile.id === id
-                ? {
-                    ...tile,
-                    status: 'error',
-                    error: 'Upload failed. Remove or retry.',
-                  }
-                : tile,
-            ),
-          );
-        });
+        .then((document) => setFiles((prev) => prev.map((t) => t.id === id ? { ...t, status: 'uploaded', document } : t)))
+        .catch(() => setFiles((prev) => prev.map((t) => t.id === id ? { ...t, status: 'error', error: 'Upload failed' } : t)));
     });
-
     event.target.value = '';
   };
 
-  const removeFile = (id: string) => {
-    const tile = files.find((entry) => entry.id === id);
-    revokePreview(id);
-    setFiles((prev) => prev.filter((entry) => entry.id !== id));
-
-    if (tile?.document) {
-      void deleteDocument(tile.document.id);
-    }
-  };
+  const removeFile = (id: string) => { const tile = files.find((e) => e.id === id); revokePreview(id); setFiles((prev) => prev.filter((e) => e.id !== id)); if (tile?.document) void deleteDocument(tile.document.id); };
 
   const handleVoiceCapture = () => {
-    if (!isSpeechSupported || isHistoryActive || isSending || !isAuthenticated) {
-      return;
-    }
-
-    const recognition = recognitionRef.current;
-    if (!recognition) {
-      return;
-    }
-
-    if (isRecording) {
-      recognition.stop();
-    } else {
-      try {
-        recognition.start();
-      } catch (error) {
-        console.error('Speech recognition error', error);
-      }
-    }
+    if (!isSpeechSupported || isHistoryActive || isSending || !isAuthenticated) return;
+    const r = recognitionRef.current; if (!r) return;
+    if (isRecording) r.stop(); else { try { r.start(); } catch (e) { console.error('Speech error', e); } }
   };
 
-  const handleUploadTrigger = () => {
-    if (isHistoryActive) return;
-    if (!isAuthenticated) {
-      onRequireAuth('signup');
-      return;
-    }
-    fileInputRef.current?.click();
-  };
-
-  const handleDatabaseConfig = () => {
-    if (isHistoryActive) return;
-    if (!isAuthenticated) {
-      onRequireAuth('signin');
-      return;
-    }
-    onOpenDatabaseSettings();
-  };
-
-  const handleSideWindowToggle = () => {
-    if (isHistoryActive) return;
-    if (!isAuthenticated) {
-      onRequireAuth('signin');
-      return;
-    }
-    if (!canUseDatabaseTools) {
-      onOpenDatabaseSettings();
-      return;
-    }
-    onToggleSideWindow();
-  };
-
-  const hasUploadingFiles = files.some((tile) => tile.status === 'uploading');
+  const hasUploadingFiles = files.some((t) => t.status === 'uploading');
   const canSend = message.trim().length > 0;
-  const voiceButtonDisabled = isHistoryActive || isSending || !isSpeechSupported || !isAuthenticated;
-  const isSendDisabled =
-    isHistoryActive || isSending || hasUploadingFiles || !canSend || !isAuthenticated;
-  const uploadButtonDisabled = isHistoryActive || isSending;
-  const databaseButtonDisabled = isHistoryActive || isSending;
-  const sideWindowDisabled = databaseButtonDisabled;
-  const sideWindowButtonLabel = isSideWindowOpen ? 'Hide window' : 'Side window';
-  const sideWindowAriaLabel = isSideWindowOpen ? 'Hide SQL side window' : 'Open SQL side window';
-  const modelButtonLabel = isAuthenticated ? 'Change AI model' : 'Sign in to choose AI model';
+  const isSendDisabled = isHistoryActive || isSending || hasUploadingFiles || !canSend || !isAuthenticated;
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (!isSendDisabled) {
-        void handleSend();
-      }
-    }
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!isSendDisabled) void handleSend(); }
   };
+
+  const currentModelName = availableModels.find((m) => m.id === currentModel)?.name?.split(' ')[0] || 'Gemini';
 
   return (
-    <footer className="sticky bottom-0 z-30 flex flex-col items-center justify-center px-4 pb-4 pt-3 backdrop-blur-xl md:px-6">
-      <AnimatePresence>
-        {sendError && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="mb-2 flex w-full max-w-3xl items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-950/60 px-3 py-2 text-xs text-rose-300"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="15" y1="9" x2="9" y2="15" />
-              <line x1="9" y1="9" x2="15" y2="15" />
-            </svg>
-            <span className="flex-1">{sendError}</span>
-            <button type="button" onClick={() => setSendError(null)} className="opacity-60 hover:opacity-100">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div className="w-full max-w-3xl">
+    <>
+      {/* ── Fixed Bottom Shell — Stitch Monolith Input ─────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 w-full z-50 px-4 flex flex-col items-center">
+        {/* Error */}
         <AnimatePresence>
-          {files.length > 0 && (
-            <motion.div
-              className="mb-4 flex gap-3 overflow-x-auto pb-2"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {files.map((tile) => {
-                const { id, file, preview, status, error } = tile;
-                const statusLabel =
-                  status === 'uploading'
-                    ? 'Uploading…'
-                    : status === 'uploaded'
-                      ? 'Ready'
-                      : error ?? 'Upload failed';
-                const statusClass =
-                  status === 'error'
-                    ? 'text-red-600 dark:text-red-400'
-                    : status === 'uploading'
-                      ? 'text-amber-600 dark:text-amber-300'
-                      : 'text-blue-600 dark:text-blue-300';
-
-                return (
-                  <motion.div
-                  key={id}
-                  className="group relative min-w-[160px] max-w-[180px] overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <div className="relative mb-2 h-20 w-full overflow-hidden rounded-lg bg-white/5">
-                    {preview ? (
-                      <img src={preview} alt={file.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-[var(--text-subtle)] dark:text-white/50">
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-                          <polyline points="13 2 13 9 20 9" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-[var(--text-primary)] dark:text-white" title={file.name}>
-                        {file.name}
-                      </p>
-                      <p className="text-[10px] text-[var(--text-subtle)] dark:text-white/50">{formatFileSize(file.size)}</p>
-                      <p className={`text-[10px] ${statusClass}`}>{statusLabel}</p>
-                    </div>
-                    <motion.button
-                      type="button"
-                      className="rounded-md bg-white/10 p-1 text-[var(--text-muted)] hover:bg-white/20 hover:text-[var(--text-primary)] dark:text-white/70 dark:hover:text-white"
-                      onClick={() => removeFile(id)}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </motion.button>
-                  </div>
-                  </motion.div>
-                );
-              })}
+          {sendError && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="mb-3 flex w-full max-w-[780px] items-center gap-2 rounded-xl px-4 py-2 text-xs" style={{ background: 'rgba(255,180,171,0.1)', color: 'var(--error)', border: '1px solid rgba(255,180,171,0.15)' }}>
+              <span className="material-symbols-outlined text-sm">error</span>
+              <span className="flex-1">{sendError}</span>
+              <button type="button" onClick={() => setSendError(null)} style={{ opacity: 0.6 }}><span className="material-symbols-outlined text-sm">close</span></button>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="flex items-center gap-2.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)]/85 px-3 py-2.5 shadow-[0_18px_35px_-26px_rgba(14,40,90,0.55)] backdrop-blur-sm">
-          <motion.button
-            type="button"
-            className={`grid h-9 w-9 place-items-center rounded-lg transition ${
-              isRecording
-                ? 'bg-red-500/20 text-red-600 dark:text-red-400'
-                : voiceButtonDisabled
-                  ? 'bg-[var(--bg-soft)] text-[var(--text-subtle)]'
-                  : 'bg-[var(--bg-soft)] text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]'
-            }`}
-            aria-label="Voice input"
-            whileHover={voiceButtonDisabled ? {} : { scale: 1.05 }}
-            whileTap={voiceButtonDisabled ? {} : { scale: 0.95 }}
-            onClick={handleVoiceCapture}
-            animate={isRecording ? { scale: [1, 1.1, 1] } : {}}
-            transition={isRecording ? { duration: 1, repeat: Infinity } : {}}
-            disabled={voiceButtonDisabled}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
-            </svg>
-          </motion.button>
-
-          <motion.button
-            type="button"
-            className={`grid h-9 w-9 place-items-center rounded-lg transition ${
-              uploadButtonDisabled
-                ? 'bg-[var(--bg-soft)] text-[var(--text-subtle)]'
-                : 'bg-[var(--bg-soft)] text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]'
-            }`}
-            aria-label="Attach files"
-            title="Attach PDF files"
-            whileHover={uploadButtonDisabled ? {} : { scale: 1.05 }}
-            whileTap={uploadButtonDisabled ? {} : { scale: 0.95 }}
-            onClick={handleUploadTrigger}
-            disabled={uploadButtonDisabled}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-            </svg>
-          </motion.button>
-
-          <input ref={fileInputRef} type="file" multiple accept=".pdf,application/pdf" onChange={handleFileUpload} className="sr-only" />
-
-          <textarea
-            ref={messageInputRef}
-            rows={1}
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder={
-              isHistoryActive
-                ? 'History view is read-only. Return to Chat to send messages.'
-                : isSending
-                  ? 'Sending…'
-                  : hasUploadingFiles
-                    ? 'Waiting for files to upload…'
-                    : isAuthenticated
-                      ? 'Ask Axon about your data, docs, or SQL...'
-                      : 'Sign in to start chatting'
-            }
-            className="flex-1 resize-none bg-transparent py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-            onKeyDown={handleKeyDown}
-            disabled={isHistoryActive || !isAuthenticated}
-            aria-label="Chat message"
-          />
-
-          <motion.button
-            type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-muted)] transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
-            aria-label="Configure database connection"
-            title={databaseSummary}
-            whileHover={databaseButtonDisabled ? {} : { scale: 1.03 }}
-            whileTap={databaseButtonDisabled ? {} : { scale: 0.97 }}
-            onClick={handleDatabaseConfig}
-            disabled={databaseButtonDisabled}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <ellipse cx="12" cy="5" rx="8" ry="3" />
-              <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
-              <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
-            </svg>
-          </motion.button>
-
-          {/* Model Selector */}
-          <div className="relative" ref={modelSelectorRef}>
-            <motion.button
-              type="button"
-              className={`flex h-9 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-2.5 text-xs text-[var(--text-muted)] transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)] ${isModelSwitching ? 'opacity-50' : ''}`}
-              aria-label="Select AI model"
-              title={modelButtonLabel}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                if (!isAuthenticated) {
-                  onRequireAuth('signin');
-                  return;
-                }
-                if (availableModels.length === 0) {
-                  return;
-                }
-                setShowModelSelector(!showModelSelector);
-              }}
-              disabled={isModelSwitching}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" />
-                <path d="M16 14v1a4 4 0 0 1-8 0v-1" />
-                <circle cx="12" cy="19" r="2" />
-                <path d="M12 17v-3" />
-              </svg>
-              <span className="hidden sm:inline max-w-[80px] truncate">
-                {availableModels.find((m) => m.id === currentModel)?.name?.split(' ')[0] || 'Model'}
-              </span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </motion.button>
-
-            <AnimatePresence>
-              {showModelSelector && (
-                <motion.div
-                  className="absolute bottom-full left-0 z-50 mb-2 min-w-[180px] rounded-xl border border-[var(--border)] bg-[var(--bg-panel)] p-2 text-[var(--text-primary)] shadow-xl"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <div className="mb-1 px-2 py-1 text-[10px] uppercase tracking-wider text-[var(--text-subtle)]">
-                    AI Model
+        {/* File tiles */}
+        <AnimatePresence>
+          {files.length > 0 && (
+            <motion.div className="mb-3 flex gap-2 overflow-x-auto w-full max-w-[780px]" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+              {files.map((tile) => (
+                <div key={tile.id} className="liquid-glass rounded-xl p-3 min-w-[140px] max-w-[160px] flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <p className="truncate text-xs font-medium text-white" title={tile.file.name}>{tile.file.name}</p>
+                    <button type="button" className="text-slate-500 hover:text-white transition-colors" onClick={() => removeFile(tile.id)}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span></button>
                   </div>
-                  {availableModels.map((model) => (
-                    <button
-                      key={model.id}
-                      type="button"
-                      className={`w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition ${
-                        currentModel === model.id
-                          ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-                          : model.available
-                            ? 'text-[var(--text-muted)] hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]'
-                            : 'cursor-not-allowed text-[var(--text-subtle)]'
-                      }`}
-                      onClick={() => {
-                        if (model.available && onModelChange) {
-                          onModelChange(model.id);
-                          setShowModelSelector(false);
-                        }
-                      }}
-                      disabled={!model.available || isModelSwitching}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span>{model.name}</span>
-                        {model.isDefault && (
-                          <span className="rounded bg-[var(--bg-soft)] px-1 py-0.5 text-[9px] uppercase text-[var(--text-subtle)]">
-                            Default
-                          </span>
-                        )}
-                      </span>
-                      {currentModel === model.id && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                      {!model.available && (
-                        <span className="text-[9px] text-[var(--text-subtle)]">Unavailable</span>
-                      )}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  <span className="text-[10px]" style={{ color: tile.status === 'error' ? 'var(--error)' : tile.status === 'uploading' ? '#fbbf24' : '#4ade80' }}>
+                    {tile.status === 'uploading' ? 'Uploading…' : tile.status === 'uploaded' ? `Ready · ${formatFileSize(tile.file.size)}` : tile.error ?? 'Failed'}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <motion.button
-            type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-muted)] transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
-            aria-label={sideWindowAriaLabel}
-            title={sideWindowButtonLabel}
-            whileHover={sideWindowDisabled ? {} : { scale: 1.03 }}
-            whileTap={sideWindowDisabled ? {} : { scale: 0.97 }}
-            onClick={handleSideWindowToggle}
-            disabled={sideWindowDisabled}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        {/* ── The Monolith — light-leak + liquid-glass input ─────── */}
+        <div className="w-full max-w-[780px] mb-4 relative group">
+          {/* Light Leak Top Edge */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[1px] opacity-50 z-10" style={{ background: 'linear-gradient(90deg, transparent, #7C3AED, transparent)' }} />
+
+          <div className="liquid-glass rounded-2xl p-2 flex items-end gap-2 shadow-2xl">
+            {/* Add / Attach */}
+            <button
+              type="button"
+              className="p-3 transition-colors flex items-center justify-center"
+              style={{ color: 'rgb(100,116,139)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#e2e8f0')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgb(100,116,139)')}
+              onClick={() => { if (!isAuthenticated) { onRequireAuth('signup'); return; } fileInputRef.current?.click(); }}
+              disabled={isHistoryActive || isSending}
             >
-              <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
-              <path d="M9 4v16" />
-              <path d="M7 8h6M7 12h6M7 16h6" />
-            </svg>
-          </motion.button>
+              <span className="material-symbols-outlined">add</span>
+            </button>
 
-          <motion.button
-            type="button"
-            className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--accent)] text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={isSendDisabled}
-            whileHover={isSendDisabled ? {} : { scale: 1.05 }}
-            whileTap={isSendDisabled ? {} : { scale: 0.95 }}
-            onClick={() => void handleSend()}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-            </svg>
-          </motion.button>
+            <input ref={fileInputRef} type="file" multiple accept=".pdf,application/pdf" onChange={handleFileUpload} className="sr-only" />
+
+            {/* Textarea */}
+            <textarea
+              ref={messageInputRef}
+              rows={1}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={isHistoryActive ? 'Library view is read-only.' : isSending ? 'Thinking…' : hasUploadingFiles ? 'Uploading files…' : isAuthenticated ? 'Message axon ai...' : 'Sign in to start'}
+              className="flex-grow resize-none py-3 px-1 text-lg focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ background: 'transparent', color: 'var(--on-surface)', border: 'none', caretColor: '#a78bfa' }}
+              onKeyDown={handleKeyDown}
+              disabled={isHistoryActive || !isAuthenticated}
+              aria-label="Chat message"
+            />
+
+            {/* Send */}
+            <button
+              type="button"
+              className="p-3 rounded-xl flex items-center justify-center transition-all active:scale-95"
+              style={{
+                background: isSendDisabled ? 'rgba(255,255,255,0.05)' : 'var(--primary-container)',
+                color: isSendDisabled ? 'rgb(100,116,139)' : 'white',
+                boxShadow: isSendDisabled ? 'none' : '0 0 15px var(--violet-glow)',
+                cursor: isSendDisabled ? 'not-allowed' : 'pointer',
+                opacity: isSendDisabled ? 0.5 : 1,
+              }}
+              disabled={isSendDisabled}
+              onClick={() => void handleSend()}
+            >
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'wght' 600" }}>arrow_upward</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Metadata Row — Stitch pattern ─────────────────────── */}
+        <div className="mb-8 flex items-center gap-6 font-mono text-[11px] tracking-wider" style={{ opacity: 0.4, color: 'rgb(148,163,184)' }}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[8px]" style={{ color: 'var(--primary-container)' }}>●</span>
+            <span>Model: {currentModelName}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>attach_file</span>
+            <span>{files.length} document{files.length !== 1 ? 's' : ''}</span>
+          </div>
+          {canUseDatabaseTools && (
+            <button type="button" className="flex items-center gap-1.5 transition-opacity hover:opacity-100" onClick={onToggleSideWindow}>
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>database</span>
+              <span>{isSideWindowOpen ? 'Hide SQL' : 'SQL Panel'}</span>
+            </button>
+          )}
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.5 rounded text-[9px]" style={{ border: '1px solid rgba(255,255,255,0.2)' }}>⌘K</span>
+            <span>for commands</span>
+          </div>
         </div>
       </div>
-    </footer>
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { ChatMessage, ConversationSummary } from '../../types/chat';
 import type { SqlQueryResult, FeedbackType } from '../../services/chatApi';
 import { submitMessageFeedback, deleteMessageFeedback } from '../../services/chatApi';
@@ -18,61 +18,35 @@ interface ChatDisplayProps {
   isChatLoading: boolean;
   onViewSqlInCanvas?: (sql: string) => void;
   isAuthenticated?: boolean;
-  executedQueries?: Map<string, SqlQueryResult>; // sql -> result
+  executedQueries?: Map<string, SqlQueryResult>;
   onSuggestionClick?: (text: string) => void;
 }
 
-// Detect sources used in a message based on content patterns
 const detectSources = (content: string): string[] => {
   const sources: string[] = [];
-  
-  // Check for tavily/web search usage
-  if (content.includes('tavily_search') || 
-      content.includes('searched the web') || 
-      content.includes('search results') ||
-      content.includes('According to') ||
-      content.includes('Based on the search')) {
-    sources.push('Web Search');
-  }
-  
-  // Check for PDF/document usage
-  if (content.includes('Document excerpts') || 
-      content.includes('search_pdf') ||
-      content.includes('uploaded document') ||
-      content.includes('PDF')) {
-    sources.push('Uploaded Documents');
-  }
-  
-  // Check for database/SQL usage
-  if (content.includes('database schema') || 
-      content.includes('```sql') ||
-      content.includes('get_database_schema')) {
-    sources.push('Database');
-  }
-  
+  if (content.includes('tavily_search') || content.includes('searched the web') || content.includes('search results') || content.includes('According to')) sources.push('Web Search');
+  if (content.includes('Document excerpts') || content.includes('search_pdf') || content.includes('uploaded document') || content.includes('PDF')) sources.push('Uploaded Documents');
+  if (content.includes('database schema') || content.includes('```sql') || content.includes('get_database_schema')) sources.push('Database');
   return sources;
 };
 
 const suggestions = [
-  'Summarize the latest uploaded document in 5 bullets.',
-  'Write a SQL query to find the top 10 customers by revenue.',
-  'Explain this schema and highlight missing foreign keys.',
-  'Compare this month versus last month trend in plain language.',
-  'Generate a concise action plan from this conversation.'
+  { icon: 'terminal', text: 'Optimize a SQL query' },
+  { icon: 'description', text: 'Analyze a document' },
+  { icon: 'database', text: 'Explore database schema' },
+  { icon: 'code', text: 'Write a Python function' },
 ];
 
 const formatDisplayTime = (timestamp: string) => {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
 };
 
 const formatHistoryTimestamp = (timestamp: string) => {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return timestamp;
-  const day = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `${day} ${time}`;
+  return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 };
 
 const formatAttachmentSize = (size: number) => {
@@ -102,700 +76,344 @@ const ChatDisplay: React.FC<ChatDisplayProps> = ({
   const [messageFeedback, setMessageFeedback] = useState<Map<string, FeedbackType>>(new Map());
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
 
-  // Handle copy with feedback
   const handleCopy = async (messageId: string, content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopiedMessageId(messageId);
-      setTimeout(() => setCopiedMessageId(null), 2000);
-    } catch {
-      // Fallback for non-HTTPS or denied permissions
-      const textarea = document.createElement('textarea');
-      textarea.value = content;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        setCopiedMessageId(messageId);
-        setTimeout(() => setCopiedMessageId(null), 2000);
-      } catch {
-        console.error('Copy failed: clipboard access denied');
-      }
-      document.body.removeChild(textarea);
-    }
+    try { await navigator.clipboard.writeText(content); setCopiedMessageId(messageId); setTimeout(() => setCopiedMessageId(null), 2000); }
+    catch { const ta = document.createElement('textarea'); ta.value = content; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); setCopiedMessageId(messageId); setTimeout(() => setCopiedMessageId(null), 2000); } catch { /* noop */ } document.body.removeChild(ta); }
   };
 
-  // Handle message feedback
   const handleFeedback = useCallback(async (messageId: string, type: FeedbackType) => {
     if (!isAuthenticated) return;
-    
-    const currentFeedback = messageFeedback.get(messageId);
+    const current = messageFeedback.get(messageId);
     setFeedbackLoading(messageId);
-    
     try {
-      if (currentFeedback === type) {
-        // Remove feedback if clicking same type
-        await deleteMessageFeedback(messageId);
-        setMessageFeedback((prev) => {
-          const next = new Map(prev);
-          next.delete(messageId);
-          return next;
-        });
-      } else {
-        // Set new feedback
-        await submitMessageFeedback(messageId, type);
-        setMessageFeedback((prev) => new Map(prev).set(messageId, type));
-      }
-    } catch (error) {
-      console.error('Failed to submit feedback:', error);
-    } finally {
-      setFeedbackLoading(null);
-    }
+      if (current === type) { await deleteMessageFeedback(messageId); setMessageFeedback((prev) => { const next = new Map(prev); next.delete(messageId); return next; }); }
+      else { await submitMessageFeedback(messageId, type); setMessageFeedback((prev) => new Map(prev).set(messageId, type)); }
+    } catch (e) { console.error('Feedback error:', e); } finally { setFeedbackLoading(null); }
   }, [isAuthenticated, messageFeedback]);
 
-  // Helper to render SQL query results inline
   const renderSqlResults = (result: SqlQueryResult) => {
     if (result.type === 'rows' && result.columns && result.rows) {
-      const maxRows = 10; // Show max 10 rows in chat
-      const displayRows = result.rows.slice(0, maxRows);
-      const hasMore = result.rows.length > maxRows;
-
+      const displayRows = result.rows.slice(0, 10);
+      const hasMore = result.rows.length > 10;
       return (
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'var(--surface-container-lowest)' }}>
           <table className="w-full text-xs">
-            <thead className="border-b border-[var(--border)] bg-[var(--bg-soft)]">
-              <tr>
-                {result.columns.map((col, colIdx) => (
-                  <th key={colIdx} className="px-3 py-2 text-left text-[var(--text-muted)] font-mono font-medium">
-                    {col}
-                  </th>
-                ))}
+            <thead><tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.05)' }}>
+              {result.columns.map((col, i) => <th key={i} className="px-3 py-2 text-left font-mono font-medium" style={{ color: 'rgb(148,163,184)' }}>{col}</th>)}
+            </tr></thead>
+            <tbody>{displayRows.map((row, idx) => (
+              <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                {result.columns.map((_, ci) => <td key={`${idx}-${ci}`} className="px-3 py-2 font-mono truncate max-w-[200px]" style={{ color: '#cbd5e1' }}>{String(row[ci] ?? 'NULL')}</td>)}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border)]">
-              {displayRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-[var(--bg-soft)]">
-                  {result.columns.map((_, colIdx) => (
-                    <td key={`${idx}-${colIdx}`} className="px-3 py-2 text-[var(--text-secondary)] font-mono truncate max-w-[200px]">
-                      {String(row[colIdx] ?? 'NULL')}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            ))}</tbody>
           </table>
-          {hasMore && (
-            <div className="px-3 py-2 border-t border-[var(--border)] text-xs text-[var(--text-muted)] bg-[var(--bg-soft)]">
-              Showing {displayRows.length} of {result.rows.length} rows. <span className="text-[var(--text-subtle)]">View all in Canvas</span>
-            </div>
-          )}
+          {hasMore && <div className="px-3 py-2 text-xs" style={{ color: 'rgb(148,163,184)', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.05)' }}>Showing {displayRows.length} of {result.rows.length} rows</div>}
         </div>
       );
     }
-
-    // For ACK results (INSERT, UPDATE, DELETE)
-    if (result.type === 'ack') {
-      return (
-        <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3">
-          <p className="text-xs text-emerald-300">
-            ✓ {result.message} ({result.rowCount} {result.rowCount === 1 ? 'row' : 'rows'} affected)
-          </p>
-        </div>
-      );
-    }
-
-    if (result.type === 'error') {
-      return (
-        <div className="rounded-lg border border-rose-400/35 bg-rose-500/10 p-3">
-          <p className="text-xs text-rose-200">SQL error: {result.message}</p>
-        </div>
-      );
-    }
-
+    if (result.type === 'ack') return <div className="rounded-lg p-3" style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.15)' }}><p className="text-xs" style={{ color: '#4ade80' }}>✓ {result.message} ({result.rowCount} row{result.rowCount === 1 ? '' : 's'})</p></div>;
+    if (result.type === 'error') return <div className="rounded-lg p-3" style={{ background: 'rgba(255,180,171,0.1)', border: '1px solid rgba(255,180,171,0.15)' }}><p className="text-xs" style={{ color: 'var(--error)' }}>SQL error: {result.message}</p></div>;
     return null;
   };
 
-  // Rendered via MarkdownRenderer component (replaces hand-rolled parser)
-
-  // Helper to render message content with clickable SQL blocks
   const renderMessageContent = (message: ChatMessage) => {
-    // Extract ALL SQL blocks from the message
     const sqlBlockRegex = /```sql\s*([\s\S]*?)```/gi;
     const sqlMatches = [...message.content.matchAll(sqlBlockRegex)];
-
     if (sqlMatches.length > 0 && onViewSqlInCanvas) {
-      // Split content around all SQL blocks
       const parts: React.ReactNode[] = [];
       let lastIndex = 0;
-
-      sqlMatches.forEach((match, matchIdx) => {
+      sqlMatches.forEach((match, mi) => {
         const sql = match[1].trim();
         const normalizedSql = normalizeSql(sql);
         const queryResult = normalizedSql && executedQueries ? executedQueries.get(normalizedSql) : null;
-        const hasExecutedResults = !!queryResult;
-        const matchStart = match.index ?? 0;
-        const matchEnd = matchStart + match[0].length;
-
-        // Text before this SQL block
-        const beforeText = message.content.slice(lastIndex, matchStart).trim();
-        if (beforeText) {
-          parts.push(<div key={`text-${matchIdx}`} className="prose-content"><MarkdownRenderer content={beforeText} /></div>);
-        }
-
-        // SQL block
+        const ms = match.index ?? 0, me = ms + match[0].length;
+        const before = message.content.slice(lastIndex, ms).trim();
+        if (before) parts.push(<div key={`t-${mi}`} className="prose-content"><MarkdownRenderer content={before} /></div>);
         parts.push(
-          <div key={`sql-${matchIdx}`} className="rounded-lg border border-white/10 bg-slate-50 dark:bg-[#0d1117] overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-soft)]">
-              <span className="text-xs text-[var(--text-muted)] font-mono">SQL Query</span>
-              <button
-                type="button"
-                onClick={() => onViewSqlInCanvas(sql)}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-[#2563eb]/80 hover:bg-[#2563eb] rounded-md transition"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <line x1="9" y1="3" x2="9" y2="21" />
-                </svg>
-                {hasExecutedResults ? 'View in Canvas' : 'Open in Canvas'}
+          <div key={`sql-${mi}`} className="liquid-glass rounded-lg overflow-hidden shadow-2xl w-full" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+            {/* Editor header — Stitch pattern */}
+            <div className="flex justify-between items-center px-6 py-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm" style={{ color: 'rgb(100,116,139)' }}>description</span>
+                <span className="label-meta" style={{ color: 'rgb(148,163,184)', letterSpacing: '0.05em' }}>optimized_query.sql</span>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }} />
+              </div>
+            </div>
+            {/* Code */}
+            <pre className="p-6 font-mono text-sm leading-relaxed overflow-x-auto" style={{ background: 'var(--surface-container-lowest)', color: '#cbd5e1' }}><code>{sql}</code></pre>
+            {/* Footer */}
+            <div className="px-6 py-4 flex justify-end gap-4" style={{ background: 'rgba(255,255,255,0.05)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button type="button" className="label-meta flex items-center gap-2 transition-colors hover:text-white" style={{ color: 'rgb(148,163,184)', letterSpacing: '0.1em' }} onClick={() => void handleCopy(message.id, sql)}>
+                <span className="material-symbols-outlined text-sm">content_copy</span>Copy
+              </button>
+              <button type="button" className="label-meta flex items-center gap-2 transition-colors" style={{ color: '#a78bfa', letterSpacing: '0.1em' }} onClick={() => onViewSqlInCanvas(sql)}>
+                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>Run Query
               </button>
             </div>
-            <pre className="p-3 text-sm font-mono text-slate-700 dark:text-sky-300 overflow-x-auto">
-              <code>{sql}</code>
-            </pre>
           </div>
         );
-
-        // Display results if query has been executed
-        if (hasExecutedResults && queryResult) {
-          parts.push(
-            <div key={`result-${matchIdx}`} className="flex flex-col gap-2">
-              <div className="text-xs text-[var(--text-subtle)] px-1">Query Results:</div>
-              {renderSqlResults(queryResult)}
-            </div>
-          );
-        }
-
-        lastIndex = matchEnd;
+        if (queryResult) parts.push(<div key={`r-${mi}`} className="flex flex-col gap-2"><div className="text-xs px-1" style={{ color: 'rgb(148,163,184)' }}>Query Results:</div>{renderSqlResults(queryResult)}</div>);
+        lastIndex = me;
       });
-
-      // Remaining text after the last SQL block
-      const afterText = message.content.slice(lastIndex).trim();
-      if (afterText) {
-        parts.push(<div key="text-after" className="prose-content"><MarkdownRenderer content={afterText} /></div>);
-      }
-
-      return <div className="flex flex-col gap-2">{parts}</div>;
+      const after = message.content.slice(lastIndex).trim();
+      if (after) parts.push(<div key="t-after" className="prose-content"><MarkdownRenderer content={after} /></div>);
+      return <div className="flex flex-col gap-4">{parts}</div>;
     }
-    
-    // For non-SQL messages, render with full formatting
-    if (message.sender === 'assistant') {
-      return <div className="prose-content"><MarkdownRenderer content={message.content} /></div>;
-    }
-    
-    // User messages - simpler formatting
+    if (message.sender === 'assistant') return <div className="prose-content"><MarkdownRenderer content={message.content} /></div>;
     return <p className="whitespace-pre-wrap">{message.content}</p>;
   };
 
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTo({ top: 0, behavior: 'auto' });
-  }, [view]);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'auto' }); }, [view]);
 
   const historyEmpty = useMemo(() => historyConversations.length === 0, [historyConversations]);
 
   return (
     <section className="relative flex h-full flex-col items-center">
-      <div ref={scrollRef} className="flex h-full w-full flex-col items-center overflow-y-auto px-4 pb-8 pt-4 md:px-6 md:pb-10 md:pt-6">
-        <div className="flex w-full max-w-3xl flex-1 flex-col">
+      <div ref={scrollRef} className="flex h-full w-full flex-col items-center overflow-y-auto">
+        <div className="flex w-full max-w-[720px] flex-1 flex-col mx-auto px-4">
           <AnimatePresence initial={false}>
+            {/* ── Empty State — Stitch design ─────────────────────── */}
             {view === 'chat' && showLanding && (
-              <motion.div
+              <motion.main
                 key="landing"
-                className="flex flex-1 flex-col items-center justify-center"
+                className="min-h-screen flex flex-col items-center justify-center px-6 pb-48"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -60 }}
-                transition={{ duration: 0.55, ease: [0.22, 0.61, 0.36, 1] }}
+                exit={{ opacity: 0, y: -40 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               >
-                <LayoutGroup id="landing-toggle">
-                  <div className="mb-8 flex gap-2">
-                    {(['chat', 'history'] as const).map((mode) => {
-                      const isActive = view === mode;
-                      return (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => onViewChange(mode)}
-                          className={`relative flex flex-col items-center  px-2 pb-1 text-xl font-semibold transition-colors ${
-                            isActive
-                              ? 'text-slate-900 dark:text-white'
-                              : 'text-slate-500 hover:text-slate-700 dark:text-white/60 dark:hover:text-white/80'
-                          }`}
-                        >
-                          <span>{mode === 'chat' ? 'Chat' : 'History'}</span>
-                          {isActive && (
-                            <motion.span
-                              layoutId="landing-underline"
-                              className="h-[2px] w-full rounded-full bg-[#2563eb]"
-                              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                              initial={false}
-                            />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </LayoutGroup>
-                <motion.div className="grid w-full max-w-lg place-items-center gap-8 text-center">
-                  <div className="grid place-items-center gap-5">
-                    <motion.div
-                      className="relative"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: 0.2 }}
-                    >
-                      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#7dd3fc] opacity-40 blur-3xl" />
-                      <div className="relative grid h-28 w-28 place-items-center rounded-[26px] border border-slate-200 dark:border-white/15 bg-white/90 dark:bg-[#0b1220]/90 shadow-[0_25px_60px_-30px_rgba(37,99,235,0.35)] dark:shadow-[0_25px_60px_-30px_rgba(37,99,235,0.8)] backdrop-blur-sm">
-                        <div className="absolute h-20 w-20 rounded-[22px] border border-[#3b82f6]/40" />
-                        <motion.div
-                          className="relative flex h-20 w-20 items-center justify-center rounded-[22px] bg-[conic-gradient(from_140deg,_rgba(125,211,252,0.4),_rgba(37,99,235,0.85),_rgba(14,165,233,0.4))] shadow-[0_18px_45px_-18px_rgba(14,165,233,0.9)]"
-                        
-                          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                        >
-                          
-                          <div className="relative flex items-center gap-1 text-xl  font-semibold tracking-wide text-white">
-                            <svg
-                              width="26"
-                              height="26"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="text-sky-200"
-                            >
-                              <path d="M4 4h9l7 8-7 8H4l7-8z" />
-                              <path d="M11 4 7 12l4 8" />
-                            </svg>
-                            <span className="text-lg font-bold">Axon</span>
-                          </div>
-                        </motion.div>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      className="space-y-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.6, delay: 0.4 }}
-                    >
-                      <p className="text-2xl leading-relaxed text-[var(--text-secondary)]">What do you want to explore today?</p>
-                      <p className="text-sm text-[var(--text-subtle)]">Start with a prompt below or ask your own question.</p>
-                    </motion.div>
+                <div className="flex flex-col items-center max-w-2xl w-full text-center" style={{ gap: '2rem' }}>
+                  {/* Logo with glow */}
+                  <div className="relative">
+                    <div className="absolute inset-0 blur-3xl rounded-full" style={{ background: 'rgba(224,227,229,0.2)' }} />
+                    <div className="relative liquid-glass w-20 h-20 rounded-2xl flex items-center justify-center">
+                      <span className="material-symbols-outlined text-4xl" style={{ color: 'var(--primary-container)', fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                    </div>
                   </div>
 
-                  <motion.div
-                    className="flex max-w-lg flex-wrap justify-center gap-2"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.6 }}
-                  >
-                    {suggestions.map((suggestion, index) => (
-                      <motion.button
+                  {/* Tagline */}
+                  <div className="space-y-3">
+                    <h2 className="label-meta" style={{ color: 'var(--on-surface-variant)', letterSpacing: '0.2em', opacity: 0.8, fontSize: '0.6875rem' }}>
+                      Ask anything. Upload anything.
+                    </h2>
+                    <div className="h-px w-12 mx-auto" style={{ background: 'linear-gradient(90deg, transparent, rgba(224,227,229,0.4), transparent)' }} />
+                  </div>
+
+                  {/* Suggestion chips — 2x2 grid with Material icons */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-xl pt-4">
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={i}
                         type="button"
-                        key={`${suggestion}-${index}`}
-                        className="rounded-full border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] cursor-pointer"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: 0.7 + index * 0.05 }}
-                        onClick={() => onSuggestionClick?.(suggestion)}
+                        className="liquid-glass px-5 py-3 rounded-xl flex items-center gap-3 text-left transition-all active:scale-[0.98] group"
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                        onClick={() => onSuggestionClick?.(s.text)}
                       >
-                        {suggestion}
-                      </motion.button>
+                        <span className="material-symbols-outlined text-xl transition-colors group-hover:text-[var(--primary-container)]" style={{ color: 'rgb(100,116,139)' }}>{s.icon}</span>
+                        <span className="text-sm font-medium" style={{ color: '#cbd5e1' }}>{s.text}</span>
+                      </button>
                     ))}
-                  </motion.div>
-                </motion.div>
-              </motion.div>
+                  </div>
+                </div>
+              </motion.main>
             )}
 
+            {/* ── Loading ─────────────────────────────────────────── */}
             {showConversationLoading && (
-              <motion.div
-                key="conversation-loading"
-                className="flex flex-1 items-center justify-center"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25 }}
-              >
-                <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-3 text-sm text-[var(--text-muted)]">
-                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--accent)]" aria-hidden />
-                  Loading conversation...
+              <motion.div key="loading" className="flex flex-1 items-center justify-center pt-32" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div className="liquid-glass flex items-center gap-3 px-5 py-3 rounded-full" style={{ color: 'rgb(148,163,184)' }}>
+                  <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                  Loading conversation…
                 </div>
               </motion.div>
             )}
 
+            {/* ── Messages — Stitch layout ─────────────────────────── */}
             {view === 'chat' && !showLanding && !showConversationLoading && (
-              <motion.div
-                key="messages"
-                className="flex flex-1 flex-col gap-6"
-                initial={{ opacity: 0, y: 32 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 32 }}
-                transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
-              >
+              <motion.div key="messages" className="pt-32 pb-48 flex flex-1 flex-col" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ duration: 0.35 }}>
                 {messages.map((message) => {
                   const isUser = message.sender === 'user';
-                  const title = isUser ? 'You' : 'Axon';
-                  const avatarClasses = isUser
-                    ? 'bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white'
-                    : 'bg-[var(--bg-soft)] text-[var(--text-primary)]';
-                  const bubbleClasses = isUser
-                    ? 'border border-[var(--accent)]/20 bg-[var(--accent)]/10 text-[var(--text-primary)]'
-                    : 'border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-primary)]';
                   const hasAttachments = (message.attachments?.length ?? 0) > 0;
                   const sources = !isUser ? detectSources(message.content) : [];
 
-                  return (
-                    <motion.div
-                      key={message.id}
-                      className={`flex w-full items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.35, ease: [0.22, 0.61, 0.36, 1] }}
-                    >
-                      {/* Avatar */}
-                      <div
-                        className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-[var(--border)] shadow-inner ${avatarClasses}`}
-                        aria-hidden
-                      >
-                        {isUser ? (
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M6 20c0-3.314 2.686-6 6-6s6 2.686 6 6" />
-                          </svg>
-                        ) : (
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="text-sky-200"
-                          >
-                            <path d="M4 4h9l7 8-7 8H4l7-8z" />
-                            <path d="M11 4 7 12l4 8" />
-                          </svg>
-                        )}
-                      </div>
-
-                      {/* Message Content */}
-                      <div className={`flex flex-col gap-1.5 min-w-0 ${isUser ? 'items-end max-w-[75%]' : 'flex-1 max-w-full'}`}>
-                        {/* Header */}
-                        <div className={`flex items-center gap-2 text-xs text-[var(--text-muted)] ${isUser ? 'flex-row-reverse' : ''}`}>
-                          <span className="font-medium text-[var(--text-secondary)]">{title}</span>
-                          <span className="h-1 w-1 rounded-full bg-[var(--text-subtle)]" aria-hidden />
-                          <span>{formatDisplayTime(message.timestamp)}</span>
-                        </div>
-
-                        {/* Message Bubble */}
-                        <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg backdrop-blur overflow-hidden ${bubbleClasses}`}>
+                  if (isUser) {
+                    /* ── User message — right-aligned glass bubble ──── */
+                    return (
+                      <div key={message.id} className="flex flex-col items-end mb-12">
+                        <div className="liquid-glass rounded-lg px-6 py-4 max-w-[85%] leading-relaxed" style={{ color: 'var(--on-surface)' }}>
                           {renderMessageContent(message)}
                           {hasAttachments && (
                             <div className="mt-3 flex flex-wrap gap-2">
-                              {message.attachments!.map((attachment) => (
-                                <a
-                                  key={attachment.id}
-                                  href={attachment.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:border-[var(--accent)]/30 hover:bg-[var(--bg-soft)]"
-                                >
-                                  <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                                  </svg>
-                                  <span className="truncate max-w-[120px]" title={attachment.name}>
-                                    {attachment.name}
-                                  </span>
-                                  <span className="text-[var(--text-subtle)]">
-                                    {formatAttachmentSize(attachment.size)}
-                                  </span>
+                              {message.attachments!.map((att) => (
+                                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="liquid-glass rounded-lg px-3 py-1.5 text-xs flex items-center gap-2" style={{ color: '#cbd5e1' }}>
+                                  <span className="material-symbols-outlined text-sm">attach_file</span>
+                                  <span className="truncate max-w-[100px]">{att.name}</span>
+                                  <span style={{ color: 'rgb(100,116,139)' }}>{formatAttachmentSize(att.size)}</span>
                                 </a>
                               ))}
                             </div>
                           )}
                         </div>
+                        <span className="mt-3 label-meta" style={{ color: 'rgba(100,116,139,0.4)', letterSpacing: '0.1em', fontSize: '0.6875rem' }}>
+                          You · {formatDisplayTime(message.timestamp)}
+                        </span>
+                      </div>
+                    );
+                  }
 
-                        {/* Sources & Actions - Only for assistant messages */}
-                        {!isUser && (
-                          <div className="flex items-center gap-3 mt-1">
-                            {/* Sources */}
-                            {sources.length > 0 && (
-                              <div className="flex items-center gap-1.5">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-subtle)]">
-                                  <circle cx="12" cy="12" r="10" />
-                                  <path d="M12 16v-4M12 8h.01" />
-                                </svg>
-                                <span className="text-[10px] text-[var(--text-subtle)]">Sources:</span>
-                                {sources.map((source) => (
-                                  <span key={source} className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-soft)] text-[var(--text-muted)] border border-[var(--border)]">
-                                    {source}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+                  /* ── AI response — full width with icon header ──── */
+                  return (
+                    <div key={message.id} className="flex flex-col items-start mb-12">
+                      {/* Avatar + Name */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center">
+                          <span className="material-symbols-outlined text-sm" style={{ color: '#a78bfa' }}>psychology</span>
+                        </div>
+                        <span className="label-meta" style={{ color: '#e2e8f0', letterSpacing: '0.1em' }}>Axon</span>
+                      </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex items-center gap-0.5 ml-auto">
-                              {/* Copy */}
-                              <button
-                                type="button"
-                                onClick={() => handleCopy(message.id, message.content)}
-                                className={`p-1.5 rounded-lg transition ${
-                                  copiedMessageId === message.id
-                                    ? 'text-green-400 bg-green-500/10'
-                                    : 'text-[var(--text-subtle)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-soft)]'
-                                }`}
-                                title={copiedMessageId === message.id ? 'Copied!' : 'Copy message'}
-                              >
-                                {copiedMessageId === message.id ? (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                ) : (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                  </svg>
-                                )}
-                              </button>
+                      {/* Content — large text Stitch style */}
+                      <div className="space-y-8 text-lg leading-[1.6]" style={{ color: 'var(--on-surface)' }}>
+                        {renderMessageContent(message)}
 
-                              {/* Like */}
-                              <button
-                                type="button"
-                                onClick={() => handleFeedback(message.id, 'like')}
-                                disabled={feedbackLoading === message.id}
-                                className={`p-1.5 rounded-lg transition ${
-                                  messageFeedback.get(message.id) === 'like'
-                                    ? 'text-green-400 bg-green-500/15'
-                                    : 'text-[var(--text-subtle)] hover:text-green-400 hover:bg-green-500/10'
-                                } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
-                                title="Good response"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                                </svg>
-                              </button>
-
-                              {/* Dislike */}
-                              <button
-                                type="button"
-                                onClick={() => handleFeedback(message.id, 'dislike')}
-                                disabled={feedbackLoading === message.id}
-                                className={`p-1.5 rounded-lg transition ${
-                                  messageFeedback.get(message.id) === 'dislike'
-                                    ? 'text-rose-400 bg-rose-500/15'
-                                    : 'text-[var(--text-subtle)] hover:text-rose-400 hover:bg-rose-500/10'
-                                } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
-                                title="Bad response"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
-                                </svg>
-                              </button>
-
-                              {/* Report */}
-                              <button
-                                type="button"
-                                onClick={() => handleFeedback(message.id, 'report')}
-                                disabled={feedbackLoading === message.id}
-                                className={`p-1.5 rounded-lg transition ${
-                                  messageFeedback.get(message.id) === 'report'
-                                    ? 'text-amber-400 bg-amber-500/15'
-                                    : 'text-[var(--text-subtle)] hover:text-amber-400 hover:bg-amber-500/10'
-                                } ${feedbackLoading === message.id ? 'opacity-50' : ''}`}
-                                title="Report issue"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-                                  <line x1="4" y1="22" x2="4" y2="15" />
-                                </svg>
-                              </button>
-                            </div>
+                        {hasAttachments && (
+                          <div className="flex flex-wrap gap-2">
+                            {message.attachments!.map((att) => (
+                              <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="liquid-glass rounded-lg px-3 py-1.5 text-xs flex items-center gap-2" style={{ color: '#cbd5e1' }}>
+                                <span className="material-symbols-outlined text-sm">attach_file</span>
+                                <span className="truncate max-w-[100px]">{att.name}</span>
+                                <span style={{ color: 'rgb(100,116,139)' }}>{formatAttachmentSize(att.size)}</span>
+                              </a>
+                            ))}
                           </div>
                         )}
                       </div>
-                    </motion.div>
+
+                      {/* Sources & Actions */}
+                      <div className="flex items-center gap-4 mt-6">
+                        {sources.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            {sources.map((s) => <span key={s} className="label-meta px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgb(148,163,184)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.5625rem' }}>{s}</span>)}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 ml-auto">
+                          {[
+                            { type: 'copy' as const, icon: copiedMessageId === message.id ? 'check' : 'content_copy', action: () => handleCopy(message.id, message.content), title: copiedMessageId === message.id ? 'Copied!' : 'Copy' },
+                            { type: 'like' as const, icon: 'thumb_up', action: () => handleFeedback(message.id, 'like'), title: 'Good' },
+                            { type: 'dislike' as const, icon: 'thumb_down', action: () => handleFeedback(message.id, 'dislike'), title: 'Bad' },
+                            { type: 'report' as const, icon: 'flag', action: () => handleFeedback(message.id, 'report'), title: 'Report' },
+                          ].map(({ type, icon, action, title }) => {
+                            const fbType = type === 'copy' ? null : type;
+                            const isActive = fbType ? messageFeedback.get(message.id) === fbType : copiedMessageId === message.id;
+                            return (
+                              <button key={type} type="button" title={title} disabled={feedbackLoading === message.id}
+                                className="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+                                style={{ color: isActive ? '#a78bfa' : 'rgb(100,116,139)', background: isActive ? 'var(--violet-soft)' : 'transparent' }}
+                                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = '#e2e8f0'; }}
+                                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'rgb(100,116,139)'; }}
+                                onClick={action}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{icon}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
               </motion.div>
             )}
 
+            {/* ── Library / History — Stitch Library layout ─────────── */}
             {view === 'history' && (
-              <motion.div
-                key="history"
-                className="flex flex-1 flex-col gap-4"
-                initial={{ opacity: 0, y: 32 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 32 }}
-                transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
-              >
+              <motion.div key="history" className="pt-32 pb-48 flex flex-1 flex-col" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ duration: 0.35 }}>
+                {/* Library header */}
+                <div className="mb-16">
+                  <h1 className="text-5xl font-extrabold tracking-tighter text-white mb-2">Library</h1>
+                  <p className="font-medium tracking-tight" style={{ color: 'var(--on-surface-variant)' }}>Your conversation history and saved artifacts.</p>
+                </div>
+
+                {/* Section label */}
+                <div className="flex items-center gap-3 mb-8">
+                  <span className="label-meta text-xs font-bold" style={{ color: 'var(--secondary)', letterSpacing: '0.05em' }}>Recent Conversations</span>
+                  <div className="h-px flex-grow" style={{ background: 'rgba(68,71,73,0.15)' }} />
+                </div>
+
                 {historyEmpty ? (
-                  <div className="flex flex-1 items-center justify-center rounded-3xl border border-dashed border-[var(--border)] bg-[var(--bg-soft)] text-center text-[var(--text-subtle)]">
-                    <p>No saved conversations yet. Your next chats will appear here.</p>
+                  <div className="liquid-glass rounded-xl p-12 text-center" style={{ color: 'var(--on-surface-variant)' }}>
+                    <span className="material-symbols-outlined text-4xl mb-4 block" style={{ color: 'rgb(100,116,139)' }}>inbox</span>
+                    <p>No conversations yet. Your chats will appear here.</p>
                   </div>
                 ) : (
-                  historyConversations.map((conversation) => {
-                    const isSelected = conversation.id === selectedHistoryId;
-                    return (
-                      <motion.div
-                        key={conversation.id}
-                        className={`relative flex w-full flex-col gap-2 rounded-2xl border px-5 py-4 text-left transition ${
-                          isSelected
-                            ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-primary)]'
-                            : 'border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-secondary)] hover:border-[var(--accent)]/30 hover:bg-[var(--bg-panel)]'
-                        }`}
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => onSelectHistory(conversation.id)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            onSelectHistory(conversation.id);
-                          }
-                        }}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <h3 className="text-base font-semibold text-[var(--text-primary)]">{conversation.title}</h3>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs uppercase tracking-[0.18em] text-[var(--text-subtle)]">
-                              {formatHistoryTimestamp(conversation.updatedAt)}
-                            </span>
-                            <button
-                              type="button"
-                              className="rounded-lg border border-transparent p-1 text-[var(--text-subtle)] hover:border-[var(--border)] hover:text-[var(--text-secondary)]"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void onDeleteConversation(conversation.id);
-                              }}
-                              aria-label="Delete conversation"
-                            >
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                <line x1="10" y1="11" x2="10" y2="17" />
-                                <line x1="14" y1="11" x2="14" y2="17" />
-                              </svg>
-                            </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {historyConversations.map((conversation) => {
+                      const isSelected = conversation.id === selectedHistoryId;
+                      return (
+                        <div
+                          key={conversation.id}
+                          className="liquid-glass rounded-xl p-6 flex flex-col justify-between cursor-pointer transition-all duration-500 hover:scale-[1.01]"
+                          style={{
+                            background: isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+                            border: isSelected ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
+                            minHeight: '140px',
+                          }}
+                          onClick={() => onSelectHistory(conversation.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectHistory(conversation.id); } }}
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="p-2 rounded-lg" style={{ background: 'var(--surface-container-high)' }}>
+                              <span className="material-symbols-outlined" style={{ color: 'var(--on-secondary-container)' }}>chat_bubble</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="label-meta text-[10px]" style={{ color: 'var(--on-surface-variant)', letterSpacing: '0.1em' }}>{formatHistoryTimestamp(conversation.updatedAt)}</span>
+                              <button type="button" className="p-1 rounded-md transition-colors hover:bg-white/10" style={{ color: 'rgb(100,116,139)' }} onClick={(e) => { e.stopPropagation(); void onDeleteConversation(conversation.id); }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white tracking-tight mb-1">{conversation.title}</h3>
+                            <p className="text-sm leading-relaxed" style={{ color: 'var(--on-surface-variant)' }}>{conversation.summary}</p>
                           </div>
                         </div>
-                        <p className="text-sm text-[var(--text-muted)]">{conversation.summary}</p>
-                        <div className="flex items-center gap-2 text-xs text-[var(--text-subtle)]">
-                          <span>{conversation.messageCount ?? conversation.messages?.length ?? 0} messages</span>
-                          <span>•</span>
-                          <span>Open conversation</span>
-                        </div>
-                      </motion.div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* ── Typing Indicator ───────────────────────────────────── */}
           {view === 'chat' && !showLanding && isChatLoading && messages.length > 0 && messages[messages.length - 1]?.sender === 'user' && (
-            <motion.div
-              key="assistant-typing"
-              className="mt-6 flex w-full items-start gap-4"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 12 }}
-            >
-              <div
-                className="grid h-10 w-10 place-items-center rounded-xl border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--text-primary)]"
-                aria-hidden
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 4h9l7 8-7 8H4l7-8z" />
-                  <path d="M11 4 7 12l4 8" />
-                </svg>
+            <motion.div key="typing" className="flex flex-col items-start mb-12" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center">
+                  <span className="material-symbols-outlined text-sm" style={{ color: '#a78bfa' }}>psychology</span>
+                </div>
+                <span className="label-meta" style={{ color: '#e2e8f0', letterSpacing: '0.1em' }}>Axon</span>
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                  <span className="font-semibold text-[var(--text-primary)]">Axon</span>
-                  <span className="h-1 w-1 rounded-full bg-[var(--text-subtle)]" aria-hidden />
-                  <span>Thinking…</span>
-                </div>
-                <div className="w-fit rounded-2xl border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-3 text-sm leading-relaxed text-[var(--text-primary)] shadow-lg">
-                  <div className="flex items-center gap-2">
-                    {[0, 1, 2].map((index) => (
-                      <motion.span
-                        key={index}
-                        className="h-2 w-2 rounded-full bg-[var(--text-secondary)]"
-                        animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 1, repeat: Infinity, delay: index * 0.2 }}
-                      />
-                    ))}
-                  </div>
-                </div>
+              <div className="flex items-center gap-2 text-lg" style={{ color: 'rgb(148,163,184)' }}>
+                {[0, 1, 2].map((i) => (
+                  <motion.span key={i} className="inline-block w-2 h-2 rounded-full" style={{ background: '#a78bfa' }} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+                ))}
               </div>
             </motion.div>
           )}
         </div>
       </div>
 
-      {/* Floating scroll-to-bottom button */}
-      {view === 'chat' && !showLanding && (
-        <ScrollToBottom scrollRef={scrollRef} />
-      )}
+      {view === 'chat' && !showLanding && <ScrollToBottom scrollRef={scrollRef} />}
     </section>
   );
 };

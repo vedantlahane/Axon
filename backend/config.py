@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +15,26 @@ class Settings(BaseSettings):
     API_PREFIX: str = '/api'
 
     DATABASE_URL: str = f'sqlite+aiosqlite:///{_DEFAULT_SQLITE_PATH}'
+
+    @field_validator('DATABASE_URL', mode='before')
+    @classmethod
+    def normalize_sqlite_database_url(cls, value: str) -> str:
+        database_url = str(value)
+        prefixes = ('sqlite+aiosqlite:///', 'sqlite:///')
+
+        for prefix in prefixes:
+            if database_url.startswith(prefix):
+                db_path = database_url[len(prefix):]
+
+                # Keep absolute sqlite paths as-is and normalize relative paths to repo root.
+                if db_path.startswith('/') or (len(db_path) > 1 and db_path[1] == ':'):
+                    return database_url
+
+                root_dir = Path(__file__).resolve().parents[1]
+                normalized_path = (root_dir / db_path).resolve().as_posix()
+                return f'{prefix}{normalized_path}'
+
+        return database_url
 
     OPENAI_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None

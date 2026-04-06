@@ -1,9 +1,7 @@
+/* ─── Liquid Glass — Base Styles (from Stitch source) ──────────────── */
+
 @layer base {
-  html,
-  body,
-  #root {
-    height: 100%;
-  }
+  html, body, #root { height: 100%; }
 
   * {
     box-sizing: border-box;
@@ -13,37 +11,123 @@
 
   body {
     margin: 0;
-    overflow: hidden;
-    background-color: var(--bg-base);
-    color: var(--text-primary);
+    overflow-x: hidden;
+    background-color: var(--body-bg);
+    color: #E2E8F0;
     font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.6;
   }
 
-  code,
-  pre,
-  .font-mono {
-    font-family: var(--font-mono);
-  }
+  code, pre, .font-mono { font-family: var(--font-mono); }
+  button, input, textarea, select { font: inherit; color: inherit; }
 
-  button,
-  input,
-  textarea,
-  select {
-    font: inherit;
-    color: inherit;
+  ::selection {
+    background: rgba(224, 227, 229, 0.3);
+    color: #ffffff;
   }
 }
+
+/* ─── App Shell (no sidebar — full-screen canvas) ──────────────────── */
 
 .app-shell {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: var(--bg-base);
-  background-image: radial-gradient(circle at 0% -20%, rgba(19, 99, 255, 0.1), transparent 50%);
-  color: var(--text-primary);
+  position: relative;
+  background-color: var(--body-bg);
+  color: var(--on-surface);
 }
 
-.dark .app-shell {
-  background-image: radial-gradient(circle at 0% -20%, rgba(99, 160, 255, 0.22), transparent 55%);
+/* ─── Liquid Glass (exact Stitch class) ────────────────────────────── */
+
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
 }
+
+.liquid-glass-hover:hover {
+  backdrop-filter: blur(24px) saturate(250%);
+  -webkit-backdrop-filter: blur(24px) saturate(250%);
+  box-shadow: 0 0 20px rgba(185, 200, 222, 0.1);
+}
+
+/* ─── Light Leak (violet gradient line on top edge) ────────────────── */
+
+.light-leak-top {
+  position: relative;
+}
+
+.light-leak-top::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #7C3AED, transparent);
+  z-index: 10;
+}
+
+/* ─── Ambient Orbs (atmospheric depth behind content) ──────────────── */
+
+.ambient-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ─── Ambient Background (radial gradient) ─────────────────────────── */
+
+.ambient-bg {
+  background: radial-gradient(circle at 50% -20%, #171f33 0%, #0b1326 70%);
+}
+
+/* ─── Material Symbols ─────────────────────────────────────────────── */
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Label Typography (Stitch pattern) ────────────────────────────── */
+
+.label-meta {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+}
+
+.label-section {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }

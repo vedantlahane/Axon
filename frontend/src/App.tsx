@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Sidebar from './components/layout/Sidebar';
 import MainPanel from './components/layout/MainPanel';
 import AuthModal from './components/modals/AuthModal';
 import DatabaseConnectionModal from './components/modals/DatabaseConnectionModal';
@@ -15,15 +14,11 @@ import {
 import type { ChatMessage } from './types/chat';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 
-/** Pure utility — kept outside the component to avoid recreation on every render. */
 const deriveErrorMessage = (error: unknown, fallback: string): string => {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
+  if (error instanceof Error && error.message) return error.message;
   return fallback;
 };
 
-/** Creates a toast message object with a unique ID. */
 const createToast = (type: 'success' | 'error' | 'info' | 'warning', message: string): ToastMessage => ({
   id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
   type,
@@ -32,8 +27,6 @@ const createToast = (type: 'success' | 'error' | 'info' | 'warning', message: st
 
 const App = () => {
   const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeSidebarItem, setActiveSidebarItem] = useState('chat');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const startNewChatRef = useRef<() => void>(() => undefined);
 
@@ -147,7 +140,6 @@ const App = () => {
     startNewChatRef.current = () => {
       startNewChat();
       setCurrentView('chat');
-      setActiveSidebarItem('chat');
     };
   }, [appendMessage, startNewChat]);
 
@@ -156,61 +148,32 @@ const App = () => {
       resetAssistantTracking();
       return;
     }
-
     const latest = currentMessages[currentMessages.length - 1];
-    if (!latest) {
-      return;
-    }
-
+    if (!latest) return;
     handleAssistantMessageForSql(latest);
   }, [currentMessages, handleAssistantMessageForSql, resetAssistantTracking]);
 
   const handleOpenDatabaseSettings = () => {
-    if (!currentUser) {
-      openAuthModal('signin');
-      return;
-    }
-
+    if (!currentUser) { openAuthModal('signin'); return; }
     void openDatabaseSettings();
   };
 
-  const handleCloseDatabaseModal = () => {
-    closeDatabaseModal();
-  };
-
   const handleToggleSideWindow = () => {
-    if (!currentUser) {
-      openAuthModal('signin');
-      return;
-    }
-
-    if (!canUseDatabaseTools) {
-      handleOpenDatabaseSettings();
-      return;
-    }
-
+    if (!currentUser) { openAuthModal('signin'); return; }
+    if (!canUseDatabaseTools) { handleOpenDatabaseSettings(); return; }
     clearSqlErrors();
-
     if (!isSideWindowOpen) {
       resetSqlSuggestions();
-      if (!sqlSchema) {
-        void refreshDatabaseSchema();
-      }
+      if (!sqlSchema) void refreshDatabaseSchema();
     }
-
     setIsSideWindowOpen((prev) => !prev);
   };
 
-  const handleCollapseSideWindow = () => {
-    setIsSideWindowOpen(false);
-    clearSqlErrors();
-  };
+  const handleCollapseSideWindow = () => { setIsSideWindowOpen(false); clearSqlErrors(); };
 
   const handleSaveDatabaseSettings = async (payload: UpdateDatabaseConnectionPayload) => {
     const ok = await saveDatabaseSettings(payload);
-    if (ok) {
-      resetSqlConsoleState();
-    }
+    if (ok) resetSqlConsoleState();
   };
 
   const handleTestDatabaseSettings = async (payload: UpdateDatabaseConnectionPayload) => {
@@ -219,20 +182,13 @@ const App = () => {
 
   const handleDisconnectDatabase = async () => {
     const ok = await disconnectDatabase();
-    if (ok) {
-      resetSqlConsoleState({ close: true });
-    }
+    if (ok) resetSqlConsoleState({ close: true });
   };
 
   const handleStartNewChat = useCallback(() => {
     startNewChat();
     setCurrentView('chat');
-    setActiveSidebarItem('chat');
   }, [startNewChat]);
-
-  const handleSignIn = signInUser;
-
-  const handleSignUp = signUpUser;
 
   const handleSignOut = async () => {
     await signOutUser();
@@ -243,32 +199,14 @@ const App = () => {
     resetSqlConsoleState({ close: true });
   };
 
-  const handleRequestPasswordReset = requestPasswordResetUser;
-
-  const handleConfirmPasswordReset = confirmPasswordResetUser;
-
-  const handleSidebarSelect = (itemId: string) => {
-    setActiveSidebarItem(itemId);
-    if (itemId === 'chat' || itemId === 'history') {
-      setCurrentView(itemId);
-    }
-  };
-
   const handleViewChange = useCallback((view: 'chat' | 'history') => {
     setCurrentView(view);
-    setActiveSidebarItem(view);
   }, []);
 
   const handleSendMessage = useCallback(
-    async (
-      content: string,
-      options?: {
-        documentIds?: string[];
-      },
-    ) => {
+    async (content: string, options?: { documentIds?: string[] }) => {
       await sendMessage(content, options);
       setCurrentView('chat');
-      setActiveSidebarItem('chat');
     },
     [sendMessage]
   );
@@ -277,15 +215,12 @@ const App = () => {
     async (conversationId: string) => {
       await selectHistoryConversation(conversationId);
       setCurrentView('chat');
-      setActiveSidebarItem('chat');
     },
     [selectHistoryConversation]
   );
 
   const handleDeleteConversation = useCallback(
-    async (conversationId: string) => {
-      await deleteConversation(conversationId);
-    },
+    async (conversationId: string) => { await deleteConversation(conversationId); },
     [deleteConversation]
   );
 
@@ -296,7 +231,6 @@ const App = () => {
     return 'Select database';
   })();
 
-  // Global keyboard shortcuts
   const shortcuts = useMemo(() => [
     { key: 'n', ctrl: true, handler: handleStartNewChat },
     { key: 'h', ctrl: true, shift: true, handler: () => handleViewChange('history') },
@@ -336,17 +270,11 @@ const App = () => {
 
   return (
     <div className="app-shell">
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        activeItem={activeSidebarItem}
-        onSelect={handleSidebarSelect}
-        onStartNewChat={handleStartNewChat}
-        isAuthenticated={Boolean(currentUser)}
-        onRequireAuth={(mode: 'signin' | 'signup') => openAuthModal(mode)}
-        currentUser={currentUser}
-        onSignOut={handleSignOut}
-      />
+      {/* Ambient Orbs — Stitch atmospheric depth */}
+      <div className="ambient-orb" style={{ width: 600, height: 600, background: 'rgba(255,255,255,0.05)', top: '-10%', left: '-5%' }} />
+      <div className="ambient-orb" style={{ width: 500, height: 500, background: 'rgba(139, 92, 246, 0.05)', bottom: '10%', right: '-5%' }} />
+      <div className="ambient-orb" style={{ width: 400, height: 400, background: 'rgba(255,255,255,0.03)', top: '40%', left: '30%' }} />
+
       <MainPanel
         currentView={currentView}
         onViewChange={handleViewChange}
@@ -378,17 +306,17 @@ const App = () => {
         mode={authModalState.mode}
         onClose={closeAuthModal}
         onModeChange={openAuthModal}
-        onSignIn={handleSignIn}
-        onSignUp={handleSignUp}
-        onRequestPasswordReset={handleRequestPasswordReset}
-        onConfirmPasswordReset={handleConfirmPasswordReset}
+        onSignIn={signInUser}
+        onSignUp={signUpUser}
+        onRequestPasswordReset={requestPasswordResetUser}
+        onConfirmPasswordReset={confirmPasswordResetUser}
         isSubmitting={isAuthSubmitting}
         errorMessage={authError}
         successMessage={authSuccessMessage}
       />
       <DatabaseConnectionModal
         isOpen={databaseModalOpen}
-        onClose={handleCloseDatabaseModal}
+        onClose={() => closeDatabaseModal()}
         config={databaseSettings}
         availableModes={databaseModes}
         environmentFallback={environmentFallback}

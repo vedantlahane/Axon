@@ -6,12 +6,7 @@ import Canvas, { type SqlSideWindowProps } from "../Canvas";
 import type { ChatMessage, ConversationSummary } from "../../types/chat";
 import type { UserProfile, SqlQueryResult, LLMModel } from "../../services/chatApi";
 import { fetchAvailableModels, setCurrentModel, exportConversationZip } from "../../services/chatApi";
-import { currentTheme, toggleTheme } from "../../utils/theme";
 
-/**
- * Layout contract for the main chat surface. Each prop maps to a control in the surrounding shell
- * (sidebar, chat area, SQL side drawer) so that higher-level containers can orchestrate state.
- */
 interface MainPanelProps {
   currentView: "chat" | "history";
   onViewChange: (view: "chat" | "history") => void;
@@ -19,10 +14,7 @@ interface MainPanelProps {
   historyConversations: ConversationSummary[];
   selectedHistoryId: string | null;
   onSelectHistory: (conversationId: string) => void;
-  onSendMessage: (
-    content: string,
-    options?: { documentIds?: string[] }
-  ) => Promise<void> | void;
+  onSendMessage: (content: string, options?: { documentIds?: string[] }) => Promise<void> | void;
   onStartNewChat: () => void;
   isChatLoading: boolean;
   onDeleteConversation: (conversationId: string) => Promise<void> | void;
@@ -42,11 +34,6 @@ interface MainPanelProps {
   showToast?: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
 }
 
-/**
- * Renders the primary application workspace, wiring together chat history, the live conversation,
- * settings overlay, and optional SQL side tooling. It focuses on presentation while delegating all
- * business logic to callbacks provided via {@link MainPanelProps}.
- */
 const MainPanel: React.FC<MainPanelProps> = ({
   currentView,
   onViewChange,
@@ -75,33 +62,18 @@ const MainPanel: React.FC<MainPanelProps> = ({
 }) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const settingsRef = useRef<HTMLDivElement | null>(null);
-  
-  // Model selection state
   const [availableModels, setAvailableModels] = useState<LLMModel[]>([]);
   const [currentModel, setCurrentModelState] = useState<string>("gemini");
   const [isModelSwitching, setIsModelSwitching] = useState(false);
   const [isModelsLoading, setIsModelsLoading] = useState(true);
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => currentTheme());
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Fetch available models only for authenticated users.
   useEffect(() => {
-    if (!isAuthenticated) {
-      setAvailableModels([]);
-      setCurrentModelState('gemini');
-      setIsModelsLoading(false);
-      return;
-    }
-
+    if (!isAuthenticated) { setAvailableModels([]); setCurrentModelState('gemini'); setIsModelsLoading(false); return; }
     setIsModelsLoading(true);
     fetchAvailableModels()
-      .then((data) => {
-        setAvailableModels(data.models);
-        setCurrentModelState(data.current);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch models:", err);
-        showToast?.('error', 'Failed to load available models');
-      })
+      .then((data) => { setAvailableModels(data.models); setCurrentModelState(data.current); })
+      .catch((err) => { console.error("Failed to fetch models:", err); showToast?.('error', 'Failed to load models'); })
       .finally(() => setIsModelsLoading(false));
   }, [isAuthenticated, showToast]);
 
@@ -110,378 +82,170 @@ const MainPanel: React.FC<MainPanelProps> = ({
     setIsModelSwitching(true);
     try {
       const result = await setCurrentModel(modelId);
-      if (result.success) {
-        setCurrentModelState(result.current);
-      }
-    } catch (err) {
-      console.error("Failed to switch model:", err);
-      showToast?.('error', 'Failed to switch model');
-    } finally {
-      setIsModelSwitching(false);
-    }
+      if (result.success) setCurrentModelState(result.current);
+    } catch (err) { console.error("Failed to switch model:", err); showToast?.('error', 'Failed to switch model'); }
+    finally { setIsModelSwitching(false); }
   };
 
-  // Export conversation as ZIP with all SQL results
-  const [isExporting, setIsExporting] = useState(false);
   const handleExportConversation = async () => {
     if (!selectedHistoryId || isExporting) return;
     setIsExporting(true);
     try {
-      // Gather SQL results from executed queries
       const sqlResults: { query: string; columns: string[]; rows: Record<string, unknown>[] }[] = [];
-      
       if (executedQueries) {
         executedQueries.forEach((result, query) => {
           if (result.type === 'rows' && result.columns && result.rows) {
-            // Convert rows array to array of objects
             const rowObjects = result.rows.map((row) => {
               const obj: Record<string, unknown> = {};
-              result.columns.forEach((col, idx) => {
-                obj[col] = row[idx];
-              });
+              result.columns.forEach((col, idx) => { obj[col] = row[idx]; });
               return obj;
             });
-            sqlResults.push({
-              query,
-              columns: result.columns,
-              rows: rowObjects,
-            });
+            sqlResults.push({ query, columns: result.columns, rows: rowObjects });
           }
         });
       }
-      
       await exportConversationZip(selectedHistoryId, sqlResults);
-    } catch (err) {
-      console.error("Failed to export conversation:", err);
-      showToast?.('error', 'Failed to export conversation');
-    } finally {
-      setIsExporting(false);
-      setShowSettingsMenu(false);
-    }
+    } catch (err) { console.error("Export failed:", err); showToast?.('error', 'Failed to export'); }
+    finally { setIsExporting(false); setShowSettingsMenu(false); }
   };
 
   useEffect(() => {
     if (!showSettingsMenu) return;
-    // Close the floating settings card when a click lands outside the menu bounds.
     const handleClick = (event: MouseEvent) => {
-      if (!settingsRef.current) return;
-      if (settingsRef.current.contains(event.target as Node)) return;
-      setShowSettingsMenu(false);
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) setShowSettingsMenu(false);
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showSettingsMenu]);
 
   const selectedHistory = useMemo(
-    () =>
-      historyConversations.find(
-        (conversation) => conversation.id === selectedHistoryId
-      ) ?? null,
+    () => historyConversations.find((c) => c.id === selectedHistoryId) ?? null,
     [historyConversations, selectedHistoryId]
   );
 
-  const subtitle = useMemo(() => {
-    // Keep the header status text in sync with loading state and the active conversation context.
-    if (isChatLoading) {
-      return "Axon is thinking...";
-    }
-    if (selectedHistory) {
-      return `Viewing "${selectedHistory.title}"`;
-    }
-    if (messages.length > 0) {
-      return "Continuing your current conversation";
-    }
-    return "Start a new conversation or revisit one from history";
-  }, [isChatLoading, messages.length, selectedHistory]);
-
-  const showLanding = currentView === "chat" && messages.length === 0;
-
-  const handleBack = () => {
-    if (messages.length > 0 || selectedHistoryId) {
-      onViewChange('history');
-    }
-  };
-
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 pt-3 lg:px-5 lg:pb-5 lg:pt-4">
-      <header className="relative z-20 backdrop-blur-xl">
-        <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl bg-[var(--bg-panel)]/70 px-3 py-2 shadow-[0_18px_35px_-28px_rgba(15,40,95,0.35)]">
-          <motion.button
-            type="button"
-            onClick={handleBack}
-            className={`group/back flex items-center gap-2 rounded-full text-sm font-medium text-[var(--text-muted)] transition ${
-              showLanding
-                ? "opacity-60 hover:opacity-100"
-                : "hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-            }`}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* ── TopAppBar — Stitch fixed header ──────────────────────── */}
+      <header className="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-5" style={{ background: 'transparent' }}>
+        {/* Brand */}
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={onStartNewChat}>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{
+              background: 'var(--primary-container)',
+              boxShadow: '0 0 15px var(--violet-glow)',
+            }}
           >
-            <span
-              className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-soft)] text-[var(--text-primary)]"
-              aria-hidden
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
+            <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+              dataset
             </span>
-            <span className="text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)] hidden sm:inline">
-              Back
-            </span>
-          </motion.button>
-
-          <div className="flex flex-col items-center justify-center text-center text-[var(--text-primary)]">
-            <span className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">
-              Axon Copilot
-            </span>
-            <span className="text-sm text-[var(--text-subtle)]">{subtitle}</span>
           </div>
+          <h1 className="text-xl font-medium tracking-tighter" style={{ color: '#e2e8f0' }}>
+            axon ai
+          </h1>
+        </div>
 
+        {/* Right actions */}
+        <div className="flex items-center gap-6">
+          {/* Search */}
+          <button
+            className="transition-colors"
+            style={{ color: 'rgb(100,116,139)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#e2e8f0')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgb(100,116,139)')}
+            onClick={() => onViewChange(currentView === 'history' ? 'chat' : 'history')}
+            title={currentView === 'history' ? 'Back to Chat' : 'Library'}
+          >
+            <span className="material-symbols-outlined">
+              {currentView === 'history' ? 'chat_bubble' : 'search'}
+            </span>
+          </button>
+
+          {/* User Avatar / Settings */}
           <div className="relative" ref={settingsRef}>
-            <motion.button
-              type="button"
-              className="group/settings flex items-center gap-2 rounded-full text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setShowSettingsMenu((prev) => !prev)}
-            >
-              <span
-                className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-soft)] text-[var(--text-primary)]"
-                aria-hidden
+            {isAuthenticated ? (
+              <button
+                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold"
+                style={{
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'var(--surface-container-high)',
+                  color: 'var(--on-secondary-container)',
+                }}
+                onClick={() => setShowSettingsMenu(!showSettingsMenu)}
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-              </span>
-              <span className="text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)] hidden sm:inline">
-                Settings
-              </span>
-            </motion.button>
+                {(currentUser?.name?.charAt(0) ?? currentUser?.email?.charAt(0) ?? 'A').toUpperCase()}
+              </button>
+            ) : (
+              <button
+                className="transition-opacity hover:opacity-80"
+                style={{ color: 'rgb(100,116,139)' }}
+                onClick={() => onOpenAuthModal('signin')}
+              >
+                <span className="material-symbols-outlined">account_circle</span>
+              </button>
+            )}
 
+            {/* Settings dropdown */}
             <AnimatePresence>
               {showSettingsMenu && (
                 <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
+                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute right-0 z-50 mt-3 w-56 rounded-2xl border border-[var(--border)] bg-[var(--bg-panel)]/95 p-3 text-sm text-[var(--text-primary)] shadow-lg backdrop-blur"
+                  className="liquid-glass absolute right-0 z-50 mt-3 w-60 p-4 text-sm"
+                  style={{ borderRadius: 'var(--radius-xl)', color: 'var(--on-surface)', boxShadow: 'var(--shadow-ambient)' }}
                 >
-                  <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
-                    Account
-                  </p>
+                  {/* Account */}
+                  <p className="label-meta mb-2" style={{ color: 'rgb(100,116,139)' }}>Account</p>
                   {isAuthenticated ? (
                     <>
-                      <div className="flex w-full flex-col gap-1 rounded-xl bg-[var(--bg-soft)] px-3 py-2 text-left text-xs text-[var(--text-muted)]">
-                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                          Signed in as
-                        </span>
-                        <span className="text-sm font-medium text-[var(--text-primary)]">
-                          {currentUser?.name ?? currentUser?.email}
-                        </span>
-                        <span className="text-xs text-[var(--text-subtle)]">
-                          {currentUser?.email}
-                        </span>
+                      <div className="rounded-xl p-3 mb-2" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <span className="block text-sm font-medium text-white">{currentUser?.name ?? currentUser?.email}</span>
+                        <span className="text-xs" style={{ color: 'var(--on-surface-variant)' }}>{currentUser?.email}</span>
                       </div>
-                      <button
-                        type="button"
-                        className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200"
-                        onClick={() => {
-                          setShowSettingsMenu(false);
-                          void onSignOut();
-                        }}
-                      >
-                        Sign out
-                      </button>
+                      <button type="button" className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-white/5" style={{ color: 'var(--error)' }} onClick={() => { setShowSettingsMenu(false); void onSignOut(); }}>Sign out</button>
                     </>
                   ) : (
                     <>
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                        onClick={() => {
-                          setShowSettingsMenu(false);
-                          onOpenAuthModal("signin");
-                        }}
-                      >
-                        Sign in
-                      </button>
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                        onClick={() => {
-                          setShowSettingsMenu(false);
-                          onOpenAuthModal("signup");
-                        }}
-                      >
-                        Create account
-                      </button>
+                      <button type="button" className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-white/5" style={{ color: 'var(--on-surface-variant)' }} onClick={() => { setShowSettingsMenu(false); onOpenAuthModal("signin"); }}>Sign in</button>
+                      <button type="button" className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-white/5" style={{ color: 'var(--on-surface-variant)' }} onClick={() => { setShowSettingsMenu(false); onOpenAuthModal("signup"); }}>Create account</button>
                     </>
                   )}
-                  <div className="mt-3 border-t border-[var(--border)] pt-3">
-                    <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
-                      AI Model
-                    </p>
-                    <div className="flex flex-col gap-1">
-                      {!isAuthenticated ? (
-                        <div className="py-2 text-xs text-[var(--text-subtle)]">Sign in to manage model preferences</div>
-                      ) : isModelsLoading ? (
-                        <div className="flex items-center justify-center py-3">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
-                          <span className="ml-2 text-xs text-[var(--text-subtle)]">Loading models...</span>
-                        </div>
-                      ) : availableModels.length === 0 ? (
-                        <div className="py-2 text-xs text-[var(--text-subtle)]">No models available</div>
-                      ) : (
-                      availableModels.map((model) => (
-                        <button
-                          key={model.id}
-                          type="button"
-                          disabled={!model.available || isModelSwitching}
-                          className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition ${
-                            currentModel === model.id
-                              ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                              : model.available
-                              ? "hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                              : "cursor-not-allowed opacity-40"
-                          }`}
-                          onClick={() => handleModelChange(model.id)}
-                        >
-                          <span className="flex items-center gap-2">
-                            {model.name}
-                            {model.isDefault && (
-                              <span className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 text-[9px] uppercase text-[var(--text-subtle)]">
-                                Default
-                              </span>
-                            )}
-                          </span>
-                          {currentModel === model.id && (
-                            <svg
-                              className="h-4 w-4 text-[var(--accent)]"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          )}
-                          {!model.available && (
-                            <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                              Unavailable
-                            </span>
-                          )}
-                        </button>
-                      ))
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 border-t border-[var(--border)] pt-3">
-                    <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
-                      Appearance
-                    </p>
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                      onClick={() => {
-                        const nextTheme = toggleTheme();
-                        setThemeMode(nextTheme);
-                        setShowSettingsMenu(false);
-                      }}
-                    >
-                      Theme
-                      <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                        {themeMode === 'dark' ? 'Dark' : 'Light'}
-                      </span>
-                    </button>
-                    {isAuthenticated ? null : (
-                      <button
-                        type="button"
-                        className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                        onClick={() => {
-                          setShowSettingsMenu(false);
-                          onOpenAuthModal("signin");
-                        }}
+
+                  {/* AI Model */}
+                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p className="label-meta mb-2" style={{ color: 'rgb(100,116,139)' }}>AI Model</p>
+                    {!isAuthenticated ? (
+                      <div className="py-2 text-xs" style={{ color: 'var(--on-surface-variant)' }}>Sign in to manage models</div>
+                    ) : isModelsLoading ? (
+                      <div className="py-3 text-xs text-center" style={{ color: 'var(--on-surface-variant)' }}>Loading…</div>
+                    ) : availableModels.map((model) => (
+                      <button key={model.id} type="button" disabled={!model.available || isModelSwitching}
+                        className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5"
+                        style={{ color: currentModel === model.id ? 'var(--violet, #a78bfa)' : model.available ? 'var(--on-surface-variant)' : 'rgb(100,116,139)', opacity: model.available ? 1 : 0.4, cursor: model.available ? 'pointer' : 'not-allowed', background: currentModel === model.id ? 'var(--violet-soft)' : 'transparent' }}
+                        onClick={() => handleModelChange(model.id)}
                       >
-                        Unlock more
-                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                          Sign in
-                        </span>
+                        <span>{model.name}{model.isDefault && <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] uppercase" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgb(100,116,139)' }}>Default</span>}</span>
+                        {currentModel === model.id && <span className="material-symbols-outlined text-sm">check</span>}
                       </button>
-                    )}
+                    ))}
                   </div>
+
+                  {/* Data */}
                   {isAuthenticated && (
-                    <div className="mt-3 border-t border-[var(--border)] pt-3">
-                      <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[var(--text-subtle)]">
-                        Data
-                      </p>
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)]"
-                        onClick={() => {
-                          setShowSettingsMenu(false);
-                          onOpenDatabaseSettings();
-                        }}
-                      >
-                        Database
-                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                          {databaseSummary}
-                        </span>
+                    <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="label-meta mb-2" style={{ color: 'rgb(100,116,139)' }}>Data</p>
+                      <button type="button" className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5" style={{ color: 'var(--on-surface-variant)' }} onClick={() => { setShowSettingsMenu(false); onOpenDatabaseSettings(); }}>
+                        Database <span className="label-meta" style={{ color: 'rgb(100,116,139)' }}>{databaseSummary}</span>
                       </button>
-                      <button
-                        type="button"
-                        className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-rose-500/10 hover:text-rose-300"
-                        onClick={() => {
-                          if (window.confirm('Clear all messages and start fresh? This cannot be undone.')) {
-                            setShowSettingsMenu(false);
-                            onStartNewChat();
-                          }
-                        }}
-                      >
-                        Reset workspace
-                        <span className="text-[10px] uppercase text-[var(--text-subtle)]">
-                          Clear
-                        </span>
+                      <button type="button" className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5" style={{ color: 'var(--on-surface-variant)' }} onClick={() => { if (window.confirm('Clear all messages?')) { setShowSettingsMenu(false); onStartNewChat(); } }}>
+                        Reset <span className="label-meta" style={{ color: 'rgb(100,116,139)' }}>Clear</span>
                       </button>
                       {selectedHistoryId && messages.length > 0 && (
-                        <button
-                          type="button"
-                          disabled={isExporting}
-                          className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition hover:bg-[var(--bg-soft)] hover:text-[var(--text-primary)] disabled:opacity-50"
-                          onClick={handleExportConversation}
-                        >
-                          <span className="flex items-center gap-2">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Export All
-                          </span>
-                          <span className="text-[10px] uppercase text-white/40">
-                            {isExporting ? "..." : "ZIP"}
-                          </span>
+                        <button type="button" disabled={isExporting} className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5 disabled:opacity-50" style={{ color: 'var(--on-surface-variant)' }} onClick={handleExportConversation}>
+                          <span className="flex items-center gap-2"><span className="material-symbols-outlined text-sm">download</span>Export</span>
+                          <span className="label-meta" style={{ color: 'rgb(100,116,139)' }}>{isExporting ? '…' : 'ZIP'}</span>
                         </button>
                       )}
                     </div>
@@ -493,6 +257,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
         </div>
       </header>
 
+      {/* ── Content ──────────────────────────────────────────────── */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <Canvas sideWindow={sideWindow}>
           <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden">
