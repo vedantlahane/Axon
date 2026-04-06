@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>axon ai - Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c4c7c9",
+                        "tertiary": "#ffffff",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-primary-container": "#626567",
+                        "on-primary": "#2d3133",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "outline": "#8e9193",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#57657b",
+                        "on-error": "#690005",
+                        "on-tertiary": "#233144",
+                        "on-primary-fixed": "#191c1e",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#dae2fd",
+                        "secondary-fixed": "#d4e4fa",
+                        "primary-container": "#e0e3e5",
+                        "on-primary-fixed-variant": "#444749",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "outline-variant": "#444749",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-secondary": "#233143",
+                        "inverse-on-surface": "#283044",
+                        "surface-variant": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "primary": "#ffffff",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "inverse-primary": "#5c5f61",
+                        "surface": "#0b1326",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "surface-container-low": "#131b2e",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#39485a",
+                        "primary-fixed": "#e0e3e5",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+        }
+        .inner-glow-success { box-shadow: inset 0 0 12px rgba(74, 222, 128, 0.15); border: 0.5px solid rgba(74, 222, 128, 0.2); }
+        .inner-glow-info { box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.15); border: 0.5px solid rgba(56, 189, 248, 0.2); }
+        .inner-glow-warning { box-shadow: inset 0 0 12px rgba(251, 191, 36, 0.15); border: 0.5px solid rgba(251, 191, 36, 0.2); }
+        .ambient-orb {
+            position: fixed;
+            filter: blur(120px);
+            z-index: 0;
+            border-radius: 9999px;
+            opacity: 0.4;
+        }
+        .orb-1 { width: 400px; height: 400px; background: #171f33; top: -100px; left: -100px; }
+        .orb-2 { width: 500px; height: 500px; background: #222a3d; bottom: -150px; right: -150px; }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary/20 overflow-hidden">
+<!-- Ambient Orbs Background -->
+<div class="ambient-orb orb-1"></div>
+<div class="ambient-orb orb-2"></div>
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 w-full bg-transparent text-slate-100 font-inter tracking-tight">
+<div class="text-lg font-medium text-white lowercase">axon ai</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-400 hover:opacity-80 transition-opacity" data-icon="search">search</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="Portrait of a professional man with clean-cut appearance in a high-tech minimalist profile photo style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwOEAbnNkh5AbvIS-WpuJFtW30C9Ryl46aadQXhs06ierZSqfVhqMjqU9dL_M47z6Hn2UPnr2uoMZwwVGfH1b-2051UoQcWLNnbES31RWsg7NULWbdGf8r3LjeKNvc8PxC7pvE_4bShmVU0EosdCt-ZvFCmQYlyUIn_rOkGl1nzrHXyc0vqpiwpGzWPQRWyrst9wvw5NA_Naip97q-ZaY7xb4pDE5jakEmMqK3k-paSrVqW06iXUMeAXcvsskxWzwF7Kr4hTvOU5mc"/>
+</div>
+</div>
+</header>
+<!-- Workspace Canvas -->
+<main class="relative z-10 w-full h-screen pt-20 pb-24 px-6 flex flex-col items-center">
+<!-- Toast Stack Container -->
+<div class="fixed top-20 right-6 z-[60] flex flex-col gap-2 w-full max-w-sm">
+<!-- TOAST 1: Success -->
+<div class="liquid-glass rounded-xl p-4 flex items-start gap-4 inner-glow-success transform hover:scale-[1.02] transition-transform duration-200">
+<div class="bg-green-500/20 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-green-400 text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">Query executed successfully</span>
+<span class="text-xs text-slate-500 mt-0.5">12 rows returned in 34ms</span>
+</div>
+</div>
+<!-- TOAST 2: Info -->
+<div class="liquid-glass rounded-xl p-4 flex items-start gap-4 inner-glow-info transform hover:scale-[1.02] transition-transform duration-200">
+<div class="bg-sky-500/20 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-sky-400 text-[20px]" data-icon="info" style="font-variation-settings: 'FILL' 1;">info</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">Model switched to GPT-4o</span>
+<span class="text-xs text-slate-500 mt-0.5">Context preserved...</span>
+</div>
+</div>
+<!-- TOAST 3: Warning -->
+<div class="liquid-glass rounded-xl p-4 flex items-start gap-4 inner-glow-warning transform hover:scale-[1.02] transition-transform duration-200">
+<div class="bg-amber-500/20 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-amber-400 text-[20px]" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">Token limit approaching</span>
+<span class="text-xs text-slate-500 mt-0.5">85% of context window used</span>
+</div>
+</div>
+</div>
+<!-- Main Content Area (Background Mockup) -->
+<div class="w-full max-w-5xl flex flex-col gap-12 mt-12 opacity-40">
+<div class="flex flex-col gap-2">
+<h1 class="text-3xl font-light tracking-tight text-on-surface">Financial Analysis Report</h1>
+<p class="text-on-surface-variant max-w-2xl">Based on the latest Q3 datasets, here is the projected growth trajectory for the upcoming fiscal year.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="liquid-glass rounded-xl p-8 h-64 flex flex-col justify-end">
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-[65%] h-full bg-primary"></div>
+</div>
+<div class="flex justify-between mt-4">
+<span class="label-sm text-[10px] tracking-widest text-on-surface-variant uppercase">Growth Potential</span>
+<span class="label-sm text-[10px] tracking-widest text-primary uppercase">+24.8%</span>
+</div>
+</div>
+<div class="liquid-glass rounded-xl p-8 h-64 border border-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-surface-container-highest text-6xl" data-icon="insert_chart">insert_chart</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Fixed Input Bar -->
+<div class="fixed bottom-0 left-0 w-full p-6 z-50 flex justify-center">
+<div class="w-full max-w-3xl liquid-glass rounded-full p-1.5 pl-6 flex items-center border border-white/10 shadow-2xl">
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm text-on-surface placeholder:text-slate-500" placeholder="Type a message or command..." type="text"/>
+<div class="flex items-center gap-2 pr-1">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="attach_file">attach_file</span>
+</button>
+<button class="bg-white text-background w-10 h-10 rounded-full flex items-center justify-center hover:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

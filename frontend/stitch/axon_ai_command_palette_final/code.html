@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Axon AI - Command Palette</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#0d1c2d",
+                    "on-secondary-fixed-variant": "#39485a",
+                    "background": "#0b1326",
+                    "inverse-primary": "#5c5f61",
+                    "on-tertiary-fixed-variant": "#3a485c",
+                    "on-tertiary": "#233144",
+                    "on-secondary": "#233143",
+                    "error": "#ffb4ab",
+                    "surface-container": "#171f33",
+                    "inverse-on-surface": "#283044",
+                    "surface": "#0b1326",
+                    "surface-tint": "#c4c7c9",
+                    "primary-container": "#e0e3e5",
+                    "on-primary": "#2d3133",
+                    "surface-bright": "#31394d",
+                    "error-container": "#93000a",
+                    "surface-container-low": "#131b2e",
+                    "on-surface-variant": "#c4c7c9",
+                    "primary-fixed": "#e0e3e5",
+                    "outline": "#8e9193",
+                    "tertiary": "#ffffff",
+                    "secondary-fixed-dim": "#b9c8de",
+                    "tertiary-fixed": "#d5e3fd",
+                    "on-primary-fixed-variant": "#444749",
+                    "on-secondary-container": "#a7b6cc",
+                    "on-surface": "#dae2fd",
+                    "surface-variant": "#2d3449",
+                    "secondary-container": "#39485a",
+                    "tertiary-container": "#d5e3fd",
+                    "secondary": "#b9c8de",
+                    "on-background": "#dae2fd",
+                    "tertiary-fixed-dim": "#b9c7e0",
+                    "primary": "#ffffff",
+                    "on-tertiary-fixed": "#0d1c2f",
+                    "inverse-surface": "#dae2fd",
+                    "primary-fixed-dim": "#c4c7c9",
+                    "surface-container-highest": "#2d3449",
+                    "surface-container-high": "#222a3d",
+                    "outline-variant": "#444749",
+                    "on-tertiary-container": "#57657b",
+                    "on-primary-container": "#626567",
+                    "on-error-container": "#ffdad6",
+                    "surface-dim": "#0b1326",
+                    "secondary-fixed": "#d4e4fa",
+                    "on-primary-fixed": "#191c1e",
+                    "surface-container-lowest": "#060e20",
+                    "on-error": "#690005"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(24px) saturate(180%);
+        box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.4);
+      }
+      .tonal-shift-via-blur {
+        backdrop-filter: blur(8px);
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen selection:bg-primary/20">
+<!-- Background Content (Dimmed and Blurred) -->
+<div class="fixed inset-0 z-0 flex flex-col grayscale opacity-40 blur-md overflow-hidden pointer-events-none">
+<!-- Mock TopNavBar -->
+<nav class="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto">
+<div class="text-lg font-medium tracking-tighter text-slate-50">axon ai</div>
+<div class="flex gap-6">
+<span class="material-symbols-outlined text-slate-400">account_circle</span>
+</div>
+</nav>
+<!-- Mock Conversation Area -->
+<main class="flex-1 flex flex-col max-w-4xl mx-auto w-full px-6 pt-12 space-y-8">
+<div class="flex gap-4 items-start">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex-shrink-0"></div>
+<div class="glass-card p-6 rounded-xl w-full">
+<p class="text-on-surface-variant">Analyze the architectural implications of adopting a decentralized identity protocol for the current user authentication service.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-primary flex-shrink-0"></div>
+<div class="glass-card p-6 rounded-xl w-full">
+<p class="text-on-surface-variant">The integration of decentralized identity (DID) involves a fundamental shift from siloed user databases to sovereign identity wallets. This reduces service-side liability while increasing cryptographic overhead during the handshake...</p>
+</div>
+</div>
+</main>
+</div>
+<!-- The Overlay Mask -->
+<div class="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"></div>
+<!-- Command Palette Container -->
+<div class="fixed inset-0 z-50 flex items-start justify-center pt-[153px] px-4">
+<div class="glass-card w-full max-w-2xl rounded-xl overflow-hidden flex flex-col">
+<!-- Search Input -->
+<div class="p-6 flex items-center gap-4 surface-container-lowest border-b border-white/5">
+<span class="material-symbols-outlined text-primary/60">search</span>
+<input autofocus="" class="bg-transparent border-none focus:ring-0 text-lg w-full text-on-surface placeholder-on-surface-variant/40 outline-none" placeholder="Search conversations, commands, or documents..." type="text"/>
+<div class="flex items-center gap-1">
+<span class="px-2 py-1 bg-white/10 rounded text-[10px] font-medium tracking-widest text-on-surface-variant">ESC</span>
+</div>
+</div>
+<!-- Content Area -->
+<div class="flex-1 max-h-[614px] overflow-y-auto custom-scrollbar p-2">
+<!-- Section: Commands -->
+<div class="mb-4">
+<h3 class="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant/50">Commands</h3>
+<div class="space-y-1">
+<div class="group flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary/60">memory</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">/model</span>
+<span class="text-xs text-on-surface-variant/60">Switch current AI reasoning engine</span>
+</div>
+</div>
+<span class="text-[10px] text-on-surface-variant/40 opacity-0 group-hover:opacity-100 transition-opacity">GO</span>
+</div>
+<div class="group flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary/60">hub</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">/connect</span>
+<span class="text-xs text-on-surface-variant/60">Link external API or data source</span>
+</div>
+</div>
+<span class="text-[10px] text-on-surface-variant/40 opacity-0 group-hover:opacity-100 transition-opacity">GO</span>
+</div>
+<div class="group flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary/60">auto_awesome</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">/optimize</span>
+<span class="text-xs text-on-surface-variant/60">Refine recent prompt for better accuracy</span>
+</div>
+</div>
+<span class="text-[10px] text-on-surface-variant/40 opacity-0 group-hover:opacity-100 transition-opacity">GO</span>
+</div>
+</div>
+</div>
+<!-- Section: Recent Conversations -->
+<div class="mb-4">
+<h3 class="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant/50">Recent Conversations</h3>
+<div class="space-y-1">
+<div class="group flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant/40">chat_bubble</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">Decentralized Auth Architecture</span>
+<span class="text-xs text-on-surface-variant/60">Updated 2 mins ago</span>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-white/5 border border-white/5 rounded text-[10px] text-on-surface-variant">⌘ 1</span>
+</div>
+<div class="group flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant/40">chat_bubble</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">Quarterly Security Audit Draft</span>
+<span class="text-xs text-on-surface-variant/60">Updated 5 hours ago</span>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-white/5 border border-white/5 rounded text-[10px] text-on-surface-variant">⌘ 2</span>
+</div>
+</div>
+</div>
+<!-- Section: Documents -->
+<div class="mb-2">
+<h3 class="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant/50">Linked Documents</h3>
+<div class="space-y-1">
+<div class="group flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant/40">description</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium">API_Documentation_v2.pdf</span>
+<span class="text-xs text-on-surface-variant/60">Technical Specification • 4.2 MB</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40 text-sm">open_in_new</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<div class="p-4 border-t border-white/5 flex items-center justify-between bg-white/[0.02]">
+<div class="flex gap-4">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 bg-white/10 rounded text-[9px] font-bold text-on-surface-variant">↑↓</span>
+<span class="text-[10px] text-on-surface-variant/60">Navigate</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 bg-white/10 rounded text-[9px] font-bold text-on-surface-variant">ENTER</span>
+<span class="text-[10px] text-on-surface-variant/60">Select</span>
+</div>
+</div>
+<div class="text-[10px] text-on-surface-variant/40 font-medium">
+                    AXON SEARCH V1.0.4
+                </div>
+</div>
+</div>
+</div>
+<!-- BottomNavBar (Dimmed and Backgrounded) -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 flex flex-col p-4 gap-2 w-[90%] max-w-3xl opacity-20 pointer-events-none grayscale">
+<div class="bg-white/5 backdrop-blur-3xl rounded-3xl p-4 flex justify-between items-center outline-variant opacity-15">
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-slate-400">dynamic_form</span>
+<span class="label-sm uppercase tracking-widest text-[10px] text-slate-400">Status</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-white saturate-250">memory</span>
+<span class="label-sm uppercase tracking-widest text-[10px] text-white">Model</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-slate-400">bar_chart</span>
+<span class="label-sm uppercase tracking-widest text-[10px] text-slate-400">Tokens</span>
+</div>
+</div>
+</div>
+<!-- User Input Bar (Dimmed) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-full max-w-2xl px-6 opacity-30 pointer-events-none">
+<div class="glass-card rounded-xl p-4 flex items-center gap-3">
+<div class="w-full h-10 bg-surface-container-lowest rounded-lg"></div>
+<div class="w-10 h-10 bg-primary rounded-lg"></div>
+</div>
+</div>
+</body></html>

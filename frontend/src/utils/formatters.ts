@@ -45,3 +45,17 @@ export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return `${str.slice(0, maxLength)}…`;
 }
+
+export async function exportSqlResultsXlsx(
+  _queryText: string,
+  _columns: string[],
+  _rows: Array<Record<string, unknown>>
+): Promise<void> {
+  // TODO: Implement XLSX export functionality
+  console.warn('XLSX export not yet implemented');
+}
+
+// Utility for merging classnames conditionally
+export function cn(...classes: (string | boolean | undefined | null)[]): string {
+  return classes.filter(Boolean).join(' ');
+}

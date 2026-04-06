@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
+        }
+        .ambient-orb {
+            position: fixed;
+            border-radius: 9999px;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.15;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c4c7c9",
+                        "tertiary": "#ffffff",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-primary-container": "#626567",
+                        "on-primary": "#2d3133",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "outline": "#8e9193",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#57657b",
+                        "on-error": "#690005",
+                        "on-tertiary": "#233144",
+                        "on-primary-fixed": "#191c1e",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#dae2fd",
+                        "secondary-fixed": "#d4e4fa",
+                        "primary-container": "#e0e3e5",
+                        "on-primary-fixed-variant": "#444749",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "outline-variant": "#444749",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-secondary": "#233143",
+                        "inverse-on-surface": "#283044",
+                        "surface-variant": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "primary": "#ffffff",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "inverse-primary": "#5c5f61",
+                        "surface": "#0b1326",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "surface-container-low": "#131b2e",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#39485a",
+                        "primary-fixed": "#e0e3e5",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<!-- Ambient Orbs -->
+<div class="ambient-orb w-[500px] h-[500px] bg-secondary top-[-100px] left-[-100px]"></div>
+<div class="ambient-orb w-[400px] h-[400px] bg-surface-bright bottom-[-50px] right-[-50px]"></div>
+<!-- Top App Bar (Shared Component Strategy) -->
+<header class="fixed top-0 w-full z-50 bg-transparent flex justify-between items-center px-6 py-4 w-full z-50 transition-opacity">
+<div class="flex items-center gap-4">
+<span class="text-lg font-medium text-white lowercase font-inter tracking-tight">axon ai</span>
+</div>
+<div class="flex items-center gap-6">
+<!-- Hidden Nav Tabs as per prompt -->
+<button class="hover:opacity-80 transition-opacity text-slate-100 scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/20">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a professional man with a friendly expression in clean minimalist studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRsle8c28hpoQKahtOLwLCeMArApAX6zvCj-8KS16cP0OOk1Xi-QLE1V1ujNBWqP8nFHeeCX9pQB_7QqR5RMhier91cr13Uc_KPeVrDu-F2Jd-64DaGb4kY0j36iWT9TVYSvDOzQOyOjjnCFbk-9D35B_KGWeF6J5Ydo2VYLFRv7_NKl-HQ4yvVlEBc2PeIR0Pw_wffbZu-6Lea2Ca1DEGvqBn7Ti5xQlj5VAsICQwMO8BZoPJWBnJRABkG4jCugQvXDC2NSV5pn0X"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-40 px-6 min-h-screen">
+<div class="max-w-[720px] mx-auto flex flex-col gap-8">
+<h1 class="text-2xl font-medium tracking-tight mb-2">Settings</h1>
+<!-- SECTION 1: Profile -->
+<section class="liquid-glass rounded-xl p-6">
+<header class="mb-6">
+<h2 class="text-[0.6875rem] uppercase tracking-[0.2em] font-bold text-on-surface-variant opacity-70">Profile</h2>
+</header>
+<div class="flex items-center gap-6 mb-8">
+<div class="relative group cursor-pointer">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-primary/50 transition-colors">
+<img alt="Large avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a man in minimalist attire with soft natural lighting and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFfzf68soVD45yddZHA-HwkWR50EZdvCXcWkrW9gSx3nxllECAQ0c3-qZWWDymSf5nV4DZxQPqxtnX47ZD-dQvpulQprOhTcvWdRxORJbR6ZXef-gm4r3V49e6iraB5s3vVyPt6OMcnnhy85J-iZZzMxYFK1AuvLomkRBjqF5lzjBAmXC2F4exANL1gPj-wfH273WbLZ1uJIeRsBQ2AppqYStRDg4ZaFTcFqFrk3MC5xsJQvmIoY8eeEZxUyzU7rGbq6uA_MGSoaiT"/>
+</div>
+<div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+<span class="material-symbols-outlined text-white text-sm" data-icon="edit">edit</span>
+</div>
+</div>
+<div>
+<button class="text-sm font-medium text-primary hover:underline">Change avatar</button>
+<p class="text-xs text-on-surface-variant mt-1">JPG, GIF or PNG. Max size of 800K</p>
+</div>
+</div>
+<div class="grid gap-6">
+<div class="grid gap-2">
+<label class="text-xs font-medium text-on-surface-variant">Display name</label>
+<input class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-primary/20 transition-all" type="text" value="Alex Rivers"/>
+</div>
+<div class="grid gap-2">
+<label class="text-xs font-medium text-on-surface-variant">Email</label>
+<input class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-primary/20 transition-all" type="email" value="alex@axon.ai"/>
+</div>
+<div class="flex justify-end pt-2">
+<button class="bg-primary text-on-primary px-6 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity">Save Changes</button>
+</div>
+</div>
+</section>
+<!-- SECTION 2: AI Model -->
+<section class="liquid-glass rounded-xl p-6">
+<header class="mb-6">
+<h2 class="text-[0.6875rem] uppercase tracking-[0.2em] font-bold text-on-surface-variant opacity-70">AI Model</h2>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+<!-- Gemini Active -->
+<button class="flex flex-col items-start p-4 rounded-xl border border-primary/10 bg-primary/5 text-left transition-all hover:bg-primary/10">
+<span class="material-symbols-outlined text-sm mb-2 text-primary" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-sm font-semibold">Gemini 2.5 Pro</span>
+<span class="text-[10px] text-on-surface-variant">Google DeepMind</span>
+</button>
+<!-- GPT-4o -->
+<button class="flex flex-col items-start p-4 rounded-xl border border-transparent bg-surface-container-lowest text-left transition-all hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-sm mb-2 text-on-surface-variant" data-icon="psychology">psychology</span>
+<span class="text-sm font-medium">GPT-4o</span>
+<span class="text-[10px] text-on-surface-variant">OpenAI</span>
+</button>
+<!-- Claude -->
+<button class="flex flex-col items-start p-4 rounded-xl border border-transparent bg-surface-container-lowest text-left transition-all hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-sm mb-2 text-on-surface-variant" data-icon="bolt">bolt</span>
+<span class="text-sm font-medium">Claude 3.5</span>
+<span class="text-[10px] text-on-surface-variant">Anthropic</span>
+</button>
+</div>
+<div class="grid gap-2">
+<label class="text-xs font-medium text-on-surface-variant">API Key</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-primary/20 transition-all font-mono" type="password" value="sk-••••••••••••••••••••••••"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</section>
+<!-- SECTION 3: Database Connection -->
+<section class="liquid-glass rounded-xl p-6">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-[0.6875rem] uppercase tracking-[0.2em] font-bold text-on-surface-variant opacity-70">Database Connection</h2>
+<span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold tracking-wider flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        Connected
+                    </span>
+</div>
+<div class="grid gap-4">
+<div class="grid gap-2">
+<label class="text-xs font-medium text-on-surface-variant">Connection URL</label>
+<input class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-primary/20 transition-all font-mono text-on-surface-variant" readonly="" type="text" value="postgresql://admin:••••••@db.axon-cloud.net:5432/main"/>
+</div>
+<div class="flex gap-3 pt-2">
+<button class="flex-1 bg-surface-container-high text-on-surface px-4 py-2.5 rounded-full text-sm font-medium hover:bg-surface-container-highest transition-colors">Test Connection</button>
+<button class="flex-1 bg-primary text-on-primary px-4 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity">Save</button>
+</div>
+</div>
+</section>
+<!-- SECTION 4: Appearance -->
+<section class="liquid-glass rounded-xl p-6">
+<header class="mb-6">
+<h2 class="text-[0.6875rem] uppercase tracking-[0.2em] font-bold text-on-surface-variant opacity-70">Appearance</h2>
+</header>
+<div class="grid gap-8">
+<div class="flex items-center justify-between">
+<label class="text-sm font-medium">Theme</label>
+<div class="flex p-1 bg-surface-container-lowest rounded-full border border-white/5">
+<button class="px-4 py-1.5 rounded-full text-xs font-medium bg-surface-container-high shadow-lg">Dark</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-medium text-on-surface-variant hover:text-white transition-colors">Light</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-medium text-on-surface-variant hover:text-white transition-colors">System</button>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<label class="text-sm font-medium">Font size</label>
+<div class="flex p-1 bg-surface-container-lowest rounded-full border border-white/5">
+<button class="px-4 py-1.5 rounded-full text-xs font-medium text-on-surface-variant">Small</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-medium bg-surface-container-high shadow-lg">Default</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-medium text-on-surface-variant">Large</button>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<label class="text-sm font-medium block">Send with Enter</label>
+<span class="text-xs text-on-surface-variant">Press Shift+Enter for new line</span>
+</div>
+<button class="w-11 h-6 rounded-full bg-primary relative flex items-center px-1 transition-colors">
+<div class="w-4 h-4 rounded-full bg-on-primary ml-auto shadow-sm"></div>
+</button>
+</div>
+</div>
+</section>
+<!-- SECTION 5: Danger Zone -->
+<section class="bg-red-400/5 rounded-xl p-6 border border-red-400/10 backdrop-blur-md">
+<header class="mb-4">
+<h2 class="text-[0.6875rem] uppercase tracking-[0.2em] font-bold text-red-400 opacity-80">Danger Zone</h2>
+</header>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium">Delete account</p>
+<p class="text-xs text-on-surface-variant mt-1">Permanently remove all your data and access.</p>
+</div>
+<button class="text-red-400 text-sm font-semibold hover:underline">Delete account</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Fixed Footer Input Bar -->
+<footer class="fixed bottom-0 w-full z-50">
+<div class="max-w-[720px] mx-auto px-6 pb-6">
+<div class="liquid-glass rounded-full p-2 flex items-center gap-2 border border-white/10">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<input class="flex-1 bg-transparent border-none text-sm placeholder:text-on-surface-variant/50 focus:ring-0 italic" disabled="" placeholder="Changes are autosaved..." type="text"/>
+<button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-on-surface-variant cursor-not-allowed">
+<span class="material-symbols-outlined" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+<div class="mt-4 flex justify-between items-center px-4">
+<div class="flex gap-4">
+<span class="text-[10px] text-on-surface-variant/60 font-medium tracking-wider uppercase">v2.4.0-stable</span>
+<span class="text-[10px] text-on-surface-variant/60 font-medium tracking-wider uppercase">Region: US-East-1</span>
+</div>
+<div class="flex gap-4">
+<a class="text-[10px] text-on-surface-variant/60 hover:text-white transition-colors uppercase font-medium tracking-wider" href="#">Privacy</a>
+<a class="text-[10px] text-on-surface-variant/60 hover:text-white transition-colors uppercase font-medium tracking-wider" href="#">Docs</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

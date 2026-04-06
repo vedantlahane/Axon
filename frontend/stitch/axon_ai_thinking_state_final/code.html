@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>axon ai - Thinking...</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#0d1c2d",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "background": "#0b1326",
+                        "inverse-primary": "#5c5f61",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-tertiary": "#233144",
+                        "on-secondary": "#233143",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "inverse-on-surface": "#283044",
+                        "surface": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "primary-container": "#e0e3e5",
+                        "on-primary": "#2d3133",
+                        "surface-bright": "#31394d",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#131b2e",
+                        "on-surface-variant": "#c4c7c9",
+                        "primary-fixed": "#e0e3e5",
+                        "outline": "#8e9193",
+                        "tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-primary-fixed-variant": "#444749",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-surface": "#dae2fd",
+                        "surface-variant": "#2d3449",
+                        "secondary-container": "#39485a",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "on-background": "#dae2fd",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "primary": "#ffffff",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "inverse-surface": "#dae2fd",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "surface-container-highest": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "outline-variant": "#444749",
+                        "on-tertiary-container": "#57657b",
+                        "on-primary-container": "#626567",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#0b1326",
+                        "secondary-fixed": "#d4e4fa",
+                        "on-primary-fixed": "#191c1e",
+                        "surface-container-lowest": "#060e20",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.15);
+        }
+        .tonal-shift-via-blur {
+            backdrop-filter: blur(12px);
+            background: rgba(11, 19, 38, 0.8);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            from { background-position: 200% 0; }
+            to { background-position: -200% 0; }
+        }
+        .pulse-glow {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.1; }
+            50% { transform: scale(1.1); opacity: 0.2; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<!-- TopNavBar -->
+<header class="w-full top-0 sticky z-50 tonal-shift-via-blur">
+<nav class="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto font-sans antialiased text-sm tracking-wide">
+<div class="text-lg font-medium tracking-tighter text-slate-50">axon ai</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-white font-semibold hover:text-white transition-colors duration-300" href="#">Workspace</a>
+<a class="text-slate-400 hover:text-white transition-colors duration-300" href="#">History</a>
+<a class="text-slate-400 hover:text-white transition-colors duration-300" href="#">Library</a>
+</div>
+<div class="flex items-center gap-4 text-slate-50">
+<button class="material-symbols-outlined hover:text-white transition-colors">account_circle</button>
+</div>
+</nav>
+</header>
+<!-- Main Content Canvas -->
+<main class="relative w-full max-w-4xl mx-auto px-6 pt-12 pb-32 min-h-[calc(100vh-88px)] flex flex-col">
+<!-- User Message -->
+<div class="flex flex-col items-end mb-12 space-y-2">
+<div class="liquid-glass p-5 rounded-2xl max-w-[85%] text-on-surface">
+<p class="body-md leading-relaxed">Analyze the quarterly performance data from the provided PDF and cross-reference it with our PostgreSQL user-retention tables. What's the correlation between page load speed and churn rate in Q3?</p>
+</div>
+<span class="label-sm uppercase tracking-widest text-[10px] opacity-40 px-2">You • Just now</span>
+</div>
+<!-- AI Thinking State Container -->
+<div class="relative group">
+<!-- Background Pulse Component -->
+<div class="absolute -inset-4 bg-secondary/10 rounded-[2rem] blur-3xl pulse-glow pointer-events-none"></div>
+<!-- Thinking Card -->
+<div class="liquid-glass p-8 rounded-3xl relative overflow-hidden">
+<div class="flex items-start gap-6">
+<!-- AI Identity Icon -->
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-background text-xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div class="flex-1 space-y-6">
+<div class="flex justify-between items-center">
+<h2 class="headline-sm text-slate-50 font-medium tracking-tight">Thinking</h2>
+<div class="flex gap-1.5">
+<div class="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" style="animation-delay: 0.2s"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" style="animation-delay: 0.4s"></div>
+</div>
+</div>
+<!-- Progress Bar Shell -->
+<div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden relative">
+<div class="absolute top-0 left-0 h-full w-[65%] bg-primary shimmer rounded-full"></div>
+</div>
+<!-- Step List -->
+<div class="space-y-4">
+<!-- Step 1: Checked -->
+<div class="flex items-center gap-3 group/step">
+<div class="w-5 h-5 rounded-full border border-primary/20 flex items-center justify-center bg-primary/10">
+<span class="material-symbols-outlined text-[14px] text-primary">check</span>
+</div>
+<span class="text-sm text-on-surface-variant group-hover/step:text-on-surface transition-colors">Searching document context</span>
+</div>
+<!-- Step 2: Checked -->
+<div class="flex items-center gap-3 group/step">
+<div class="w-5 h-5 rounded-full border border-primary/20 flex items-center justify-center bg-primary/10">
+<span class="material-symbols-outlined text-[14px] text-primary">check</span>
+</div>
+<span class="text-sm text-on-surface-variant group-hover/step:text-on-surface transition-colors">Querying database schema</span>
+</div>
+<!-- Step 3: Active -->
+<div class="flex items-center gap-3">
+<div class="w-5 h-5 rounded-full border border-primary/30 flex items-center justify-center relative">
+<span class="absolute w-2 h-2 bg-primary rounded-full animate-ping opacity-75"></span>
+<span class="w-1.5 h-1.5 bg-primary rounded-full relative"></span>
+</div>
+<span class="text-sm text-white font-medium">Generating response...</span>
+</div>
+</div>
+<!-- Recessed Info Area -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-white/[0.03]">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-sm opacity-50">data_object</span>
+<span class="label-sm uppercase tracking-widest text-[10px] opacity-50">Active Stream</span>
+</div>
+<div class="space-y-1">
+<div class="h-2 w-3/4 bg-white/5 rounded shimmer"></div>
+<div class="h-2 w-1/2 bg-white/5 rounded shimmer" style="animation-delay: 0.3s"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Input Bar Area -->
+<div class="fixed bottom-0 left-0 w-full z-40 px-6 pb-8">
+<div class="max-w-3xl mx-auto relative">
+<div class="liquid-glass rounded-3xl p-2 flex items-center gap-2 shadow-[0px_20px_40px_rgba(0,0,0,0.4)]">
+<button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<div class="flex-1 px-2">
+<input class="bg-transparent border-none focus:ring-0 text-sm text-white w-full placeholder-slate-500" disabled="" placeholder="Ask follow-up..." type="text"/>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">mic</span>
+</button>
+<button class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-slate-500 cursor-not-allowed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</button>
+</div>
+</div>
+<!-- Contextual Status (BottomNavBar replacement logic) -->
+<div class="flex justify-center gap-6 mt-6">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/[0.05]">
+<span class="material-symbols-outlined text-[16px] text-primary">dynamic_form</span>
+<span class="label-sm uppercase tracking-widest text-[9px] text-white">Status: Processing</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/[0.05]">
+<span class="material-symbols-outlined text-[16px] text-slate-400">memory</span>
+<span class="label-sm uppercase tracking-widest text-[9px] text-slate-400">Model: AX-3 Turbo</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/[0.05]">
+<span class="material-symbols-outlined text-[16px] text-slate-400">bar_chart</span>
+<span class="label-sm uppercase tracking-widest text-[9px] text-slate-400">Tokens: 1,420</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Background Decoration -->
+<div class="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+<div class="absolute top-1/4 -right-20 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 -left-20 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px]"></div>
+</div>
+</body></html>

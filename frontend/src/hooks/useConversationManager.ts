@@ -1,17 +1,35 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  deleteConversationWithFiles,
+  deleteConversation,
   fetchConversation,
   fetchConversations,
   sendChatMessage,
-  type RawConversationDetail,
-  type UserProfile,
-} from "../services/chatApi";
-import type { ChatMessage, ConversationSummary } from "../types/chat";
-import { mapMessage, mapSummary, sortSummaries } from "../utils/chatMappers";
+} from "../services/chatService";
+import type { ChatMessage, ConversationSummary, RawConversationDetail } from "../types/chat";
+
+// Simple mappers - can be enhanced later
+const mapSummary = (raw: any): ConversationSummary => ({
+  id: raw.id,
+  title: raw.title,
+  summary: raw.summary,
+  updatedAt: raw.updatedAt,
+  updatedAtISO: raw.updatedAtISO,
+  messageCount: raw.messageCount,
+});
+
+const mapMessage = (raw: any): ChatMessage => ({
+  id: raw.id,
+  sender: raw.sender,
+  content: raw.content,
+  timestamp: raw.timestamp,
+  attachments: raw.attachments,
+});
+
+const sortSummaries = (summaries: ConversationSummary[]) =>
+  summaries.sort((a, b) => new Date(b.updatedAtISO ?? '').getTime() - new Date(a.updatedAtISO ?? '').getTime());
 
 interface UseConversationManagerOptions {
-  currentUser: UserProfile | null;
+  currentUser: any | null;
   openAuthModal: (mode: "signin" | "signup") => void;
   filterConversationMessages: (messages: ChatMessage[]) => ChatMessage[];
 }
@@ -156,10 +174,10 @@ const useConversationManager = ({
     [applyConversationUpdate, updateMessagesFromDetail]
   );
 
-  const deleteConversation = useCallback(
+  const deleteConversationFn = useCallback(
     async (conversationId: string) => {
       try {
-        await deleteConversationWithFiles(conversationId, true);
+        await deleteConversation(conversationId);
         setHistoryConversations((prev) => prev.filter((conversation) => conversation.id !== conversationId));
 
         if (selectedHistoryId === conversationId || activeConversationId === conversationId) {
@@ -183,7 +201,7 @@ const useConversationManager = ({
     startNewChat,
     sendMessage,
     selectHistoryConversation,
-    deleteConversation,
+    deleteConversation: deleteConversationFn,
     appendMessage,
     clearConversations,
   };

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchDatabaseSchema, requestSqlSuggestions as requestSqlSuggestionsApi, runSqlQuery, type SqlQueryResult, type SqlQuerySuggestion, type SqlSchemaPayload } from "../services/chatApi";
-import { normalizeSql } from "../utils/sqlUtils";
-import type { SqlQueryHistoryEntry, PendingQuery } from "../components/Canvas";
+import { fetchSchema, requestSuggestions, runSqlQuery } from "../services/databaseService";
+import type { SqlQueryResult, SqlQuerySuggestion, SqlSchemaPayload, SqlQueryHistoryEntry, PendingQuery } from "../types/database";
+import { normalizeSql } from "../utils/sql";
 import type { ChatMessage } from "../types/chat";
 
 interface UseSqlConsoleOptions {
@@ -87,7 +87,7 @@ const useSqlConsole = ({ canUseDatabaseTools, onRevealMessage }: UseSqlConsoleOp
 		setSqlConsoleError(null);
 
 		try {
-			const schemaPayload = await fetchDatabaseSchema();
+			const schemaPayload = await fetchSchema();
 			setSqlSchema(schemaPayload);
 		} catch (error) {
 			setSqlConsoleError(deriveErrorMessage(error, "Unable to load database schema."));
@@ -97,7 +97,7 @@ const useSqlConsole = ({ canUseDatabaseTools, onRevealMessage }: UseSqlConsoleOp
 	}, [canUseDatabaseTools]);
 
 	const executeSqlQuery = useCallback(
-		async (query: string, limit = 200, source: "ai" | "user" = "user"): Promise<SqlQueryResult> => {
+		async (query: string, limit = 200, _source: "assistant" | "suggestion" = "suggestion"): Promise<SqlQueryResult> => {
 			if (!canUseDatabaseTools) {
 				const error = new Error("Configure a database connection before running SQL queries.");
 				setSqlConsoleError(error.message);
@@ -121,17 +121,11 @@ const useSqlConsole = ({ canUseDatabaseTools, onRevealMessage }: UseSqlConsoleOp
 					id: `sql-${Date.now()}`,
 					query,
 					executedAt: new Date().toISOString(),
-					type: result.type,
-					rowCount: result.rowCount,
 					result,
-					source,
+					executionTimeMs: result.executionTimeMs,
 				};
 
 				setSqlHistory((prev) => [historyEntry, ...prev].slice(0, 25));
-
-				if (source === "ai") {
-					setLatestAutoResult(result);
-				}
 
 				setExecutedQueries((prev) => {
 					const newMap = new Map(prev);
@@ -175,7 +169,7 @@ const useSqlConsole = ({ canUseDatabaseTools, onRevealMessage }: UseSqlConsoleOp
 			setSqlSuggestionsError(null);
 
 			try {
-				const response = await requestSqlSuggestionsApi({
+			const response = await requestSuggestions({
 					query: trimmed,
 					includeSchema: options?.includeSchema ?? true,
 					maxSuggestions: options?.maxSuggestions,
@@ -264,13 +258,13 @@ const useSqlConsole = ({ canUseDatabaseTools, onRevealMessage }: UseSqlConsoleOp
 			lastAssistantMessageIdRef.current = message.id;
 
 			if (autoExecuteEnabled) {
-				void executeSqlQuery(sqlQuery, 200, "ai");
+				void executeSqlQuery(sqlQuery, 200, "assistant");
 			} else {
 				setSqlEditorValue(sqlQuery);
 				setPendingSqlQuery({
 					id: `pending-${Date.now()}`,
 					query: sqlQuery,
-					source: "ai",
+					source: "assistant",
 					timestamp: new Date().toISOString(),
 				});
 				setIsSideWindowOpen(true);
@@ -299,14 +293,14 @@ const useSqlConsole = ({ canUseDatabaseTools, onRevealMessage }: UseSqlConsoleOp
 			lastAssistantMessageIdRef.current = latestMessage.id;
 
 			if (autoExecuteEnabled) {
-				void executeSqlQuery(sqlQuery, 200, "ai");
+				void executeSqlQuery(sqlQuery, 200, "assistant");
 				return messages;
 			}
 
 			setPendingSqlQuery({
 				id: `pending-${Date.now()}`,
 				query: sqlQuery,
-				source: "ai",
+				source: "assistant",
 				timestamp: new Date().toISOString(),
 			});
 			setHiddenAssistantMessage(latestMessage);

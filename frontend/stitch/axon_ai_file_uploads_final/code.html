@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#0d1c2d",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "background": "#0b1326",
+                        "inverse-primary": "#5c5f61",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-tertiary": "#233144",
+                        "on-secondary": "#233143",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "inverse-on-surface": "#283044",
+                        "surface": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "primary-container": "#e0e3e5",
+                        "on-primary": "#2d3133",
+                        "surface-bright": "#31394d",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#131b2e",
+                        "on-surface-variant": "#c4c7c9",
+                        "primary-fixed": "#e0e3e5",
+                        "outline": "#8e9193",
+                        "tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-primary-fixed-variant": "#444749",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-surface": "#dae2fd",
+                        "surface-variant": "#2d3449",
+                        "secondary-container": "#39485a",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "on-background": "#dae2fd",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "primary": "#ffffff",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "inverse-surface": "#dae2fd",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "surface-container-highest": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "outline-variant": "#444749",
+                        "on-tertiary-container": "#57657b",
+                        "on-primary-container": "#626567",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#0b1326",
+                        "secondary-fixed": "#d4e4fa",
+                        "on-primary-fixed": "#191c1e",
+                        "surface-container-lowest": "#060e20",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+        }
+        .liquid-glass-active {
+            backdrop-filter: blur(24px) saturate(250%);
+        }
+        .tonal-shift-via-blur {
+            backdrop-filter: blur(12px);
+            background: rgba(11, 19, 38, 0.8);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="w-full top-0 sticky z-50 tonal-shift-via-blur">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto font-sans antialiased text-sm tracking-wide">
+<div class="text-lg font-medium tracking-tighter text-slate-50">axon ai</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-white font-semibold hover:text-white transition-colors duration-300" href="#">Workspace</a>
+<a class="text-slate-400 hover:text-white transition-colors duration-300" href="#">History</a>
+<a class="text-slate-400 hover:text-white transition-colors duration-300" href="#">Assets</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-50 scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-grow flex flex-col items-center justify-start px-6 pt-12 pb-32 max-w-4xl mx-auto w-full gap-12">
+<!-- User Message -->
+<div class="w-full flex flex-col items-end gap-4">
+<div class="liquid-glass p-6 rounded-xl max-w-[85%] text-on-surface">
+<p class="body-md mb-4">I've uploaded the Q3 Performance Review and the Revenue Sheet. Can you analyze the correlation between headcount growth and net revenue?</p>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 bg-surface-container-lowest px-3 py-2 rounded-full border border-outline-variant/15">
+<span class="material-symbols-outlined text-sm" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="label-sm tracking-widest text-[10px] uppercase">Q3_PERFORMANCE.PDF</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest px-3 py-2 rounded-full border border-outline-variant/15">
+<span class="material-symbols-outlined text-sm" data-icon="table_chart">table_chart</span>
+<span class="label-sm tracking-widest text-[10px] uppercase">REVENUE_DATA_V2.XLSX</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Axon Response Container -->
+<div class="w-full flex flex-col gap-8">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-white/20 to-white/5 flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-sm text-white" data-icon="blur_on">blur_on</span>
+</div>
+<span class="label-sm uppercase tracking-widest text-on-surface-variant">Axon Analysis Engine</span>
+</div>
+<!-- Response Content -->
+<div class="flex flex-col gap-6 pl-11">
+<p class="text-on-surface leading-relaxed text-lg font-light">
+                    Analysis complete. The data indicates a strong positive correlation (r=0.84) between tactical hiring in the EMEA region and the subsequent 12% lift in subscription renewals. Here is the breakdown:
+                </p>
+<!-- Document Preview Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Preview Card 1: Bullet List Summary -->
+<div class="liquid-glass p-6 rounded-xl flex flex-col gap-4 border border-white/5 hover:bg-white/10 transition-all duration-300">
+<div class="flex items-center justify-between">
+<span class="label-sm uppercase tracking-widest text-on-surface-variant">Summary: Q3 Review</span>
+<span class="material-symbols-outlined text-sm opacity-40" data-icon="description">description</span>
+</div>
+<ul class="space-y-3 text-sm text-on-surface-variant">
+<li class="flex gap-3">
+<span class="w-1 h-1 rounded-full bg-secondary mt-2 shrink-0"></span>
+                                Headcount increased by 14% primarily in Customer Success roles.
+                            </li>
+<li class="flex gap-3">
+<span class="w-1 h-1 rounded-full bg-secondary mt-2 shrink-0"></span>
+                                Employee retention reached an all-time high of 92%.
+                            </li>
+<li class="flex gap-3">
+<span class="w-1 h-1 rounded-full bg-secondary mt-2 shrink-0"></span>
+                                Shift toward "Product-Led Growth" strategy finalized in September.
+                            </li>
+</ul>
+</div>
+<!-- Preview Card 2: Mini Data Table -->
+<div class="liquid-glass p-6 rounded-xl flex flex-col gap-4 border border-white/5 hover:bg-white/10 transition-all duration-300">
+<div class="flex items-center justify-between">
+<span class="label-sm uppercase tracking-widest text-on-surface-variant">Revenue Metrics</span>
+<span class="material-symbols-outlined text-sm opacity-40" data-icon="monitoring">monitoring</span>
+</div>
+<div class="overflow-hidden rounded-lg bg-surface-container-lowest/50 border border-outline-variant/10">
+<table class="w-full text-left text-xs">
+<thead class="bg-surface-container-high/50 text-on-surface-variant uppercase tracking-tighter">
+<tr>
+<th class="px-3 py-2 font-medium">Month</th>
+<th class="px-3 py-2 font-medium">Hires</th>
+<th class="px-3 py-2 font-medium text-right">ARR (M)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5 text-on-surface">
+<tr>
+<td class="px-3 py-2">July</td>
+<td class="px-3 py-2">08</td>
+<td class="px-3 py-2 text-right">$4.2</td>
+</tr>
+<tr>
+<td class="px-3 py-2">August</td>
+<td class="px-3 py-2">12</td>
+<td class="px-3 py-2 text-right">$4.8</td>
+</tr>
+<tr>
+<td class="px-3 py-2">Sept</td>
+<td class="px-3 py-2">15</td>
+<td class="px-3 py-2 text-right">$5.6</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Suggestion Pills -->
+<div class="flex flex-wrap gap-2 pt-4">
+<button class="bg-surface-container-high hover:bg-surface-variant text-on-surface text-xs px-4 py-2 rounded-full border border-outline-variant/10 transition-all">
+                        Predict Q4 churn rates
+                    </button>
+<button class="bg-surface-container-high hover:bg-surface-variant text-on-surface text-xs px-4 py-2 rounded-full border border-outline-variant/10 transition-all">
+                        Generate hiring ROI report
+                    </button>
+<button class="bg-surface-container-high hover:bg-surface-variant text-on-surface text-xs px-4 py-2 rounded-full border border-outline-variant/10 transition-all">
+                        Compare with Q2 data
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Area (Floating Input) -->
+<div class="fixed bottom-0 left-0 right-0 p-8 flex flex-col items-center pointer-events-none">
+<div class="w-full max-w-3xl pointer-events-auto">
+<!-- Floating Input Shell -->
+<div class="liquid-glass rounded-3xl p-4 flex flex-col gap-3 shadow-[0px_20px_40px_rgba(0,0,0,0.4)] border border-white/5">
+<!-- Active Files Overlay -->
+<div class="flex gap-2 px-2">
+<div class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 group">
+<span class="material-symbols-outlined text-[16px] text-red-400" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="text-[11px] font-medium tracking-tight">Q3_PERFORMANCE.PDF</span>
+<button class="opacity-40 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[14px]" data-icon="close">close</span>
+</button>
+</div>
+<div class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 group">
+<span class="material-symbols-outlined text-[16px] text-emerald-400" data-icon="table_chart">table_chart</span>
+<span class="text-[11px] font-medium tracking-tight">REVENUE_DATA_V2.XLSX</span>
+<button class="opacity-40 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[14px]" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<!-- Input Bar -->
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<input class="flex-grow bg-transparent border-none focus:ring-0 text-sm text-on-surface placeholder:text-slate-500" placeholder="Ask Axon anything about these files..." type="text"/>
+<button class="bg-white text-on-primary p-2 px-4 rounded-full font-semibold text-xs flex items-center gap-2 hover:scale-105 transition-transform duration-200">
+<span>Send</span>
+<span class="material-symbols-outlined text-sm" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+</div>
+<!-- BottomNavBar from JSON (Contextual State: Tokens) -->
+<div class="mt-4 flex flex-row items-center justify-between p-4 px-8 liquid-glass rounded-full border border-white/5 mx-auto w-[90%] pointer-events-auto">
+<div class="flex items-center gap-6">
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-slate-400 opacity-60 hover:backdrop-saturate-250 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="dynamic_form">dynamic_form</span>
+<span class="label-sm uppercase tracking-widest text-[10px]">Status</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-slate-400 opacity-60 hover:backdrop-saturate-250 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="memory">memory</span>
+<span class="label-sm uppercase tracking-widest text-[10px]">Model</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer text-white saturate-250 hover:backdrop-saturate-250 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="BarChart">bar_chart</span>
+<span class="label-sm uppercase tracking-widest text-[10px]">Tokens</span>
+</div>
+</div>
+<div class="text-[10px] font-mono opacity-40 uppercase tracking-[0.2em]">
+                    Context: 8.4k / 128k
+                </div>
+</div>
+</div>
+</div>
+</body></html>

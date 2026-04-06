@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>axon ai - Documents Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c4c7c9",
+                        "tertiary": "#ffffff",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-primary-container": "#626567",
+                        "on-primary": "#2d3133",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "outline": "#8e9193",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#57657b",
+                        "on-error": "#690005",
+                        "on-tertiary": "#233144",
+                        "on-primary-fixed": "#191c1e",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#dae2fd",
+                        "secondary-fixed": "#d4e4fa",
+                        "primary-container": "#e0e3e5",
+                        "on-primary-fixed-variant": "#444749",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "outline-variant": "#444749",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-secondary": "#233143",
+                        "inverse-on-surface": "#283044",
+                        "surface-variant": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "primary": "#ffffff",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "inverse-primary": "#5c5f61",
+                        "surface": "#0b1326",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "surface-container-low": "#131b2e",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#39485a",
+                        "primary-fixed": "#e0e3e5",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+        }
+        .liquid-glass:hover {
+            backdrop-filter: blur(24px) saturate(250%);
+            -webkit-backdrop-filter: blur(24px) saturate(250%);
+        }
+        .ambient-orb {
+            position: fixed;
+            width: 40vw;
+            height: 40vw;
+            border-radius: 9999px;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.15;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<!-- Ambient Orbs Background -->
+<div class="ambient-orb bg-secondary top-[-10%] left-[-5%]"></div>
+<div class="ambient-orb bg-tertiary-container bottom-[-10%] right-[-5%]"></div>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full bg-transparent text-slate-100 font-inter tracking-tight z-50 flex justify-between items-center px-6 py-4 w-full">
+<div class="text-lg font-medium text-white lowercase">axon ai</div>
+<div class="flex items-center gap-6">
+<button class="hover:opacity-80 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400" data-icon="search">search</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-white/10">
+<img alt="User avatar" data-alt="close up profile photo of a person with minimalist aesthetic, soft studio lighting, professional and modern look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPE51taWB8tr0dDhj7unetjX8szYyZMQQK3ZZWzYGqZOJhrudF-xyUJayIcArnW6bw26AhArC7oHG_rreiaR0ic1PvSsOWxR2Mi9hTvxV8VKglsCM-A8Y0KxsUEBykP7dR-85bT-mfnzxzy_9wWDJDpBFAEhLI6ETQAGQO5g1VYod3KcG0_H9FU2xAxFo_2hcwO1NtLQZTrCv_pU8u1Z2OKoMiOQvJQw2zBQ9FSRKuQracO_pAU3FYDSrQddjQPb_msAEhVRldctRL"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-48 px-6 flex flex-col items-center min-h-screen">
+<div class="w-full max-w-[900px]">
+<!-- Page Title Area -->
+<div class="flex justify-between items-end mb-12">
+<div class="space-y-1">
+<h1 class="text-2xl font-medium tracking-tight text-white">Documents</h1>
+<p class="text-on-surface-variant text-sm">Manage your AI context and data sources.</p>
+</div>
+<button class="liquid-glass rounded-full px-6 py-2.5 flex items-center gap-2 border border-white/5 hover:border-white/20 transition-all text-sm font-medium text-white">
+<span class="material-symbols-outlined text-sm" data-icon="upload">upload</span>
+                    Upload
+                </button>
+</div>
+<!-- Upload Dropzone -->
+<div class="liquid-glass rounded-xl border border-dashed border-white/10 p-12 mb-12 flex flex-col items-center justify-center group cursor-pointer hover:border-white/20 transition-colors">
+<div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl text-secondary" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<p class="text-lg font-medium text-white mb-1">Drop files here...</p>
+<p class="text-on-surface-variant text-sm">or click to browse from your computer</p>
+<div class="mt-6 px-4 py-1.5 rounded-full bg-white/5 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Max 50MB per file</div>
+</div>
+<!-- Documents Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- PDF Card -->
+<div class="liquid-glass rounded-xl p-5 border border-white/5 group hover:bg-white/[0.08] transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-2.5 rounded-lg bg-red-500/10 text-red-400">
+<span class="material-symbols-outlined block" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h3 class="font-medium text-white mb-1 truncate" title="Q3_Market_Report_2023.pdf">Q3_Market_Report_2023.pdf</h3>
+<div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
+<span>4.2 MB</span>
+<span class="w-1 h-1 rounded-full bg-slate-700"></span>
+<span>Oct 12, 2023</span>
+</div>
+</div>
+<!-- XLSX Card -->
+<div class="liquid-glass rounded-xl p-5 border border-white/5 group hover:bg-white/[0.08] transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+<span class="material-symbols-outlined block" data-icon="table_chart">table_chart</span>
+</div>
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h3 class="font-medium text-white mb-1 truncate" title="Customer_Database_Final.xlsx">Customer_Database_Final.xlsx</h3>
+<div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
+<span>2.8 MB</span>
+<span class="w-1 h-1 rounded-full bg-slate-700"></span>
+<span>Oct 10, 2023</span>
+</div>
+</div>
+<!-- SQL Card -->
+<div class="liquid-glass rounded-xl p-5 border border-white/5 group hover:bg-white/[0.08] transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-2.5 rounded-lg bg-blue-500/10 text-blue-400">
+<span class="material-symbols-outlined block" data-icon="database">database</span>
+</div>
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h3 class="font-medium text-white mb-1 truncate" title="schema_dump_v2.sql">schema_dump_v2.sql</h3>
+<div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
+<span>6.1 MB</span>
+<span class="w-1 h-1 rounded-full bg-slate-700"></span>
+<span>Oct 08, 2023</span>
+</div>
+</div>
+<!-- TXT Card -->
+<div class="liquid-glass rounded-xl p-5 border border-white/5 group hover:bg-white/[0.08] transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-2.5 rounded-lg bg-slate-500/10 text-slate-400">
+<span class="material-symbols-outlined block" data-icon="description">description</span>
+</div>
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h3 class="font-medium text-white mb-1 truncate" title="Meeting_Notes_AI_Sync.txt">Meeting_Notes_AI_Sync.txt</h3>
+<div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
+<span>0.6 MB</span>
+<span class="w-1 h-1 rounded-full bg-slate-700"></span>
+<span>Oct 05, 2023</span>
+</div>
+</div>
+<!-- Another PDF Card for variety -->
+<div class="liquid-glass rounded-xl p-5 border border-white/5 group hover:bg-white/[0.08] transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-2.5 rounded-lg bg-red-500/10 text-red-400">
+<span class="material-symbols-outlined block" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<h3 class="font-medium text-white mb-1 truncate" title="Product_Roadmap_2024.pdf">Product_Roadmap_2024.pdf</h3>
+<div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
+<span>13.7 MB</span>
+<span class="w-1 h-1 rounded-full bg-slate-700"></span>
+<span>Oct 01, 2023</span>
+</div>
+</div>
+</div>
+<!-- Storage Usage Section -->
+<div class="mt-16 max-w-sm">
+<div class="flex justify-between items-end mb-3">
+<span class="text-sm font-medium text-white">Storage Usage</span>
+<span class="text-[11px] text-on-surface-variant uppercase tracking-wider font-bold">13.7 MB of 100 MB</span>
+</div>
+<div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-violet-400 w-[13.7%] rounded-full shadow-[0_0_12px_rgba(167,139,250,0.4)]"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Input Bar Area -->
+<div class="fixed bottom-0 left-0 w-full z-50">
+<div class="max-w-[800px] mx-auto px-6 pb-8">
+<!-- Glass Input -->
+<div class="liquid-glass rounded-2xl border border-white/5 p-2 flex items-center gap-2 group focus-within:border-white/20 transition-all">
+<button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<input class="flex-grow bg-transparent border-none focus:ring-0 text-white placeholder-slate-500 py-3" placeholder="Ask AI about these documents..." type="text"/>
+<button class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+<!-- Meta Row -->
+<div class="mt-4 flex justify-between items-center px-2">
+<div class="flex gap-4">
+<button class="flex items-center gap-1.5 text-[11px] text-on-surface-variant hover:text-white transition-colors uppercase tracking-widest font-bold">
+<span class="material-symbols-outlined text-[14px]" data-icon="history">history</span>
+                        History
+                    </button>
+<button class="flex items-center gap-1.5 text-[11px] text-on-surface-variant hover:text-white transition-colors uppercase tracking-widest font-bold">
+<span class="material-symbols-outlined text-[14px]" data-icon="settings">settings</span>
+                        Context Settings
+                    </button>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+<span class="text-[11px] text-on-surface-variant font-medium">System Ready</span>
+</div>
+</div>
+</div>
+</div>
+</body></html>

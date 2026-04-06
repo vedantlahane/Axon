@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>axon ai - Active Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c4c7c9",
+                        "tertiary": "#ffffff",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-primary-container": "#626567",
+                        "on-primary": "#2d3133",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "outline": "#8e9193",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#57657b",
+                        "on-error": "#690005",
+                        "on-tertiary": "#233144",
+                        "on-primary-fixed": "#191c1e",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#dae2fd",
+                        "secondary-fixed": "#d4e4fa",
+                        "primary-container": "#e0e3e5",
+                        "on-primary-fixed-variant": "#444749",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "outline-variant": "#444749",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-secondary": "#233143",
+                        "inverse-on-surface": "#283044",
+                        "surface-variant": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "primary": "#ffffff",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "inverse-primary": "#5c5f61",
+                        "surface": "#0b1326",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "surface-container-low": "#131b2e",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#39485a",
+                        "primary-fixed": "#e0e3e5",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+        }
+        .ambient-orb {
+            position: fixed;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.4;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .code-pill {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- Ambient Orbs -->
+<div class="ambient-orb w-[600px] h-[600px] bg-secondary top-[-200px] left-[-200px] rounded-full"></div>
+<div class="ambient-orb w-[500px] h-[500px] bg-on-tertiary-container bottom-[-100px] right-[-100px] rounded-full"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 py-4 w-full z-50 bg-transparent text-slate-100 font-inter tracking-tight">
+<div class="flex items-center gap-3">
+<span class="text-lg font-medium text-white lowercase">axon ai</span>
+<div class="h-4 w-[1px] bg-outline-variant/30"></div>
+<span class="text-xs uppercase tracking-widest text-slate-400 font-medium">Workspace</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:opacity-80 transition-opacity flex items-center justify-center p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User avatar" data-alt="User avatar of a young professional with a neutral background and clean lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6D0tRGRSitD7xmMVgf1dlSVgk-nAzUts0X5pMnbmhm0momzWHPHHH_spYVJuEC0Q3_81egruq2JOVjV1wI67Ko3kk_NA-Lg8UM2fn-yYqmQUVz4wfXrIDEfVLlthbwfX9tcMD6aV8QCU7cLI5WDoQzou05cAs5qy4Xxr2wNScS7WB-nG153h_QARngy1T3Dc_xgNsxQjXWeoCIAyU_8XyAyYuofudBPGp_xTwGuwsdgvZcUI0_kfo5NLhp9Y8_RB3q81KnpBZ6Fgb"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 mt-20 mb-32 px-6 max-w-5xl mx-auto w-full space-y-12">
+<!-- User Message -->
+<section class="flex flex-col items-end space-y-2">
+<div class="max-w-[80%] liquid-glass p-6 rounded-2xl rounded-tr-none text-on-surface">
+<p class="body-md leading-relaxed">
+                    Can you optimize this SQL query? It takes 2 seconds on 1M rows. I need the latest order for every customer who spent over $500 in 30 days.
+                </p>
+</div>
+<div class="flex items-center gap-2 px-1">
+<span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">You · 10:42 AM</span>
+</div>
+</section>
+<!-- Axon Response -->
+<section class="space-y-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-violet-400/20 flex items-center justify-center text-violet-400">
+<span class="material-symbols-outlined !text-lg" data-icon="psychology">psychology</span>
+</div>
+<span class="text-sm font-semibold tracking-tight text-white">Axon</span>
+</div>
+<!-- SQL Editor Card -->
+<div class="liquid-glass rounded-xl overflow-hidden border border-outline-variant/10 shadow-2xl">
+<!-- Header -->
+<div class="bg-surface-container-highest/30 px-5 py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400" data-icon="terminal">terminal</span>
+<span class="text-xs font-mono text-slate-300">optimized_query.sql</span>
+<span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase font-bold tracking-tighter">Validated</span>
+</div>
+<div class="flex gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+</div>
+</div>
+<!-- Editor Body -->
+<div class="p-6 bg-surface-container-lowest/50 font-mono text-sm leading-relaxed overflow-x-auto">
+<pre><code class="text-slate-300"><span class="text-blue-400">WITH</span> UserSpending <span class="text-blue-400">AS</span> (
+  <span class="text-blue-400">SELECT</span> customer_id
+  <span class="text-blue-400">FROM</span> orders
+  <span class="text-blue-400">WHERE</span> order_date &gt;= <span class="text-emerald-400">CURRENT_DATE</span> - <span class="text-emerald-400">INTERVAL</span> <span class="text-amber-300">'30 days'</span>
+  <span class="text-blue-400">GROUP BY</span> customer_id
+  <span class="text-blue-400">HAVING SUM</span>(amount) &gt; <span class="text-amber-300">500</span>
+),
+LatestOrders <span class="text-blue-400">AS</span> (
+  <span class="text-blue-400">SELECT</span> *,
+    <span class="text-purple-400">ROW_NUMBER</span>() <span class="text-blue-400">OVER</span> (<span class="text-blue-400">PARTITION BY</span> customer_id <span class="text-blue-400">ORDER BY</span> order_date <span class="text-blue-400">DESC</span>) <span class="text-blue-400">as</span> rank
+  <span class="text-blue-400">FROM</span> orders
+  <span class="text-blue-400">WHERE</span> customer_id <span class="text-blue-400">IN</span> (<span class="text-blue-400">SELECT</span> customer_id <span class="text-blue-400">FROM</span> UserSpending)
+)
+<span class="text-blue-400">SELECT</span> * <span class="text-blue-400">FROM</span> LatestOrders <span class="text-blue-400">WHERE</span> rank = <span class="text-amber-300">1</span>;</code></pre>
+</div>
+<!-- Footer Actions -->
+<div class="px-5 py-4 bg-surface-container-highest/20 flex justify-end gap-3">
+<button class="px-4 py-2 rounded-lg text-xs font-medium text-on-surface-variant hover:bg-white/5 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined !text-sm" data-icon="content_copy">content_copy</span>
+                        Copy
+                    </button>
+<button class="px-4 py-2 rounded-lg text-xs font-bold bg-primary text-on-primary hover:opacity-90 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined !text-sm" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        Run Query
+                    </button>
+</div>
+</div>
+<!-- Explanation -->
+<div class="max-w-3xl space-y-4">
+<p class="body-md text-on-surface-variant leading-relaxed">
+                    To optimize this, I implemented a <span class="code-pill text-white">CTE (Common Table Expression)</span> to filter high-value customers first. This reduces the dataset before applying the expensive <span class="code-pill text-white">ROW_NUMBER()</span> window function. 
+                </p>
+<p class="body-md text-on-surface-variant leading-relaxed">
+                    By narrowing down the <span class="code-pill text-white">customer_id</span> space in the first pass, we leverage existing indexes on <span class="code-pill text-white">order_date</span> and <span class="code-pill text-white">customer_id</span>, which should reduce execution time from 2s to sub-200ms.
+                </p>
+</div>
+</section>
+</main>
+<!-- Locked Input Bar -->
+<footer class="fixed bottom-0 w-full z-50 p-6 flex flex-col items-center">
+<div class="max-w-4xl w-full bg-surface-container-high/60 backdrop-blur-3xl rounded-2xl border border-outline-variant/10 shadow-2xl p-2 transition-all focus-within:ring-1 ring-primary/20">
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder:text-slate-500 text-sm" placeholder="Ask a follow-up or type '/' for commands..." type="text"/>
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="mic">mic</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-xl hover:scale-95 transition-transform">
+<span class="material-symbols-outlined !text-lg" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+</div>
+<!-- Meta Row -->
+<div class="mt-4 flex gap-6">
+<div class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+<span class="material-symbols-outlined !text-xs" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                GPT-4 Vision Engine
+            </div>
+<div class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+<span class="material-symbols-outlined !text-xs" data-icon="database">database</span>
+                Connected: Production
+            </div>
+<div class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+<span class="material-symbols-outlined !text-xs" data-icon="history">history</span>
+                Context: 4.2k tokens
+            </div>
+</div>
+</footer>
+</body></html>

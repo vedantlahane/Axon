@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15);
+        }
+        .ai-pulse {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(185, 200, 222, 0.08) 0%, rgba(11, 19, 38, 0) 70%);
+            z-index: -1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .ambient-orb-1 {
+            position: fixed;
+            top: -10%;
+            right: -5%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(57, 72, 90, 0.15) 0%, rgba(11, 19, 38, 0) 80%);
+            z-index: -2;
+        }
+        .ambient-orb-2 {
+            position: fixed;
+            bottom: -20%;
+            left: -10%;
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, rgba(35, 49, 68, 0.12) 0%, rgba(11, 19, 38, 0) 80%);
+            z-index: -2;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#0d1c2d",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "background": "#0b1326",
+                        "inverse-primary": "#5c5f61",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-tertiary": "#233144",
+                        "on-secondary": "#233143",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "inverse-on-surface": "#283044",
+                        "surface": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "primary-container": "#e0e3e5",
+                        "on-primary": "#2d3133",
+                        "surface-bright": "#31394d",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#131b2e",
+                        "on-surface-variant": "#c4c7c9",
+                        "primary-fixed": "#e0e3e5",
+                        "outline": "#8e9193",
+                        "tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-primary-fixed-variant": "#444749",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-surface": "#dae2fd",
+                        "surface-variant": "#2d3449",
+                        "secondary-container": "#39485a",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "on-background": "#dae2fd",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "primary": "#ffffff",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "inverse-surface": "#dae2fd",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "surface-container-highest": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "outline-variant": "#444749",
+                        "on-tertiary-container": "#57657b",
+                        "on-primary-container": "#626567",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#0b1326",
+                        "secondary-fixed": "#d4e4fa",
+                        "on-primary-fixed": "#191c1e",
+                        "surface-container-lowest": "#060e20",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<div class="ambient-orb-1"></div>
+<div class="ambient-orb-2"></div>
+<!-- TopNavBar -->
+<header class="w-full top-0 sticky bg-transparent text-slate-50 font-sans antialiased text-sm tracking-wide z-50">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto">
+<div class="text-lg font-medium tracking-tighter text-slate-50">axon ai</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-slate-400">
+<button class="hover:text-white transition-colors duration-300 active:scale-95 duration-200">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="hover:text-white transition-colors duration-300 active:scale-95 duration-200">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="relative flex flex-col items-center justify-center min-h-[calc(100vh-88px)] px-6 pb-24 overflow-hidden">
+<!-- Center Content -->
+<div class="relative flex flex-col items-center max-w-2xl w-full text-center">
+<!-- AI Pulse Signature Component -->
+<div class="ai-pulse"></div>
+<!-- Glass Icon -->
+<div class="relative w-24 h-24 mb-8 flex items-center justify-center liquid-glass rounded-[2rem] border border-white/10 group hover:saturate-250 transition-all duration-500">
+<span class="material-symbols-outlined text-4xl text-primary opacity-80 group-hover:opacity-100" style="font-variation-settings: 'FILL' 1;">fluid</span>
+<div class="absolute -inset-4 bg-primary/5 blur-3xl rounded-full -z-10"></div>
+</div>
+<!-- Headlines -->
+<h1 class="text-5xl md:text-6xl font-headline font-light tracking-tight text-white mb-6">
+                Ask anything. <span class="text-slate-400">Upload anything.</span>
+</h1>
+<!-- Suggestion Pills -->
+<div class="flex flex-wrap justify-center gap-3 mt-8">
+<button class="px-5 py-2.5 rounded-full liquid-glass border border-outline-variant/15 text-sm font-label tracking-wide text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-95">
+                    Optimize a SQL query
+                </button>
+<button class="px-5 py-2.5 rounded-full liquid-glass border border-outline-variant/15 text-sm font-label tracking-wide text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-95">
+                    Analyze a document
+                </button>
+<button class="px-5 py-2.5 rounded-full liquid-glass border border-outline-variant/15 text-sm font-label tracking-wide text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-95">
+                    Explore database schema
+                </button>
+<button class="px-5 py-2.5 rounded-full liquid-glass border border-outline-variant/15 text-sm font-label tracking-wide text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-95">
+                    Write a Python function
+                </button>
+</div>
+</div>
+<!-- Input Section -->
+<div class="fixed bottom-12 left-1/2 -translate-x-1/2 w-full max-w-3xl px-6 z-40">
+<div class="liquid-glass border border-outline-variant/15 rounded-3xl p-2 shadow-[0px_20px_40px_rgba(0,0,0,0.4)] transition-all focus-within:shadow-[0px_0px_30px_rgba(255,255,255,0.05)]">
+<div class="relative flex items-center px-4 py-2">
+<input class="w-full bg-transparent border-none focus:ring-0 text-white placeholder-slate-500 py-3 text-lg" placeholder="Message axon..." type="text"/>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 text-slate-400 transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-background hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Chat Hub Metadata) -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 flex flex-col p-4 gap-2 rounded-3xl mx-auto mb-8 w-[90%] max-w-3xl bg-white/5 dark:bg-white/5 backdrop-blur-3xl shadow-[0px_20px_40px_rgba(0,0,0,0.4)]">
+<div class="flex justify-between items-center px-4 py-1">
+<div class="flex gap-8">
+<!-- Status -->
+<div class="flex flex-col items-center gap-1 opacity-60 text-slate-400 hover:backdrop-saturate-250 transition-all group">
+<span class="material-symbols-outlined text-[18px]">dynamic_form</span>
+<span class="label-sm uppercase tracking-widest text-[10px] font-label">Status</span>
+</div>
+<!-- Model (Active State Logic) -->
+<div class="flex flex-col items-center gap-1 text-white saturate-250 transition-all">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+<span class="label-sm uppercase tracking-widest text-[10px] font-label">Model: Gemini 2.5 Pro</span>
+</div>
+<!-- Tokens -->
+<div class="flex flex-col items-center gap-1 opacity-60 text-slate-400 hover:backdrop-saturate-250 transition-all group">
+<span class="material-symbols-outlined text-[18px]">bar_chart</span>
+<span class="label-sm uppercase tracking-widest text-[10px] font-label">Tokens</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+<span class="text-[10px] font-label uppercase tracking-widest text-slate-400">System Ready</span>
+</div>
+</div>
+</nav>
+<!-- Decorative Corner Visual -->
+<div class="fixed bottom-8 right-8 pointer-events-none opacity-20">
+<img alt="Axon Decorative Element" class="w-32 h-32 object-cover rounded-full mix-blend-screen grayscale" data-alt="abstract crystalline structures floating in a dark liquid with soft blue refractive light and micro-details" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0326yD1yQyWDmVGVuglKpKuTYf8ZVsHSb_tfJsjpAEBogx8m7h3faVnqQRpWDYijvMmCgM0KhNmu_Ulj-aLzYK9v4eBZ-CUu3RDSaPAQWv7263NQv6A3wIepjrvyLlWL3IsrS7Xeq-Zi2KvbAwzBX5TYMf8kbf2QOR77T862H74bUQIRO-ifhvZNxiGyD_nssg5dV5XjsUPDbJJLTPvHFLyoxjmoAS5xAiSPfeQ1dtfIMkgn4RtL-47iLjdBHLuz3CrYpJnSWpQxJ"/>
+</div>
+</body></html>

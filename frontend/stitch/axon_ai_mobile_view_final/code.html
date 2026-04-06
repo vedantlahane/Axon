@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#0d1c2d",
+                    "on-secondary-fixed-variant": "#39485a",
+                    "background": "#0b1326",
+                    "inverse-primary": "#5c5f61",
+                    "on-tertiary-fixed-variant": "#3a485c",
+                    "on-tertiary": "#233144",
+                    "on-secondary": "#233143",
+                    "error": "#ffb4ab",
+                    "surface-container": "#171f33",
+                    "inverse-on-surface": "#283044",
+                    "surface": "#0b1326",
+                    "surface-tint": "#c4c7c9",
+                    "primary-container": "#e0e3e5",
+                    "on-primary": "#2d3133",
+                    "surface-bright": "#31394d",
+                    "error-container": "#93000a",
+                    "surface-container-low": "#131b2e",
+                    "on-surface-variant": "#c4c7c9",
+                    "primary-fixed": "#e0e3e5",
+                    "outline": "#8e9193",
+                    "tertiary": "#ffffff",
+                    "secondary-fixed-dim": "#b9c8de",
+                    "tertiary-fixed": "#d5e3fd",
+                    "on-primary-fixed-variant": "#444749",
+                    "on-secondary-container": "#a7b6cc",
+                    "on-surface": "#dae2fd",
+                    "surface-variant": "#2d3449",
+                    "secondary-container": "#39485a",
+                    "tertiary-container": "#d5e3fd",
+                    "secondary": "#b9c8de",
+                    "on-background": "#dae2fd",
+                    "tertiary-fixed-dim": "#b9c7e0",
+                    "primary": "#ffffff",
+                    "on-tertiary-fixed": "#0d1c2f",
+                    "inverse-surface": "#dae2fd",
+                    "primary-fixed-dim": "#c4c7c9",
+                    "surface-container-highest": "#2d3449",
+                    "surface-container-high": "#222a3d",
+                    "outline-variant": "#444749",
+                    "on-tertiary-container": "#57657b",
+                    "on-primary-container": "#626567",
+                    "on-error-container": "#ffdad6",
+                    "surface-dim": "#0b1326",
+                    "secondary-fixed": "#d4e4fa",
+                    "on-primary-fixed": "#191c1e",
+                    "surface-container-lowest": "#060e20",
+                    "on-error": "#690005"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            width: 390px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
+        }
+        .ambient-orb {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(185, 200, 222, 0.08) 0%, rgba(185, 200, 222, 0) 70%);
+            filter: blur(40px);
+            top: -100px;
+            left: -100px;
+            z-index: 0;
+        }
+        .sql-editor {
+            font-family: 'ui-monospace', 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col relative">
+<div class="ambient-orb"></div>
+<nav class="w-full top-0 sticky z-50 bg-transparent flex justify-between items-center px-4 py-4 w-full max-w-screen-2xl mx-auto font-sans antialiased text-sm tracking-wide">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 border border-white/10">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">hexagon</span>
+</div>
+<span class="text-lg font-medium tracking-tighter text-slate-50">axon ai</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-50" data-icon="account_circle">account_circle</span>
+</div>
+</nav>
+<main class="flex-1 px-4 pt-2 pb-32 relative z-10 space-y-6">
+<div class="flex items-start gap-3 max-w-[85%]">
+<div class="w-8 h-8 rounded-full bg-white/10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="axon" class="w-full h-full object-cover" data-alt="abstract glowing blue crystalline structure floating in deep space representing artificial intelligence avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwR1nXEfPaAzeuHWwEd0im4upqTldByE52LvWOEvrM3vg3R7uJNZ25ZlqzChkpUXyxGc8NDeN1mCLEJAWzm2m6ho5i9K1GJb-EIa29re-RoPD5IGpNO38PM6x3EGlAYyQeEaNXN-7VWEDFqFthshnGxQZDpm9kX6tboUE5bcR0mSM57vr9olCATnI62UfthISICAA6701Wd4hup2Sa5VQCu5ZEZJubb3Zftsoa4Rh48ttEacS9igEQUYG12k11rj8Olvnh6-ad9C-G"/>
+</div>
+<div class="liquid-glass p-4 rounded-xl rounded-tl-none">
+<p class="body-md text-on-surface-variant leading-relaxed">
+                    I've updated the quarterly projections. Would you like me to refine the SQL query for the regional breakdown?
+                </p>
+</div>
+</div>
+<div class="flex flex-col gap-2 w-full">
+<div class="flex justify-end">
+<div class="bg-primary/10 backdrop-blur-sm p-4 rounded-xl rounded-tr-none max-w-[85%] border border-primary/10">
+<p class="body-md text-primary leading-relaxed">
+                        Yes, please show me the revenue by region for Q3 2024.
+                    </p>
+</div>
+</div>
+</div>
+<div class="flex items-start gap-3 max-w-full">
+<div class="w-8 h-8 rounded-full bg-white/10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="axon" class="w-full h-full object-cover" data-alt="abstract glowing blue crystalline structure floating in deep space representing artificial intelligence avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBS2IeZ2k3E12CxEV2vr28RLc4XEzrc4xcekUvk8TmzxkoMKxt6dMg1xHE7sD8SDeyTla1vg_hL-ZjvgDb7-T5aLBM0mluY1Sde8j3qrlGPBty7MF_CCEY_W3a66RJXHpcFEMXp9f-csQSwyuT4pALlhCxmMa43OKeli6mSZ3KCj61qFqySHBC_tSbitOUmN--1vlEoVHVZvOeszAvHREk78b5ZzIMNys-DRQIrdErjEmTbM8-AOFaApjnXpsd8KIU8qb6VHKAcE-XV"/>
+</div>
+<div class="flex-1 space-y-3 min-w-0">
+<div class="liquid-glass p-4 rounded-xl rounded-tl-none">
+<p class="body-md text-on-surface-variant leading-relaxed mb-4">
+                        Executing the regional breakdown query. I've optimized the join for performance on the mobile node.
+                    </p>
+<div class="bg-surface-container-lowest rounded-lg p-3 sql-editor border border-outline-variant/15 overflow-x-auto hide-scrollbar">
+<div class="flex items-center gap-2 mb-2 border-b border-outline-variant/10 pb-2">
+<span class="w-2 h-2 rounded-full bg-error/50"></span>
+<span class="w-2 h-2 rounded-full bg-secondary/50"></span>
+<span class="label-sm text-[10px] opacity-40 uppercase tracking-[0.1em] ml-auto">SQL</span>
+</div>
+<code class="text-xs leading-relaxed block whitespace-pre">
+<span class="text-[#b9c8de]">SELECT</span> region, <span class="text-[#b9c8de]">SUM</span>(revenue)
+<span class="text-[#b9c8de]">FROM</span> sales_master
+<span class="text-[#b9c8de]">WHERE</span> quarter = <span class="text-on-surface">'Q3'</span>
+<span class="text-[#b9c8de]">AND</span> year = <span class="text-on-surface">2024</span>
+<span class="text-[#b9c8de]">GROUP BY</span> region
+<span class="text-[#b9c8de]">ORDER BY</span> revenue <span class="text-[#b9c8de]">DESC</span>;</code>
+</div>
+</div>
+<div class="liquid-glass p-4 rounded-xl space-y-3">
+<div class="flex justify-between items-center">
+<span class="label-sm opacity-60 uppercase tracking-widest text-[9px]">Query Result</span>
+<span class="material-symbols-outlined text-sm opacity-40">expand_content</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="text-xs text-on-surface-variant">North America</span>
+<span class="text-xs font-semibold text-primary">$4.2M</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+<span class="text-xs text-on-surface-variant">Europe</span>
+<span class="text-xs font-semibold text-primary">$2.8M</span>
+</div>
+<div class="flex justify-between items-center py-2">
+<span class="text-xs text-on-surface-variant">APAC</span>
+<span class="text-xs font-semibold text-primary">$1.5M</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 w-full z-50">
+<div class="bg-surface-container-high backdrop-blur-2xl border-t border-outline-variant/15 rounded-t-3xl pt-4 pb-8 px-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-3 bg-surface-container-lowest rounded-full px-4 py-2 border border-outline-variant/10">
+<span class="material-symbols-outlined text-slate-400 text-lg" data-icon="attachment">attachment</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm flex-1 text-slate-50 placeholder-slate-500 py-2" placeholder="Ask axon anything..." type="text"/>
+<button class="w-8 h-8 rounded-full bg-primary flex items-center justify-center scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-on-primary text-sm" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+<div class="flex justify-center gap-6 mt-4">
+<div class="flex flex-col items-center gap-1 opacity-100">
+<span class="material-symbols-outlined text-primary saturate-250 text-lg" data-icon="dynamic_form">dynamic_form</span>
+<span class="label-sm uppercase tracking-widest text-[8px] text-white">Status</span>
+</div>
+<div class="flex flex-col items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-slate-400 text-lg" data-icon="memory">memory</span>
+<span class="label-sm uppercase tracking-widest text-[8px] text-slate-400">Model</span>
+</div>
+<div class="flex flex-col items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-slate-400 text-lg" data-icon="BarChart">bar_chart</span>
+<span class="label-sm uppercase tracking-widest text-[8px] text-slate-400">Tokens</span>
+</div>
+</div>
+</div>
+</div>
+</body></html>

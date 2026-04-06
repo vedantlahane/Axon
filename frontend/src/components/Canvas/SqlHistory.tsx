@@ -1,0 +1,101 @@
+import React from "react";
+import type { SqlQueryHistoryEntry } from "../../types/database";
+import { formatExecutionTimestamp } from "../../utils/formatters";
+
+interface SqlHistoryPanelProps {
+  history: SqlQueryHistoryEntry[];
+  onSelectHistory: (entry: SqlQueryHistoryEntry) => void;
+  onViewResult: (entry: SqlQueryHistoryEntry) => void;
+}
+
+export const SqlHistoryPanel: React.FC<SqlHistoryPanelProps> = ({
+  history,
+  onSelectHistory,
+  onViewResult,
+}) => {
+  return (
+    <section className="flex flex-col gap-3">
+      <header className="flex items-center justify-between">
+        <span className="text-xs text-[var(--text-subtle)]">{history.length} saved</span>
+      </header>
+      {history.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-soft)] p-4 text-sm text-[var(--text-subtle)]">
+          Run queries to build your history.
+        </p>
+      ) : (
+        <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+          {history.map((entry) => (
+            <div
+              key={entry.id}
+              className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 text-xs text-[var(--text-muted)]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="flex-1 font-mono text-[11px] text-[var(--text-muted)]">
+                  {entry.query.slice(0, 120)}
+                  {entry.query.length > 120 && "..."}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-[var(--text-subtle)]">
+                <span className="flex items-center gap-2">
+                  {entry.result && (
+                    <>
+                      <span className="rounded bg-[var(--bg-panel)] px-1.5 py-0.5">
+                        {entry.result.type.toUpperCase()}
+                      </span>
+                      <span>{entry.result.rowCount} rows</span>
+                    </>
+                  )}
+                </span>
+                <span>{formatExecutionTimestamp(entry.executedAt)}</span>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => onSelectHistory(entry)}
+                  className="flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--bg-panel)] px-2 py-1 text-[10px] text-[var(--text-muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--text-primary)]"
+                >
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Load Query
+                </button>
+                {entry.result && (
+                  <button
+                    type="button"
+                    onClick={() => onViewResult(entry)}
+                    className="flex items-center gap-1 rounded-md border border-[#2563eb]/30 bg-[#2563eb]/10 px-2 py-1 text-[10px] text-[#60a5fa] transition hover:bg-[#2563eb]/20"
+                  >
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    View Results
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};

@@ -6,8 +6,8 @@ import {
   signIn,
   signOut,
   signUp,
-  type UserProfile,
-} from "../services/chatApi";
+} from "../services/authService";
+import type { UserProfile } from "../types/auth";
 
 interface AuthModalState {
   open: boolean;

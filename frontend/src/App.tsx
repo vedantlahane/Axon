@@ -19,7 +19,7 @@ import AuthModal from './components/modals/AuthModal';
 import ToastContainer from './components/ui/ToastContainer';
 import CanvasPanel from './components/Canvas/CanvasPanel';
 import { ErrorBoundary, ErrorFallback } from './components/errors/ErrorBoundary';
-import { ChatSkeleton, LibrarySkeleton, DocumentsSkeleton, SettingsSkeleton } from './components/skeletons/PageSkeletons';
+import { ChatSkeleton, LibrarySkeleton, DocumentsSkeleton, SettingsSkeleton } from './components/skeletons';
 
 // Hooks
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';

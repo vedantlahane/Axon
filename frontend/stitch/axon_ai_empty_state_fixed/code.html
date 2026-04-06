@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c4c7c9",
+                        "tertiary": "#ffffff",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-primary-container": "#626567",
+                        "on-primary": "#2d3133",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "outline": "#8e9193",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#57657b",
+                        "on-error": "#690005",
+                        "on-tertiary": "#233144",
+                        "on-primary-fixed": "#191c1e",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#dae2fd",
+                        "secondary-fixed": "#d4e4fa",
+                        "primary-container": "#e0e3e5",
+                        "on-primary-fixed-variant": "#444749",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "outline-variant": "#444749",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-secondary": "#233143",
+                        "inverse-on-surface": "#283044",
+                        "surface-variant": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "primary": "#ffffff",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "inverse-primary": "#5c5f61",
+                        "surface": "#0b1326",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "surface-container-low": "#131b2e",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#39485a",
+                        "primary-fixed": "#e0e3e5",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.15);
+        }
+        .ai-pulse-glow {
+            background: radial-gradient(circle, rgba(185, 200, 222, 0.12) 0%, rgba(11, 19, 38, 0) 70%);
+        }
+        .light-leak-top {
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 0 -10px 20px -10px rgba(255, 255, 255, 0.1);
+        }
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen selection:bg-primary/20">
+<!-- Ambient Orbs -->
+<div class="ambient-orb w-[600px] h-[600px] bg-secondary/20 -top-48 -left-48"></div>
+<div class="ambient-orb w-[500px] h-[500px] bg-surface-container-highest/30 bottom-0 right-0"></div>
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 w-full bg-transparent">
+<div class="text-lg font-medium text-white lowercase font-inter tracking-tight">
+            axon ai
+        </div>
+<div class="flex items-center gap-6">
+<button class="text-slate-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center overflow-hidden">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="close up profile shot of a minimalist geometric avatar with a soft gray and blue color palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-oUtLiHtjBzdcsOqtUEh-aEX96-CitxR0OJMfOjAw2KD68r9FL3nOLiTIplP1VqIkMdUszmwCwdbcaY5GQYAYsCQt8WUqnUV5P3dHYTOLLbf0eTL9sBvrksXooK5Ze-_F1cnVPN7jMt-Okr1zuIBmmO77TIyZbCcDgRxZj1OxPsSsNjdQlYjO9H7DSZ6oEP_0yBPBEd5bjtplNDxm6D6Cbce3Ub4Sm-YjRiCDbRc-LMWes-wjTQKHXG47-ZqAWhiPwoynaneqJbMJ"/>
+</div>
+</div>
+</nav>
+<main class="flex flex-col items-center justify-center min-h-screen px-6 pt-20 pb-48 max-w-5xl mx-auto">
+<!-- Hero Section -->
+<div class="relative mb-16 flex flex-col items-center">
+<!-- AI Pulse Radial Gradient -->
+<div class="ai-pulse-glow absolute -inset-24 rounded-full"></div>
+<!-- Icon Glass Box -->
+<div class="liquid-glass w-20 h-20 rounded-2xl flex items-center justify-center mb-10 z-10">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<!-- Tagline -->
+<h1 class="text-5xl md:text-6xl font-extralight tracking-tight text-center leading-tight">
+                Ask anything. <span class="text-on-primary-container">Upload anything.</span>
+</h1>
+</div>
+<!-- Suggestion Pills (2x2 Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+<button class="liquid-glass hover:bg-white/10 transition-all p-5 rounded-xl flex items-center gap-4 text-left group">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="terminal">terminal</span>
+</div>
+<span class="text-on-surface-variant font-medium">Optimize a SQL query</span>
+</button>
+<button class="liquid-glass hover:bg-white/10 transition-all p-5 rounded-xl flex items-center gap-4 text-left group">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="description">description</span>
+</div>
+<span class="text-on-surface-variant font-medium">Analyze a document</span>
+</button>
+<button class="liquid-glass hover:bg-white/10 transition-all p-5 rounded-xl flex items-center gap-4 text-left group">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="database">database</span>
+</div>
+<span class="text-on-surface-variant font-medium">Explore database schema</span>
+</button>
+<button class="liquid-glass hover:bg-white/10 transition-all p-5 rounded-xl flex items-center gap-4 text-left group">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="code">code</span>
+</div>
+<span class="text-on-surface-variant font-medium">Write a Python function</span>
+</button>
+</div>
+<!-- Locked Input Bar Area -->
+<div class="fixed bottom-12 w-full max-w-3xl px-6 flex flex-col gap-4">
+<div class="liquid-glass rounded-2xl p-2 light-leak-top">
+<div class="flex items-center gap-4 px-4 py-3">
+<input class="bg-transparent border-none focus:ring-0 w-full text-lg placeholder:text-on-primary-container text-white" placeholder="Send a message..." type="text"/>
+<button class="bg-primary text-on-primary w-10 h-10 rounded-xl flex items-center justify-center hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+</div>
+<!-- Meta Row -->
+<div class="flex justify-center items-center gap-6 text-[10px] tracking-[0.1em] font-medium text-slate-500 uppercase font-label px-4">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary/40"></span>
+<span>Model: Gemini 2.5 Pro</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="attachment">attachment</span>
+<span>0 documents</span>
+</div>
+<div class="flex items-center gap-2 px-2 py-0.5 border border-slate-700/50 rounded-md">
+<span>⌘K for commands</span>
+</div>
+</div>
+</div>
+</main>
+</body></html>

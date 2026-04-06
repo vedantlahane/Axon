@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b1326;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15);
+        }
+        .ai-pulse-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(185, 200, 222, 0.08) 0%, rgba(11, 19, 38, 0) 70%);
+            z-index: -1;
+        }
+        .syntax-keyword { color: #b9c8de; }
+        .syntax-string { color: #dae2fd; opacity: 0.8; }
+        .syntax-function { color: #ffffff; font-weight: 600; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#0d1c2d",
+                    "on-secondary-fixed-variant": "#39485a",
+                    "background": "#0b1326",
+                    "inverse-primary": "#5c5f61",
+                    "on-tertiary-fixed-variant": "#3a485c",
+                    "on-tertiary": "#233144",
+                    "on-secondary": "#233143",
+                    "error": "#ffb4ab",
+                    "surface-container": "#171f33",
+                    "inverse-on-surface": "#283044",
+                    "surface": "#0b1326",
+                    "surface-tint": "#c4c7c9",
+                    "primary-container": "#e0e3e5",
+                    "on-primary": "#2d3133",
+                    "surface-bright": "#31394d",
+                    "error-container": "#93000a",
+                    "surface-container-low": "#131b2e",
+                    "on-surface-variant": "#c4c7c9",
+                    "primary-fixed": "#e0e3e5",
+                    "outline": "#8e9193",
+                    "tertiary": "#ffffff",
+                    "secondary-fixed-dim": "#b9c8de",
+                    "tertiary-fixed": "#d5e3fd",
+                    "on-primary-fixed-variant": "#444749",
+                    "on-secondary-container": "#a7b6cc",
+                    "on-surface": "#dae2fd",
+                    "surface-variant": "#2d3449",
+                    "secondary-container": "#39485a",
+                    "tertiary-container": "#d5e3fd",
+                    "secondary": "#b9c8de",
+                    "on-background": "#dae2fd",
+                    "tertiary-fixed-dim": "#b9c7e0",
+                    "primary": "#ffffff",
+                    "on-tertiary-fixed": "#0d1c2f",
+                    "inverse-surface": "#dae2fd",
+                    "primary-fixed-dim": "#c4c7c9",
+                    "surface-container-highest": "#2d3449",
+                    "surface-container-high": "#222a3d",
+                    "outline-variant": "#444749",
+                    "on-tertiary-container": "#57657b",
+                    "on-primary-container": "#626567",
+                    "on-error-container": "#ffdad6",
+                    "surface-dim": "#0b1326",
+                    "secondary-fixed": "#d4e4fa",
+                    "on-primary-fixed": "#191c1e",
+                    "surface-container-lowest": "#060e20",
+                    "on-error": "#690005"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+</head>
+<body class="text-on-surface selection:bg-primary/20">
+<!-- TopNavBar -->
+<nav class="w-full top-0 sticky z-50 bg-transparent backdrop-blur-md">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto">
+<div class="text-lg font-medium tracking-tighter text-slate-50 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+                axon ai
+            </div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-white font-semibold font-sans antialiased text-sm tracking-wide transition-colors duration-300" href="#">Workspace</a>
+<a class="text-slate-400 font-sans antialiased text-sm tracking-wide hover:text-white transition-colors duration-300" href="#">Models</a>
+<a class="text-slate-400 font-sans antialiased text-sm tracking-wide hover:text-white transition-colors duration-300" href="#">History</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-50 hover:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="relative flex flex-col items-center w-full max-w-4xl mx-auto px-6 pt-12 pb-32">
+<!-- User Query Bubble -->
+<div class="w-full flex justify-end mb-10">
+<div class="liquid-glass rounded-2xl p-6 max-w-[80%] shadow-[0px_20px_40px_rgba(0,0,0,0.2)]">
+<p class="text-on-surface body-md leading-relaxed">
+                    Optimize this SQL query for high-frequency user telemetry. I need to reduce the scan size on the <code class="text-primary opacity-80 px-1.5 py-0.5 bg-white/5 rounded">events_partitioned</code> table and ensure the join with <code class="text-primary opacity-80 px-1.5 py-0.5 bg-white/5 rounded">users</code> is using the index efficiently.
+                </p>
+<div class="mt-4 flex items-center gap-2 text-[10px] label-sm uppercase tracking-widest text-slate-400 opacity-60">
+<span>Just now</span>
+<span class="w-1 h-1 rounded-full bg-slate-400/40"></span>
+<span>PostgreSQL</span>
+</div>
+</div>
+</div>
+<!-- Axon AI Response Container -->
+<div class="relative w-full mb-12">
+<div class="ai-pulse-bg"></div>
+<div class="flex gap-6">
+<!-- Avatar Anchor -->
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+<span class="material-symbols-outlined text-background text-xl" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<!-- Response Content -->
+<div class="flex-grow space-y-6 pt-1">
+<div class="space-y-4">
+<h2 class="text-headline-sm font-medium tracking-tight text-white">Query Optimization Strategy</h2>
+<p class="text-on-surface-variant leading-relaxed body-md">
+                            I've refactored your query to utilize <span class="text-white font-medium">common table expressions (CTEs)</span> and implemented a time-series filter to leverage the partition pruning on your telemetry table. I also replaced the broad <code class="text-slate-300">SELECT *</code> with specific column references to minimize I/O overhead.
+                        </p>
+</div>
+<!-- INLINE EDITOR CARD -->
+<div class="surface-container-high rounded-xl overflow-hidden shadow-2xl border border-white/5">
+<!-- Editor Header -->
+<div class="px-5 py-3 bg-surface-container-highest flex justify-between items-center border-b border-white/5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="terminal">terminal</span>
+<span class="text-xs font-mono text-on-surface-variant">optimized_query.sql</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-emerald-500/50"></div>
+<span class="text-[10px] label-sm uppercase tracking-widest text-slate-400">Validated</span>
+</div>
+</div>
+<!-- Editor Content (Syntax Highlighting) -->
+<div class="p-6 font-mono text-sm leading-relaxed bg-surface-container-lowest/50 overflow-x-auto">
+<pre class="text-on-surface-variant"><code><span class="syntax-keyword">WITH</span> user_activity <span class="syntax-keyword">AS</span> (
+    <span class="syntax-keyword">SELECT</span> user_id, <span class="syntax-function">COUNT</span>(*) <span class="syntax-keyword">AS</span> event_count
+    <span class="syntax-keyword">FROM</span> events_partitioned
+    <span class="syntax-keyword">WHERE</span> event_timestamp &gt; <span class="syntax-function">NOW</span>() - <span class="syntax-keyword">INTERVAL</span> <span class="syntax-string">'24 hours'</span>
+    <span class="syntax-keyword">GROUP BY</span> user_id
+)
+<span class="syntax-keyword">SELECT</span> 
+    u.display_name, 
+    ua.event_count,
+    u.tier
+<span class="syntax-keyword">FROM</span> users u
+<span class="syntax-keyword">INNER JOIN</span> user_activity ua <span class="syntax-keyword">ON</span> u.id = ua.user_id
+<span class="syntax-keyword">WHERE</span> u.status = <span class="syntax-string">'active'</span>
+<span class="syntax-keyword">ORDER BY</span> ua.event_count <span class="syntax-keyword">DESC</span>;</code></pre>
+</div>
+<!-- Editor Footer -->
+<div class="px-5 py-4 bg-surface-container-highest/30 flex justify-end gap-3 border-t border-white/5">
+<button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-medium text-white flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+                                Copy
+                            </button>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary hover:scale-[1.02] active:scale-95 text-xs font-bold flex items-center gap-2 transition-all shadow-[0_4px_12px_rgba(255,255,255,0.1)]">
+<span class="material-symbols-outlined text-sm" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                                Run Query
+                            </button>
+</div>
+</div>
+<div class="pt-2">
+<p class="text-on-surface-variant italic leading-relaxed body-md opacity-80">
+                            The execution plan now shows a 42% reduction in memory usage due to the aggressive filtering in the CTE before the join operation.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Chat Hub Type) -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 flex flex-col p-4 gap-2 w-[90%] max-w-3xl">
+<!-- Floating Input Bar -->
+<div class="liquid-glass rounded-2xl p-2 flex items-center gap-3 shadow-[0px_20px_40px_rgba(0,0,0,0.4)] border border-white/10">
+<button class="p-3 text-slate-400 hover:text-white transition-all">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface placeholder-slate-500 flex-grow text-sm py-3" placeholder="Ask Axon for further refinements..." type="text"/>
+<button class="bg-primary text-on-primary w-10 h-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+<!-- Status & Meta Bar -->
+<div class="bg-white/5 backdrop-blur-3xl rounded-3xl mx-auto w-full flex items-center justify-between px-6 py-3 border border-white/5">
+<div class="flex items-center gap-8">
+<div class="flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined text-white saturate-250 text-lg" data-icon="dynamic_form">dynamic_form</span>
+<span class="label-sm uppercase tracking-widest text-[10px] text-white">Status</span>
+</div>
+<div class="flex flex-col items-center gap-1 group opacity-60">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-white transition-all text-lg" data-icon="memory">memory</span>
+<span class="label-sm uppercase tracking-widest text-[10px] text-slate-400 group-hover:text-white transition-all">Model</span>
+</div>
+<div class="flex flex-col items-center gap-1 group opacity-60">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-white transition-all text-lg" data-icon="BarChart">bar_chart</span>
+<span class="label-sm uppercase tracking-widest text-[10px] text-slate-400 group-hover:text-white transition-all">Tokens</span>
+</div>
+</div>
+<div class="text-[10px] label-sm uppercase tracking-widest text-slate-500 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                System Ready
+            </div>
+</div>
+</div>
+</body></html>

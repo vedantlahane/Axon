@@ -1,19 +1,19 @@
 # Axon Frontend
 
-A modern React-based frontend for the Axon AI-Powered Document & Database Intelligence Platform.
+A modern React + Vite frontend for the Axon AI-Powered Document & Database Intelligence Platform.
 
 ## 🚀 Features
 
-- **Multi-Model AI Chat** – Interact with Gemini 2.0 Flash or GPT-4o
-- **Document Upload** – PDF upload with drag-and-drop support
-- **Database Connectivity** – Connect to external SQL databases or upload SQLite files
-- **Schema Visualization** – Interactive Mermaid diagrams for database schemas
-- **SQL Query Editor** – Monaco Editor with syntax highlighting
-- **Export Options** – Export conversations to DOCX/ZIP, SQL results to XLSX
-- **Message Actions** – Copy, like, dislike, report messages with source citations
-- **Smooth Animations** – GSAP hero treatments and Framer Motion transitions
+- **Multi-model AI chat** with model selection and conversational history
+- **Document upload** for PDF files and contextual document search
+- **Database connectivity** with SQL query execution, schema browsing, and SQLite upload
+- **Schema visualization** using Mermaid diagrams
+- **SQL query editing** in Monaco Editor with export support
+- **Export options** for conversations to DOCX/ZIP and SQL results to XLSX
+- **Message actions** including copy, like/dislike, and citation links
+- **Smooth UI transitions** using Framer Motion
 
-## ��️ Tech Stack
+## 🧰 Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
@@ -21,25 +21,22 @@ A modern React-based frontend for the Axon AI-Powered Document & Database Intell
 | **TypeScript** | Type safety |
 | **Vite** | Build tool and dev server |
 | **TailwindCSS 4** | Styling |
-| **Framer Motion** | Animations |
-| **GSAP** | Hero animations |
+| **Framer Motion** | UI animations |
 | **Monaco Editor** | SQL query editor |
 | **Mermaid** | Database schema diagrams |
 
 ## 📦 Installation
 
 ```bash
-# Navigate to frontend directory
 cd frontend
-
-# Install dependencies
 npm install
-
-# Create environment file
-echo "VITE_API_BASE_URL=http://localhost:8000/api" > .env
-
-# Start development server
 npm run dev
+```
+
+If you want to override the backend URL, add a `.env` file in `frontend/` with:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
 ## 🔧 Available Scripts
@@ -55,30 +52,117 @@ npm run dev
 
 ```
 frontend/
-├── public/              # Static assets (images, icons)
+├── public/                  # Static assets and favicon
 ├── src/
-│   ├── components/
-│   │   ├── AuthModal.tsx              # Login/Register modal
-│   │   ├── Canvas.tsx                 # SQL results & schema view
-│   │   ├── ChatDisplay.tsx            # Message rendering with actions
-│   │   ├── DatabaseConnectionModal.tsx # DB connection form
-│   │   ├── InputSection.tsx           # Chat input with file upload
-│   │   ├── MainPanel.tsx              # Main content area with settings
-│   │   ├── SchemaDiagram.tsx          # Mermaid schema visualization
-│   │   └── Sidebar.tsx                # Conversation list
+│   ├── components/          # UI components and feature screens
+│   │   ├── Canvas/
+│   │   │   ├── CanvasPanel.tsx
+│   │   │   ├── SchemaDiagram.tsx
+│   │   │   ├── SqlHistoryPanel.tsx
+│   │   │   ├── SqlPendingApprovalPanel.tsx
+│   │   │   ├── SqlResultsView.tsx
+│   │   │   ├── SqlSuggestionsPanel.tsx
+│   │   │   └── types.ts
+│   │   ├── chat/
+│   │   │   ├── AssistantMessage.tsx
+│   │   │   ├── ChatDisplay.tsx
+│   │   │   ├── ChatView.tsx
+│   │   │   ├── InputSection.tsx
+│   │   │   ├── MarkdownRenderer.tsx
+│   │   │   ├── MessageActions.tsx
+│   │   │   ├── MessageList.tsx
+│   │   │   ├── ScrollToBottom.tsx
+│   │   │   ├── SourceBadges.tsx
+│   │   │   ├── SqlBlock.tsx
+│   │   │   ├── SqlResultsInline.tsx
+│   │   │   ├── TypingIndicator.tsx
+│   │   │   └── UserMessage.tsx
+│   │   ├── command/
+│   │   │   └── CommandPalette.tsx
+│   │   ├── documents/
+│   │   │   └── DocumentsView.tsx
+│   │   ├── errors/
+│   │   │   ├── ErrorBoundary.tsx
+│   │   │   └── NotFound.tsx
+│   │   ├── input/
+│   │   │   └── ChatInput.tsx
+│   │   ├── layout/
+│   │   │   ├── AppShell.tsx
+│   │   │   ├── MainPanel.tsx
+│   │   │   ├── PageContainer.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── TopBar.tsx
+│   │   ├── library/
+│   │   │   ├── ConversationCard.tsx
+│   │   │   └── LibraryView.tsx
+│   │   ├── modals/
+│   │   │   ├── AuthModal.tsx
+│   │   │   └── DatabaseConnectionModal.tsx
+│   │   ├── settings/
+│   │   │   └── SettingsView.tsx
+│   │   ├── skeletons/
+│   │   │   └── PageSkeletons.tsx
+│   │   └── ui/
+│   │       └── ToastContainer.tsx
+│   ├── config/
+│   │   └── api.ts
+│   ├── hooks/
+│   │   ├── index.ts
+│   │   ├── useAuth.ts
+│   │   ├── useConversationManager.ts
+│   │   ├── useDatabaseSettings.ts
+│   │   ├── useKeyboardShortcuts.ts
+│   │   └── useSqlConsole.ts
 │   ├── services/
-│   │   └── chatApi.ts                 # API client (auth, chat, export)
+│   │   ├── authService.ts
+│   │   ├── chatApi.ts
+│   │   ├── chatService.ts
+│   │   ├── databaseService.ts
+│   │   ├── documentService.ts
+│   │   ├── feedbackService.ts
+│   │   ├── graphService.ts
+│   │   ├── http.ts
+│   │   └── modelService.ts
+│   ├── stores/
+│   │   ├── AuthProvider.tsx
+│   │   ├── chatStore.ts
+│   │   ├── databaseStore.ts
+│   │   ├── ThemeProvider.tsx
+│   │   └── ToastProvider.tsx
+│   ├── styles/
+│   │   ├── animations.css
+│   │   ├── base.css
+│   │   ├── components.css
+│   │   ├── glass.css
+│   │   ├── tokens.css
+│   │   ├── typography.css
+│   │   └── utilities.css
 │   ├── types/
+│   │   ├── auth.ts
+│   │   ├── chat.ts
+│   │   ├── common.ts
+│   │   ├── database.ts
+│   │   ├── documents.ts
+│   │   ├── graph.ts
 │   │   ├── mermaid.d.ts
+│   │   ├── models.ts
 │   │   └── speech.d.ts
-│   ├── App.tsx                        # Root component
-│   ├── main.tsx                       # Entry point
-│   └── index.css                      # Global styles
+│   ├── utils/
+│   │   ├── chatMappers.ts
+│   │   ├── formatters.ts
+│   │   ├── sql.ts
+│   │   ├── sqlUtils.ts
+│   │   └── theme.ts
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
 ├── index.html
 ├── package.json
+├── tsconfig.app.json
 ├── tsconfig.json
+├── tsconfig.node.json
 ├── vite.config.ts
-└── vercel.json                        # Vercel deployment config
+└── vercel.json              # Vercel deploy config
 ```
 
 ## 🎨 Design System
@@ -90,22 +174,24 @@ frontend/
 
 ## 🔗 Backend Integration
 
-The frontend communicates with the Django backend API. Ensure the backend is running at the configured `VITE_API_BASE_URL`.
+The frontend communicates with the Axon Python backend API over the `/api` prefix. By default, the app resolves to `http://localhost:8000/api` in development.
 
 ### Key API Endpoints Used
 
-- `/auth/*` – Authentication (login, register, logout)
-- `/chat/` – Send messages
-- `/conversations/*` – Manage conversations
-- `/documents/*` – Manage uploaded documents
-- `/database/*` – Database operations
-- `/models/*` – AI model selection
+- `/auth/*` – Authentication endpoints (register, login, logout, profile)
+- `/chat/` – Conversational AI requests
+- `/conversations/*` – Conversation history and exports
+- `/documents/*` – Document upload, listing, download, and deletion
+- `/database/*` – Database connection, query, schema, and export
+- `/models/*` – AI model listing and selection
 
 ## 🌐 Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:8000/api` |
+| `VITE_API_BASE_URL` | Backend API base URL | `http://localhost:8000/api` |
+
+If `VITE_API_BASE_URL` is not set, the frontend defaults to `http://localhost:8000/api` during development and `window.location.origin/api` in production.
 
 ## 🚀 Deployment
 

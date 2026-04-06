@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#c4c7c9",
+            "tertiary": "#ffffff",
+            "surface-bright": "#31394d",
+            "on-tertiary-fixed": "#0d1c2f",
+            "on-secondary-container": "#a7b6cc",
+            "on-primary-container": "#626567",
+            "on-primary": "#2d3133",
+            "error": "#ffb4ab",
+            "on-secondary-fixed": "#0d1c2d",
+            "outline": "#8e9193",
+            "background": "#0b1326",
+            "on-tertiary-container": "#57657b",
+            "on-error": "#690005",
+            "on-tertiary": "#233144",
+            "on-primary-fixed": "#191c1e",
+            "tertiary-fixed-dim": "#b9c7e0",
+            "on-surface": "#dae2fd",
+            "secondary-fixed": "#d4e4fa",
+            "primary-container": "#e0e3e5",
+            "on-primary-fixed-variant": "#444749",
+            "surface-container-lowest": "#060e20",
+            "primary-fixed-dim": "#c4c7c9",
+            "outline-variant": "#444749",
+            "tertiary-fixed": "#d5e3fd",
+            "on-secondary": "#233143",
+            "inverse-on-surface": "#283044",
+            "surface-variant": "#2d3449",
+            "surface-container-high": "#222a3d",
+            "primary": "#ffffff",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "secondary-fixed-dim": "#b9c8de",
+            "on-secondary-fixed-variant": "#39485a",
+            "surface-dim": "#0b1326",
+            "surface-tint": "#c4c7c9",
+            "inverse-primary": "#5c5f61",
+            "surface": "#0b1326",
+            "surface-container-highest": "#2d3449",
+            "on-tertiary-fixed-variant": "#3a485c",
+            "on-background": "#dae2fd",
+            "tertiary-container": "#d5e3fd",
+            "secondary": "#b9c8de",
+            "surface-container-low": "#131b2e",
+            "surface-container": "#171f33",
+            "secondary-container": "#39485a",
+            "primary-fixed": "#e0e3e5",
+            "inverse-surface": "#dae2fd"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "headline": ["Inter"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #0b1326;
+      font-family: 'Inter', sans-serif;
+    }
+    .liquid-glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15);
+    }
+    .ambient-orb {
+      position: absolute;
+      filter: blur(120px);
+      z-index: -1;
+      border-radius: 9999px;
+      opacity: 0.15;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="text-on-surface selection:bg-primary/20 selection:text-white">
+<!-- Ambient Background Decor -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+<div class="ambient-orb bg-secondary w-[600px] h-[600px] -top-48 -left-48"></div>
+<div class="ambient-orb bg-tertiary-container w-[400px] h-[400px] top-1/2 -right-24"></div>
+<div class="ambient-orb bg-surface-bright w-[500px] h-[500px] -bottom-24 left-1/4"></div>
+</div>
+<!-- Top Navigation (Shared Component) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 w-full bg-transparent text-slate-100 font-inter tracking-tight">
+<div class="flex items-center gap-4">
+<span class="text-lg font-medium text-white lowercase">axon ai</span>
+<div class="h-4 w-px bg-white/10 mx-2"></div>
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant opacity-60">Schema Viewer</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-sm" data-icon="search">search</span>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/10 hover:opacity-80 transition-opacity cursor-pointer">
+<img alt="User avatar" data-alt="Close-up professional portrait of a software engineer in soft blue studio lighting with bokeh background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCegR8-03YOXBwy8UIDH4l49gxnnRWo4pN_amg0cx2i2Z3laIZSH8zRuyhi9hRxtzlghTiKHXHt3wXYwVM2uWLcEBsgM5dhggC5wN4uop_9CNgYC0w621JeRB83XGcYAhPlQVF7MJ9edYRxo0jQLx-mEOeen0bEUH3ntVMJzuZQ1RqZikVTF46lUrGuGp4KjdNwM78vQap19IRg7LOwhAWz1nno0yfutk91ZUm8eusQf0Nlr7B9WLKvYB98x3ejlsuel7SBj99nFBtD"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="relative pt-24 pb-32 max-w-5xl mx-auto px-6 min-h-screen">
+<!-- Chat Stream -->
+<div class="flex flex-col gap-10">
+<!-- User Message -->
+<div class="flex justify-end ml-auto max-w-[80%]">
+<div class="liquid-glass px-6 py-4 rounded-xl rounded-tr-none text-on-surface text-sm leading-relaxed border border-white/5">
+          Show me the full schema for the production database
+        </div>
+</div>
+<!-- AI Response Section -->
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-on-primary text-[10px] font-bold">AX</div>
+<span class="text-xs font-semibold tracking-wide text-white">Axon</span>
+</div>
+<div class="flex flex-col gap-6 pl-10">
+<p class="text-on-surface-variant leading-relaxed">
+            Here's the complete schema for the <code class="bg-surface-container-high px-1.5 py-0.5 rounded text-secondary font-mono text-xs">production_db</code>. I've indexed 8 tables across the main application cluster.
+          </p>
+<!-- SCHEMA VIEWER CARD -->
+<div class="liquid-glass w-full rounded-2xl overflow-hidden border border-white/5 flex flex-col">
+<!-- Card Header -->
+<div class="px-6 py-5 flex items-center justify-between border-b border-white/5 bg-white/[0.02]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="database">database</span>
+</div>
+<div>
+<h3 class="text-sm font-semibold text-white">Database Schema</h3>
+<p class="text-[10px] text-on-surface-variant font-mono uppercase tracking-tighter">production_db · 8 tables · engine: postgresql</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-green-500/10 text-green-400 text-[10px] font-bold rounded-full border border-green-500/20">CONNECTED</span>
+</div>
+</div>
+<!-- Card Body: Table List -->
+<div class="flex flex-col">
+<!-- Table Entry: Expanded (users) -->
+<div class="border-b border-white/5">
+<div class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="table_chart">table_chart</span>
+<div class="flex items-center gap-2">
+<span class="text-sm font-medium text-white">users</span>
+<span class="text-[10px] text-on-surface-variant/60 font-mono">(45,231 rows)</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant rotate-180 transition-transform" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Nested Column List (Expanded State) -->
+<div class="bg-white/[0.02] px-6 pb-6 pt-2">
+<div class="rounded-xl border border-white/5 overflow-hidden">
+<table class="w-full text-left text-[11px] font-mono leading-none">
+<thead>
+<tr class="bg-surface-container-highest/40 text-on-surface-variant uppercase tracking-widest text-[9px]">
+<th class="px-4 py-3 font-semibold">Column</th>
+<th class="px-4 py-3 font-semibold">Type</th>
+<th class="px-4 py-3 font-semibold">Constraints</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-3 text-secondary">id</td>
+<td class="px-4 py-3 text-on-surface-variant">INT8</td>
+<td class="px-4 py-3">
+<span class="px-1.5 py-0.5 rounded-sm bg-tertiary-container/10 text-tertiary-fixed-dim border border-tertiary-fixed-dim/20 text-[9px] font-bold">PK</span>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-3 text-secondary">name</td>
+<td class="px-4 py-3 text-on-surface-variant">VARCHAR(255)</td>
+<td class="px-4 py-3">
+<span class="px-1.5 py-0.5 rounded-sm bg-white/5 text-on-surface-variant/60 border border-white/10 text-[9px] font-bold">NOT NULL</span>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-3 text-secondary">email</td>
+<td class="px-4 py-3 text-on-surface-variant">VARCHAR(255)</td>
+<td class="px-4 py-3 flex gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] font-bold">UNIQUE</span>
+<span class="px-1.5 py-0.5 rounded-sm bg-white/5 text-on-surface-variant/60 border border-white/10 text-[9px] font-bold">NOT NULL</span>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-3 text-secondary">created_at</td>
+<td class="px-4 py-3 text-on-surface-variant">TIMESTAMP</td>
+<td class="px-4 py-3 text-on-surface-variant/30">—</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-3 text-secondary">tier</td>
+<td class="px-4 py-3 text-on-surface-variant">ENUM('free','pro','ent')</td>
+<td class="px-4 py-3">
+<span class="px-1.5 py-0.5 rounded-sm bg-white/5 text-on-surface-variant/60 border border-white/10 text-[9px] font-bold">DEFAULT 'free'</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Table Entry: Collapsed (orders) -->
+<div class="border-b border-white/5">
+<div class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="table_chart">table_chart</span>
+<div class="flex items-center gap-2">
+<span class="text-sm font-medium text-white">orders</span>
+<span class="text-[10px] text-on-surface-variant/60 font-mono">(1.2M rows)</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Table Entry: Collapsed (products) -->
+<div class="border-b border-white/5">
+<div class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="table_chart">table_chart</span>
+<div class="flex items-center gap-2">
+<span class="text-sm font-medium text-white">products</span>
+<span class="text-[10px] text-on-surface-variant/60 font-mono">(4,821 rows)</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Table Entry: Collapsed (events_partitioned) -->
+<div>
+<div class="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="table_rows">table_rows</span>
+<div class="flex items-center gap-2">
+<span class="text-sm font-medium text-white">events_partitioned</span>
+<span class="text-[10px] text-on-surface-variant/60 font-mono">(85M rows)</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="px-6 py-4 border-t border-white/5 flex items-center gap-3 bg-white/[0.01]">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-on-primary text-[11px] font-bold hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+                Query This Table
+              </button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 text-white text-[11px] font-bold hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="account_tree">account_tree</span>
+                Show ERD
+              </button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 text-white text-[11px] font-bold hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+                Export DDL
+              </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Locked Bottom Input Shell -->
+<footer class="fixed bottom-0 left-0 w-full z-50 p-6 flex flex-col items-center gap-3">
+<div class="max-w-4xl w-full">
+<div class="liquid-glass rounded-2xl p-2 flex items-center border border-white/10 focus-within:border-secondary/50 transition-colors shadow-2xl">
+<div class="flex items-center gap-2 px-3">
+<span class="material-symbols-outlined text-on-surface-variant text-xl" data-icon="attach_file">attach_file</span>
+</div>
+<input class="flex-1 bg-transparent border-none text-sm text-white placeholder-on-surface-variant/50 focus:ring-0" placeholder="Ask Axon to modify schema or generate queries..." type="text"/>
+<button class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-on-primary hover:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined font-bold" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+<!-- Meta Row -->
+<div class="flex items-center justify-between px-4 mt-3">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant opacity-60">Connected to production_db</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-on-surface-variant" data-icon="flash_on">flash_on</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant opacity-60">GPT-4 Turbo Active</span>
+</div>
+</div>
+<div class="text-[10px] text-on-surface-variant opacity-40 italic">
+          Press ⌘+K for context menu
+        </div>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#c4c7c9",
+                        "tertiary": "#ffffff",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-fixed": "#0d1c2f",
+                        "on-secondary-container": "#a7b6cc",
+                        "on-primary-container": "#626567",
+                        "on-primary": "#2d3133",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#0d1c2d",
+                        "outline": "#8e9193",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#57657b",
+                        "on-error": "#690005",
+                        "on-tertiary": "#233144",
+                        "on-primary-fixed": "#191c1e",
+                        "tertiary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#dae2fd",
+                        "secondary-fixed": "#d4e4fa",
+                        "primary-container": "#e0e3e5",
+                        "on-primary-fixed-variant": "#444749",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#c4c7c9",
+                        "outline-variant": "#444749",
+                        "tertiary-fixed": "#d5e3fd",
+                        "on-secondary": "#233143",
+                        "inverse-on-surface": "#283044",
+                        "surface-variant": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "primary": "#ffffff",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#b9c8de",
+                        "on-secondary-fixed-variant": "#39485a",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#c4c7c9",
+                        "inverse-primary": "#5c5f61",
+                        "surface": "#0b1326",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-fixed-variant": "#3a485c",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#d5e3fd",
+                        "secondary": "#b9c8de",
+                        "surface-container-low": "#131b2e",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#39485a",
+                        "primary-fixed": "#e0e3e5",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px) saturate(180%);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .ambient-orb {
+            position: fixed;
+            filter: blur(120px);
+            z-index: -1;
+            border-radius: 9999px;
+            opacity: 0.4;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<!-- Ambient Orbs -->
+<div class="ambient-orb w-[600px] h-[600px] bg-secondary top-[-200px] left-[-100px]"></div>
+<div class="ambient-orb w-[500px] h-[500px] bg-on-tertiary-container bottom-[-100px] right-[-100px]"></div>
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 w-full bg-transparent text-slate-100 font-inter tracking-tight">
+<div class="text-lg font-medium text-white lowercase">axon ai</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined text-slate-400 group-hover:opacity-80 transition-opacity cursor-pointer">search</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a professional man with neutral expression in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC75ikUWmbi1nt7tcz8wAEZxQA8pQgY5QM-zCDUAtwA_gDaEEkjpoLGmLKY0VWwSMU8T0LTsz6Qj66N3VT0pgEHkwQVDoRiGiVDoSLfIE1w8-rd0yH54sdgUffuY2hePMuZJUXlAVMZ1ClMmoLu3Q_hkUVJL5yHiAuqt0-xQfjRIMdEUoaREhwuGBNrlsVy0SNoerefdoL5Nq2tEn0g5Fca93MMFPzfWOxEjQ5_UYISvGxQrtRFKnhp37cbXj7dF1X5dKT1OOqsvklW"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-32 px-6 max-w-[900px] mx-auto min-h-screen flex flex-col">
+<!-- Header Area -->
+<section class="mb-10">
+<div class="flex justify-between items-end mb-8">
+<h1 class="text-2xl font-bold tracking-tight text-white">Library</h1>
+<div class="relative w-64 group">
+<input class="w-full bg-white/5 border-none rounded-xl px-4 py-2 text-sm text-on-surface placeholder:text-slate-500 backdrop-blur-xl focus:ring-1 focus:ring-primary/20 transition-all" placeholder="Search conversations..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-2 text-slate-500 text-lg">search</span>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 mb-12">
+<button class="px-5 py-1.5 rounded-full text-xs font-medium bg-white text-on-primary transition-all">All</button>
+<button class="px-5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-on-surface-variant hover:bg-white/10 transition-all">Today</button>
+<button class="px-5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-on-surface-variant hover:bg-white/10 transition-all">This Week</button>
+<button class="px-5 py-1.5 rounded-full text-xs font-medium bg-white/5 text-on-surface-variant hover:bg-white/10 transition-all">Pinned</button>
+</div>
+</section>
+<!-- Conversation Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
+<!-- Card 1 -->
+<div class="liquid-glass p-6 rounded-xl group hover:saturate-[250%] transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-semibold text-white leading-tight">Optimizing PostgreSQL CTEs for High-Volume Ingestion</h3>
+<span class="material-symbols-outlined text-sm text-secondary-fixed-dim" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</div>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6 leading-relaxed">
+                    We explored the trade-offs between Materialized and non-materialized CTEs when handling 10M+ rows per hour...
+                </p>
+<div class="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+<div class="flex gap-4">
+<span>2h ago</span>
+<span>14 messages</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-white/5 text-secondary border border-outline-variant/10">GPT-4o</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="liquid-glass p-6 rounded-xl group hover:saturate-[250%] transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-semibold text-white leading-tight">Snowflake Snowflake Data Masking Policy Automation</h3>
+<span class="material-symbols-outlined text-sm text-slate-500">push_pin</span>
+</div>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6 leading-relaxed">
+                    Python script generation for applying row-level security and column-level masking across all production schemas...
+                </p>
+<div class="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+<div class="flex gap-4">
+<span>Yesterday</span>
+<span>8 messages</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-white/5 text-secondary border border-outline-variant/10">Claude 3.5</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="liquid-glass p-6 rounded-xl group hover:saturate-[250%] transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-semibold text-white leading-tight">Refactoring Airflow DAGs for Dynamic Task Generation</h3>
+<span class="material-symbols-outlined text-sm text-slate-500">push_pin</span>
+</div>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6 leading-relaxed">
+                    Moving from static task definitions to Python loop-based generation to handle variable source counts...
+                </p>
+<div class="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+<div class="flex gap-4">
+<span>Aug 12</span>
+<span>22 messages</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-white/5 text-secondary border border-outline-variant/10">GPT-4o</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="liquid-glass p-6 rounded-xl group hover:saturate-[250%] transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-semibold text-white leading-tight">Kafka Schema Registry Compatibility Investigation</h3>
+<span class="material-symbols-outlined text-sm text-secondary-fixed-dim" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</div>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6 leading-relaxed">
+                    Troubleshooting Avro schema evolution errors when transitioning from backward to forward transitive compatibility...
+                </p>
+<div class="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+<div class="flex gap-4">
+<span>Aug 10</span>
+<span>12 messages</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-white/5 text-secondary border border-outline-variant/10">Claude 3.5</span>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="liquid-glass p-6 rounded-xl group hover:saturate-[250%] transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-semibold text-white leading-tight">Real-time Data Quality Framework with dbt &amp; Great Expectations</h3>
+<span class="material-symbols-outlined text-sm text-slate-500">push_pin</span>
+</div>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6 leading-relaxed">
+                    Architecture brainstorming for integrating dbt-tests into a CI/CD pipeline for Snowflake...
+                </p>
+<div class="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+<div class="flex gap-4">
+<span>Aug 08</span>
+<span>31 messages</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-white/5 text-secondary border border-outline-variant/10">GPT-4o</span>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="liquid-glass p-6 rounded-xl group hover:saturate-[250%] transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-semibold text-white leading-tight">SQL Window Functions for Advanced Retention Cohorts</h3>
+<span class="material-symbols-outlined text-sm text-slate-500">push_pin</span>
+</div>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6 leading-relaxed">
+                    Refining a complex LAG/LEAD query to calculate user churn and resurrection rates by week...
+                </p>
+<div class="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+<div class="flex gap-4">
+<span>Aug 05</span>
+<span>5 messages</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-white/5 text-secondary border border-outline-variant/10">GPT-4o</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Input Area -->
+<footer class="fixed bottom-0 left-0 w-full p-6 bg-gradient-to-t from-background via-background/90 to-transparent">
+<div class="max-w-[900px] mx-auto">
+<div class="liquid-glass flex items-center gap-3 p-2 pr-4 rounded-full border border-white/10 group">
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<input class="bg-transparent border-none flex-grow text-white placeholder:text-slate-500 focus:ring-0 text-sm" placeholder="Ask axon to start a new conversation..." type="text"/>
+<button class="w-8 h-8 rounded-full bg-white text-on-primary flex items-center justify-center hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+</button>
+</div>
+<!-- Meta Row -->
+<div class="flex justify-center gap-6 mt-4 text-[10px] uppercase tracking-[0.1em] font-semibold text-slate-600">
+<div class="flex items-center gap-1.5 cursor-pointer hover:text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-xs">auto_awesome</span>
+<span>AI Workspace</span>
+</div>
+<div class="flex items-center gap-1.5 cursor-pointer hover:text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-xs">history</span>
+<span>2.4k History</span>
+</div>
+<div class="flex items-center gap-1.5 cursor-pointer hover:text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-xs">encrypted</span>
+<span>Encrypted</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

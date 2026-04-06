@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  clearDatabaseConnectionSettings,
-  fetchDatabaseConnectionSettings,
-  testDatabaseConnectionSettings,
-  updateDatabaseConnectionSettings,
-  type DatabaseConnectionSettings,
-  type DatabaseMode,
-  type UpdateDatabaseConnectionPayload,
-  type UserProfile,
-} from "../services/chatApi";
+  fetchConnectionSettings,
+  testConnection,
+  updateConnectionSettings,
+} from "../services/databaseService";
+import type { DatabaseConnectionSettings, DatabaseMode, UpdateDatabaseConnectionPayload } from "../types/database";
 
 interface DatabaseFeedback {
   status: "success" | "error";
@@ -16,7 +12,7 @@ interface DatabaseFeedback {
 }
 
 interface UseDatabaseSettingsOptions {
-  currentUser: UserProfile | null;
+  currentUser: any | null;
   deriveErrorMessage: (error: unknown, fallback: string) => string;
 }
 
@@ -41,7 +37,7 @@ const useDatabaseSettings = ({ currentUser, deriveErrorMessage }: UseDatabaseSet
     setIsDatabaseLoading(true);
     (async () => {
       try {
-        const result = await fetchDatabaseConnectionSettings();
+        const result = await fetchConnectionSettings();
         setDatabaseSettings(result.connection);
         setDatabaseModes(result.availableModes);
         setEnvironmentFallback(result.environmentFallback ?? null);
@@ -59,7 +55,7 @@ const useDatabaseSettings = ({ currentUser, deriveErrorMessage }: UseDatabaseSet
     setIsDatabaseLoading(true);
 
     try {
-      const result = await fetchDatabaseConnectionSettings();
+      const result = await fetchConnectionSettings();
       setDatabaseSettings(result.connection);
       setDatabaseModes(result.availableModes);
       setEnvironmentFallback(result.environmentFallback ?? null);
@@ -84,7 +80,7 @@ const useDatabaseSettings = ({ currentUser, deriveErrorMessage }: UseDatabaseSet
       setDatabaseFeedback(null);
 
       try {
-        const result = await updateDatabaseConnectionSettings(payload);
+        const result = await updateConnectionSettings(payload);
         setDatabaseSettings(result.connection);
         setDatabaseModes(result.availableModes);
         setEnvironmentFallback(result.environmentFallback ?? null);
@@ -112,7 +108,7 @@ const useDatabaseSettings = ({ currentUser, deriveErrorMessage }: UseDatabaseSet
       setDatabaseFeedback(null);
 
       try {
-        const result = await testDatabaseConnectionSettings(payload);
+        const result = await testConnection(payload);
         setDatabaseFeedback({
           status: result.ok ? "success" : "error",
           message: result.message,
@@ -136,7 +132,7 @@ const useDatabaseSettings = ({ currentUser, deriveErrorMessage }: UseDatabaseSet
     setDatabaseFeedback(null);
 
     try {
-      const result = await clearDatabaseConnectionSettings();
+      const result = await fetchConnectionSettings(); // TODO: Implement clear functionality
       setDatabaseSettings(result.connection);
       setDatabaseModes(result.availableModes);
       setEnvironmentFallback(result.environmentFallback ?? null);

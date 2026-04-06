@@ -4,13 +4,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDatabaseStore } from '../../stores/databaseStore';
-import type { SqlQuerySuggestion } from '../../types/database';
-import type { SqlQueryHistoryEntry as CanvasHistoryEntry, PendingQuery as CanvasPendingQuery } from './types';
-import SchemaDiagram from './SchemaDiagram';
-import { SqlResultsView } from './SqlResultsView';
-import { SqlHistoryPanel } from './SqlHistoryPanel';
-import { SqlSuggestionsPanel } from './SqlSuggestionsPanel';
-import { SqlPendingApprovalPanel } from './SqlPendingApprovalPanel';
+import type { SqlQuerySuggestion, SqlQueryHistoryEntry } from '../../types/database';
+import SchemaViewer from './SchemaViewer';
+import { SqlResultsView } from './SqlResults';
+import { SqlHistoryPanel } from './SqlHistory';
+import { SqlSuggestionsPanel } from './SqlSuggestions';
+import { SqlPendingApprovalPanel } from './SqlPending';
 
 type CanvasTab = 'editor' | 'results' | 'schema';
 type EditorPanel = 'suggestions' | 'history' | 'pending';
@@ -107,33 +106,21 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [requestSuggestions, queryText]);
 
-  const handleHistorySelect = useCallback((entry: CanvasHistoryEntry) => {
+  const handleHistorySelect = useCallback((entry: SqlQueryHistoryEntry) => {
     onChangeQuery(entry.query);
     if (entry.result) { setResult(entry.result); setActiveTab('results'); }
     else { setEditorPanel('history'); setActiveTab('editor'); }
   }, [onChangeQuery]);
 
   // Map Zustand history to old Canvas types
-  const canvasHistory: CanvasHistoryEntry[] = useMemo(() => history.map((h) => ({
+  const canvasHistory: (SqlQueryHistoryEntry & { displaySource?: string })[] = useMemo(() => history.map((h) => ({
     id: h.id,
     query: h.query,
     executedAt: h.executedAt,
-    type: h.result?.type ?? 'error',
-    rowCount: h.result?.rowCount ?? 0,
     result: h.result,
-    source: 'user' as const,
+    executionTimeMs: h.executionTimeMs,
+    displaySource: 'user' as const,
   })), [history]);
-
-  // Map Zustand pendingQuery to old Canvas type
-  const canvasPendingQuery: CanvasPendingQuery | null = useMemo(() => {
-    if (!pendingQuery) return null;
-    return {
-      id: pendingQuery.id,
-      query: pendingQuery.query,
-      source: pendingQuery.source === 'assistant' ? 'ai' as const : 'user' as const,
-      timestamp: pendingQuery.timestamp,
-    };
-  }, [pendingQuery]);
 
   const handleSuggestionSelect = useCallback((suggestion: SqlQuerySuggestion) => {
     onChangeQuery(suggestion.query);
@@ -212,7 +199,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   {isSchemaLoading ? (
                     <div className="skeleton-pulse h-32 rounded-xl" />
                   ) : (
-                    <SchemaDiagram schema={schema} />
+                    <SchemaViewer schema={schema} />
                   )}
                 </section>
               )}
@@ -330,7 +317,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                           {panel}
                         </button>
                       ))}
-                      {canvasPendingQuery && (
+                      {pendingQuery && (
                         <button
                           type="button"
                           onClick={() => setEditorPanel('pending')}
@@ -345,9 +332,9 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   </div>
 
                   {/* Sub-panel content */}
-                  {editorPanel === 'pending' && canvasPendingQuery ? (
+                  {editorPanel === 'pending' && pendingQuery ? (
                     <SqlPendingApprovalPanel
-                      pendingQuery={canvasPendingQuery}
+                      pendingQuery={pendingQuery}
                       isExecuting={isExecuting}
                       onApprove={() => { if (pendingQuery) { onChangeQuery(pendingQuery.query); approvePendingQuery(); } }}
                       onEdit={(q) => { onChangeQuery(q); setEditorPanel('suggestions'); }}
@@ -390,7 +377,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </button>
               </header>
               <div className="flex-1 overflow-auto p-6">
-                <SchemaDiagram schema={schema} />
+                <SchemaViewer schema={schema} />
               </div>
             </motion.div>
           </>
