@@ -1,0 +1,14 @@
+<svg
+  width="26"
+  height="26"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="1.8"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+  className="text-sky-200"
+>
+  <path d="M4 4h9l7 8-7 8H4l7-8z" />
+  <path d="M11 4 7 12l4 8" />
+</svg>

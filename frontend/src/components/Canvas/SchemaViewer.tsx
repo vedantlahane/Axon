@@ -3,6 +3,7 @@
 
 import React, { useMemo, useState } from 'react';
 import type { SqlSchemaPayload } from '../../types/database';
+import Icon from '../ui/Icon';
 
 interface SchemaViewerProps {
   schema: SqlSchemaPayload | null;
@@ -90,22 +91,19 @@ const SchemaViewer: React.FC<SchemaViewerProps> = ({ schema }) => {
                 onClick={() => setExpandedTable(isExpanded ? null : table.name)}
                 className="w-full flex items-center gap-3 px-5 py-3 hover:bg-white/5 transition-colors text-left"
               >
-                <span
-                  className="material-symbols-outlined text-sm transition-transform shrink-0"
+                <Icon
+                  name="chevron_right"
+                  className="text-sm transition-transform shrink-0"
                   style={{
                     color: 'var(--text-ghost)',
-                    fontSize: '18px',
+                    fontSize: 18,
                     transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
                   }}
-                >
-                  chevron_right
-                </span>
-                <span
-                  className="material-symbols-outlined shrink-0"
-                  style={{ fontSize: '16px', color: 'var(--text-secondary)' }}
-                >
-                  table_chart
-                </span>
+                />
+                <Icon
+                  name="table_chart"
+                  style={{ fontSize: 16, color: 'var(--text-secondary)' }}
+                />
                 <span className="text-sm font-medium text-white">{table.name}</span>
                 <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>
                   {table.columns.length} columns

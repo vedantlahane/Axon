@@ -2,6 +2,7 @@
 // Dark-only. No theme toggle. Font size + send behavior.
 
 import React, { useState } from 'react';
+import Icon from '../ui/Icon';
 import Toggle from '../ui/Toggle';
 
 interface AppearanceSectionProps {
@@ -25,12 +26,10 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   return (
     <section className="liquid-glass rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <span
-          className="material-symbols-outlined"
-          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: '20px' }}
-        >
-          palette
-        </span>
+        <Icon
+          name="palette"
+          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: 20 }}
+        />
         <h2 className="text-lg font-semibold text-white">Appearance</h2>
       </div>
 
@@ -91,12 +90,10 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
             className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
             style={{ background: 'var(--bg-surface-high, #222a3d)' }}
           >
-            <span
-              className="material-symbols-outlined"
-              style={{ color: 'var(--text-ghost)', fontSize: '20px' }}
-            >
-              dark_mode
-            </span>
+            <Icon
+              name="dark_mode"
+              style={{ color: 'var(--text-ghost)', fontSize: 20 }}
+            />
           </div>
           <div>
             <p className="text-sm font-medium text-white">Dark Mode</p>

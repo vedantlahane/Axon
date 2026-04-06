@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.2 "UserMessage"
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import type { ChatMessage } from '../../types/chat';
 import { formatDisplayTime, formatFileSize } from '../../utils/formatters';
 import MarkdownRenderer from './MarkdownRenderer';
@@ -45,12 +46,7 @@ const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
                     color: '#CBD5E1',
                   }}
                 >
-                  <span
-                    className="material-symbols-outlined"
-                    style={{ fontSize: '14px' }}
-                  >
-                    attach_file
-                  </span>
+                  <Icon name="attach_file" size={14} />
                   <span className="truncate max-w-[100px]">{att.name}</span>
                   <span className="text-slate-500">
                     {formatFileSize(att.size)}

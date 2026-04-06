@@ -1,6 +1,7 @@
 // ─── SQL Results View ────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
+import Icon from '../ui/Icon';
 import type { SqlQueryResult } from '../../types/database';
 import { exportSqlResultsXlsx } from '../../utils/formatters';
 
@@ -76,9 +77,7 @@ export const SqlResultsView: React.FC<SqlResultsViewProps> = ({ result }) => {
               onClick={() => void handleExport(result)}
               className="btn-glass text-[10px] px-2 py-1"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
-                download
-              </span>
+              <Icon name="download" size={12} />
               {isExporting ? 'Exporting…' : 'Export XLSX'}
             </button>
           </div>
@@ -161,16 +160,14 @@ export const SqlResultsView: React.FC<SqlResultsViewProps> = ({ result }) => {
     return (
       <div className="glass-error rounded-xl p-4">
         <div className="mb-2 flex items-center gap-2">
-          <span
-            className="material-symbols-outlined"
+          <Icon
+            name="error"
             style={{
-              fontSize: '16px',
+              fontSize: 16,
               color: 'var(--color-error)',
               fontVariationSettings: "'FILL' 1",
             }}
-          >
-            error
-          </span>
+          />
           <span className="text-sm font-medium" style={{ color: '#FB7185' }}>
             Query failed
           </span>
@@ -190,16 +187,14 @@ export const SqlResultsView: React.FC<SqlResultsViewProps> = ({ result }) => {
   return (
     <div className="glass-success rounded-xl p-4">
       <div className="mb-2 flex items-center gap-2">
-        <span
-          className="material-symbols-outlined"
+        <Icon
+          name="check_circle"
           style={{
-            fontSize: '16px',
+            fontSize: 16,
             color: 'var(--color-success)',
             fontVariationSettings: "'FILL' 1",
           }}
-        >
-          check_circle
-        </span>
+        />
         <span className="text-sm font-medium" style={{ color: '#34D399' }}>
           Success
         </span>

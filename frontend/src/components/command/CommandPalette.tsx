@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useChatStore } from '../../stores/chatStore';
 import { formatRelativeTime } from '../../utils/formatters';
+import Icon from '../ui/Icon';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -256,12 +257,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                   backgroundClip: 'padding-box, border-box',
                 }}
               >
-                <span
-                  className="material-symbols-outlined shrink-0"
-                  style={{ color: 'var(--text-ghost)', fontSize: '20px' }}
-                >
-                  search
-                </span>
+                <Icon
+                  name="search"
+                  size={20}
+                  style={{ color: 'var(--text-ghost)' }}
+                />
                 <input
                   ref={inputRef}
                   type="text"
@@ -341,17 +341,15 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                               setSelectedIndex(currentFlatIndex)
                             }
                           >
-                            <span
-                              className="material-symbols-outlined shrink-0"
+                            <Icon
+                              name={cmd.icon}
+                              size={18}
                               style={{
-                                fontSize: '18px',
                                 color: isSelected
                                   ? 'var(--accent-violet-light, #a78bfa)'
                                   : 'var(--text-ghost)',
                               }}
-                            >
-                              {cmd.icon}
-                            </span>
+                            />
 
                             <div className="flex-1 min-w-0">
                               {cmd.type === 'command' && cmd.label.startsWith('/') ? (

@@ -1,6 +1,7 @@
 // ─── Error Fallback ──────────────────────────────────────────────────────────
 
 import React from 'react';
+import Icon from '../ui/Icon';
 
 interface ErrorFallbackProps {
   error?: Error | null;
@@ -14,15 +15,14 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
   <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-6 text-center">
     {/* Icon */}
     <div className="liquid-glass w-20 h-20 rounded-2xl flex items-center justify-center">
-      <span
-        className="material-symbols-outlined text-4xl"
+      <Icon
+        name="error_outline"
+        className="text-4xl"
         style={{
           color: 'var(--color-error, #FB7185)',
           fontVariationSettings: "'FILL' 1",
         }}
-      >
-        error_outline
-      </span>
+      />
     </div>
 
     {/* Text */}
@@ -55,9 +55,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
     <div className="flex gap-3">
       {resetError && (
         <button type="button" className="btn-primary" onClick={resetError}>
-          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-            refresh
-          </span>
+          <Icon name="refresh" size={16} />
           Try Again
         </button>
       )}
@@ -66,9 +64,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
         className="btn-glass"
         onClick={() => (window.location.href = '/')}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-          home
-        </span>
+        <Icon name="home" size={16} />
         Go Home
       </button>
     </div>

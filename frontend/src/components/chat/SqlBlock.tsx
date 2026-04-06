@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.3 "SqlBlock"
 
 import React from 'react';
+import Icon from '../ui/Icon';
 
 interface SqlBlockProps {
   sql: string;
@@ -37,12 +38,10 @@ const SqlBlock: React.FC<SqlBlockProps> = ({
       }}
     >
       <div className="flex items-center gap-2">
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: '16px', color: 'var(--text-secondary)' }}
-        >
-          terminal
-        </span>
+        <Icon
+          name="terminal"
+          style={{ fontSize: 16, color: 'var(--text-secondary)' }}
+        />
         <span className="text-xs font-mono text-slate-400">{filename}</span>
       </div>
 
@@ -87,9 +86,10 @@ const SqlBlock: React.FC<SqlBlockProps> = ({
         onClick={onCopy}
         aria-label="Copy SQL"
       >
-        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-          {isCopied ? 'check' : 'content_copy'}
-        </span>
+        <Icon
+          name={isCopied ? 'check' : 'content_copy'}
+          style={{ fontSize: 16 }}
+        />
         {isCopied ? 'Copied' : 'Copy'}
       </button>
 
@@ -101,12 +101,10 @@ const SqlBlock: React.FC<SqlBlockProps> = ({
         onClick={onRun}
         aria-label="Run SQL query"
       >
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: '16px', fontVariationSettings: "'FILL' 1" }}
-        >
-          play_arrow
-        </span>
+        <Icon
+          name="play_arrow"
+          style={{ fontSize: 16, fontVariationSettings: "'FILL' 1" }}
+        />
         Run Query
       </button>
     </div>

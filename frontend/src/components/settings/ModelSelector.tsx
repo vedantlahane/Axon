@@ -1,6 +1,7 @@
 // ─── Model Selector ──────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
+import Icon from '../ui/Icon';
 import type { LLMModel } from '../../types/models';
 
 interface ModelSelectorProps {
@@ -30,12 +31,10 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   return (
     <section className="liquid-glass rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <span
-          className="material-symbols-outlined"
-          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: '20px' }}
-        >
-          smart_toy
-        </span>
+        <Icon
+          name="smart_toy"
+          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: 20 }}
+        />
         <h2 className="text-lg font-semibold text-white">AI Model</h2>
       </div>
 
@@ -73,17 +72,15 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                       : 'var(--bg-surface-high, #222a3d)',
                   }}
                 >
-                  <span
-                    className="material-symbols-outlined"
+                  <Icon
+                    name="smart_toy"
                     style={{
                       color: isActive
                         ? 'var(--accent-violet-light)'
                         : 'var(--text-ghost)',
-                      fontSize: '20px',
+                      fontSize: 20,
                     }}
-                  >
-                    smart_toy
-                  </span>
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white">{model.name}</p>

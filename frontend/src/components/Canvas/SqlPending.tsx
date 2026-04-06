@@ -1,6 +1,7 @@
 // ─── SQL Pending Approval Panel ──────────────────────────────────────────────
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import type { PendingQuery } from '../../types/database';
 
 interface SqlPendingApprovalPanelProps {
@@ -21,9 +22,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
   <section className="flex flex-col gap-3">
     <header className="mb-2">
       <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: 'var(--color-warning)' }}>
-        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-          pending
-        </span>
+        <Icon name="pending" size={14} />
         Query Pending Approval
       </span>
     </header>
@@ -70,9 +69,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
               color: 'var(--color-success)',
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-              check
-            </span>
+            <Icon name="check" size={14} />
             Approve & Run
           </button>
           <button
@@ -80,9 +77,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
             onClick={() => onEdit(pendingQuery.query)}
             className="btn-glass text-sm"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-              edit
-            </span>
+            <Icon name="edit" size={14} />
             Edit First
           </button>
           <button
@@ -95,9 +90,7 @@ export const SqlPendingApprovalPanel: React.FC<SqlPendingApprovalPanelProps> = (
               color: 'var(--color-error)',
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-              close
-            </span>
+            <Icon name="close" size={14} />
             Reject
           </button>
         </div>

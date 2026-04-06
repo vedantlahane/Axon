@@ -1,4 +1,5 @@
 import React from 'react';
+import Icon from '../../ui/Icon';
 
 interface SystemCardProps {
   type: 'model_switch' | 'connection' | 'info';
@@ -15,7 +16,7 @@ const SystemCard: React.FC<SystemCardProps> = ({ type, message }) => {
   return (
     <div className="flex justify-center mb-3">
       <div className="liquid-glass rounded-lg px-4 py-3 flex items-center gap-3 max-w-sm">
-        <span className="material-symbols-outlined text-violet-400">{icons[type]}</span>
+        <Icon name={icons[type]} style={{color: 'rgb(167, 139, 250)'}} />
         <p className="text-sm text-on-surface-variant">{message}</p>
       </div>
     </div>

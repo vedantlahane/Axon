@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import Icon from '../ui/Icon';
 import { fadeUp, staggerContainer } from '../../lib/animations';
 
 interface EmptyStateProps {
@@ -40,15 +41,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onSuggestClick }) => (
         aria-hidden="true"
       />
       <div className="liquid-glass w-20 h-20 rounded-2xl flex items-center justify-center">
-        <span
-          className="material-symbols-outlined text-4xl"
-          style={{
-            color: 'var(--primary-container)',
-            fontVariationSettings: "'FILL' 1",
-          }}
-        >
-          bolt
-        </span>
+        <Icon
+          name="bolt"
+          className="text-4xl"
+          style={{ color: 'var(--primary-container)', fontVariationSettings: "'FILL' 1" }}
+        />
       </div>
     </motion.div>
 
@@ -76,11 +73,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onSuggestClick }) => (
           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.10)' }}
           onClick={() => onSuggestClick?.(s.text)}
         >
-          <span
-            className="material-symbols-outlined text-xl text-slate-500 group-hover:text-violet-400 transition-colors"
-          >
-            {s.icon}
-          </span>
+          <Icon
+            name={s.icon}
+            className="text-xl text-slate-500 group-hover:text-violet-400 transition-colors"
+          />
           <span className="text-sm font-medium text-slate-300">
             {s.text}
           </span>

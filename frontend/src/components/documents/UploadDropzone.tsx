@@ -1,6 +1,7 @@
 // ─── Upload Dropzone ─────────────────────────────────────────────────────────
 
 import React, { useState, useRef } from 'react';
+import Icon from '../ui/Icon';
 
 interface UploadDropzoneProps {
   onUpload: (files: FileList) => void;
@@ -59,16 +60,15 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
           e.target.value = '';
         }}
       />
-      <span
-        className="material-symbols-outlined text-3xl mb-3"
+      <Icon
+        name={isUploading ? 'progress_activity' : 'cloud_upload'}
+        className="text-3xl mb-3"
         style={{
           color: isDragging
             ? 'var(--accent-violet-light)'
             : 'var(--text-ghost)',
         }}
-      >
-        {isUploading ? 'progress_activity' : 'cloud_upload'}
-      </span>
+      />
       <p className="text-sm font-medium text-white mb-1">
         {isUploading ? 'Uploading…' : 'Drop files here or click to upload'}
       </p>

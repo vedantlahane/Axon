@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.2 "TypingIndicator"
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import { motion } from 'framer-motion';
 import { fadeUp } from '../../lib/animations';
 
@@ -35,12 +36,11 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     {/* ── Avatar Row ────────────────────────────────────────────────── */}
     <div className="flex items-center gap-3 mb-4">
       <div className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center border border-white/10">
-        <span
-          className="material-symbols-outlined text-sm"
+        <Icon
+          name="psychology"
+          className="text-sm"
           style={{ color: 'var(--accent-violet-light, #a78bfa)' }}
-        >
-          psychology
-        </span>
+        />
       </div>
       <span
         className="text-[11px] uppercase font-medium text-slate-300"
@@ -92,9 +92,11 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           {steps.map((step, i) => (
             <div key={i} className="flex items-center gap-2.5 text-sm">
               {step.status === 'done' && (
-                <span className="material-symbols-outlined text-sm" style={{ color: 'var(--color-success)', fontVariationSettings: "'FILL' 1", fontSize: '16px' }}>
-                  check_circle
-                </span>
+                <Icon
+                  name="check_circle"
+                  className="text-sm"
+                  style={{ color: 'var(--color-success)', fontVariationSettings: "'FILL' 1", fontSize: 16 }}
+                />
               )}
               {step.status === 'active' && (
                 <span className="relative flex h-4 w-4 items-center justify-center">

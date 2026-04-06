@@ -1,5 +1,6 @@
 // ─── Dropdown ────────────────────────────────────────────────────────────────
 import React, { useState, useRef, useEffect } from 'react';
+import Icon from './Icon';
 
 interface DropdownItem {
   id: string;
@@ -50,9 +51,11 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, items, onSelect, align = '
                 style={{ color: 'var(--text-secondary)' }}
               >
                 {item.icon && (
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--text-ghost)' }}>
-                    {item.icon}
-                  </span>
+                  <Icon
+                    name={item.icon}
+                    className="text-[16px] text-[var(--text-ghost)]"
+                    style={{ minWidth: 16 }}
+                  />
                 )}
                 {item.label}
               </button>

@@ -1,6 +1,7 @@
 // ─── Button ──────────────────────────────────────────────────────────────────
 
 import React from 'react';
+import Icon from './Icon';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'glass' | 'primary' | 'ghost' | 'danger';
@@ -59,20 +60,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading ? (
-          <span
-            className="material-symbols-outlined animate-spin"
+          <Icon
+            name="sync"
+            className="animate-spin"
             style={{ fontSize: '16px' }}
-          >
-            sync
-          </span>
+          />
         ) : (
           icon && (
-            <span
-              className="material-symbols-outlined"
+            <Icon
+              name={icon}
               style={{ fontSize: '16px' }}
-            >
-              {icon}
-            </span>
+            />
           )
         )}
         {!isIconOnly && children}

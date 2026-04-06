@@ -1,6 +1,7 @@
 // ─── SQL History Panel ───────────────────────────────────────────────────────
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import type { SqlQueryHistoryEntry } from '../../types/database';
 import { formatExecutionTimestamp } from '../../utils/formatters';
 
@@ -80,12 +81,7 @@ export const SqlHistoryPanel: React.FC<SqlHistoryPanelProps> = ({
                 onClick={() => onSelectHistory(entry)}
                 className="btn-glass text-[10px] px-2 py-1"
               >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: '12px' }}
-                >
-                  edit
-                </span>
+                <Icon name="edit" size={12} />
                 Load Query
               </button>
               {entry.result && (
@@ -99,12 +95,7 @@ export const SqlHistoryPanel: React.FC<SqlHistoryPanelProps> = ({
                     color: 'var(--color-info)',
                   }}
                 >
-                  <span
-                    className="material-symbols-outlined"
-                    style={{ fontSize: '12px' }}
-                  >
-                    visibility
-                  </span>
+                  <Icon name="visibility" size={12} />
                   View Results
                 </button>
               )}

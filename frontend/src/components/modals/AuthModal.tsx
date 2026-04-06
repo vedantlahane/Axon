@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../stores/AuthProvider';
+import Icon from '../ui/Icon';
 import type { AuthModalMode } from '../../types/auth';
 
 const AuthModal: React.FC = () => {
@@ -120,9 +121,7 @@ const AuthModal: React.FC = () => {
                 onClick={closeAuthModal}
                 aria-label="Close"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  close
-                </span>
+                <Icon name="close" size={18} />
               </button>
 
               {/* ── Tabs ──────────────────────────────────────────── */}
@@ -242,12 +241,10 @@ const AuthModal: React.FC = () => {
                         tabIndex={-1}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
-                        <span
-                          className="material-symbols-outlined"
-                          style={{ fontSize: '18px', color: 'var(--text-ghost)' }}
-                        >
-                          {showPassword ? 'visibility_off' : 'visibility'}
-                        </span>
+                        <Icon
+                          name={showPassword ? 'visibility_off' : 'visibility'}
+                          style={{ fontSize: 18, color: 'var(--text-ghost)' }}
+                        />
                       </button>
                     </div>
                   </div>

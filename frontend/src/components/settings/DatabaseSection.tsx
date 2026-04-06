@@ -2,6 +2,7 @@
 // Fixed: connectionUrl → connectionString
 
 import React, { useState } from 'react';
+import Icon from '../ui/Icon';
 import type { DatabaseConnectionSettings } from '../../types/database';
 import type { ConnectionTestResult } from '../../stores/databaseStore';
 
@@ -46,12 +47,10 @@ const DatabaseSection: React.FC<DatabaseSectionProps> = ({
     <section className="liquid-glass rounded-2xl p-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <span
-            className="material-symbols-outlined"
-            style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: '20px' }}
-          >
-            database
-          </span>
+          <Icon
+            name="database"
+            style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: 20 }}
+          />
           <h2 className="text-lg font-semibold text-white">Database</h2>
         </div>
         <span

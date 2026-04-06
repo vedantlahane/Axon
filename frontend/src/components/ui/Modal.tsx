@@ -1,6 +1,7 @@
 // ─── Modal ───────────────────────────────────────────────────────────────────
 
 import React, { useEffect } from 'react';
+import Icon from './Icon';
 
 interface ModalProps {
   isOpen: boolean;
@@ -57,9 +58,7 @@ const Modal: React.FC<ModalProps> = ({
                   className="btn-icon"
                   aria-label="Close"
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
-                    close
-                  </span>
+                  <Icon name="close" size={20} />
                 </button>
               )}
             </div>

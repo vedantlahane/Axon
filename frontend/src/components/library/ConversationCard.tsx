@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.5 "Library — Each card"
 
 import React from 'react';
+import Icon from '../ui/Icon';
 
 interface ConversationCardProps {
   conversation: {
@@ -46,12 +47,10 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
         className="p-2 rounded-lg"
         style={{ background: 'var(--bg-surface-high, #222a3d)' }}
       >
-        <span
-          className="material-symbols-outlined"
-          style={{ color: 'var(--text-secondary)', fontSize: '20px' }}
-        >
-          chat_bubble_outline
-        </span>
+        <Icon
+          name="chat_bubble_outline"
+          style={{ color: 'var(--text-secondary)', fontSize: 20 }}
+        />
       </div>
 
       <div className="flex items-center gap-1">
@@ -68,18 +67,16 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
             }}
             aria-label={isPinned ? 'Unpin conversation' : 'Pin conversation'}
           >
-            <span
-              className="material-symbols-outlined"
+            <Icon
+              name="push_pin"
               style={{
-                fontSize: '16px',
+                fontSize: 16,
                 color: isPinned
                   ? 'var(--accent-violet-light, #a78bfa)'
                   : 'var(--text-ghost)',
                 fontVariationSettings: isPinned ? "'FILL' 1" : "'FILL' 0",
               }}
-            >
-              push_pin
-            </span>
+            />
           </button>
         )}
 
@@ -93,12 +90,7 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
           }}
           aria-label={`Delete conversation: ${conversation.title}`}
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: '16px' }}
-          >
-            delete
-          </span>
+          <Icon name="delete" size={16} />
         </button>
       </div>
     </div>

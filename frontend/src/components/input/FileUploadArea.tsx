@@ -3,6 +3,7 @@
 // For input-attached files, ChatInput renders its own chips internally.
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import { formatFileSize } from '../../utils/formatters';
 
 interface FileItem {
@@ -50,12 +51,11 @@ const FileUploadArea: React.FC<FileUploadAreaProps> = ({
               border: '1px solid rgba(255, 255, 255, 0.06)',
             }}
           >
-            <span
-              className={`material-symbols-outlined ${color}`}
-              style={{ fontSize: '14px' }}
-            >
-              {icon}
-            </span>
+            <Icon
+              name={icon}
+              className={`${color}`}
+              style={{ fontSize: 14 }}
+            />
             <span className="text-slate-300 max-w-[120px] truncate">
               {file.name}
             </span>
@@ -69,12 +69,7 @@ const FileUploadArea: React.FC<FileUploadAreaProps> = ({
                 className="ml-1 text-slate-500 hover:text-white transition-colors"
                 aria-label={`Remove ${file.name}`}
               >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: '12px' }}
-                >
-                  close
-                </span>
+                <Icon name="close" size={12} />
               </button>
             )}
           </div>

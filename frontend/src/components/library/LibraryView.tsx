@@ -10,6 +10,7 @@ import { useChatStore } from '../../stores/chatStore';
 import PageContainer from '../layout/PageContainer';
 import ConversationCard from './ConversationCard';
 import LibrarySearch from './LibrarySearch';
+import Icon from '../ui/Icon';
 import { formatRelativeTime } from '../../utils/formatters';
 
 const isToday = (dateStr: string) => {
@@ -141,12 +142,11 @@ const LibraryView: React.FC = () => {
             variants={fadeUp}
             className="liquid-glass rounded-xl p-12 text-center"
           >
-            <span
-              className="material-symbols-outlined text-4xl mb-4 block"
+            <Icon
+              name={searchQuery ? 'search_off' : activeFilter === 'Pinned' ? 'push_pin' : 'inbox'}
+              className="text-4xl mb-4 block"
               style={{ color: 'var(--text-ghost)' }}
-            >
-              {searchQuery ? 'search_off' : activeFilter === 'Pinned' ? 'push_pin' : 'inbox'}
-            </span>
+            />
             <p style={{ color: 'var(--text-secondary)' }}>
               {searchQuery
                 ? 'No conversations match your search.'

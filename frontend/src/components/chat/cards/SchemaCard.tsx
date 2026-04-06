@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.3 "SchemaCard"
 
 import React, { useState } from 'react';
+import Icon from '../../ui/Icon';
 
 interface Column {
   name: string;
@@ -100,22 +101,19 @@ const SchemaCard: React.FC<SchemaCardProps> = ({
                   setExpandedTable(isExpanded ? null : table.name)
                 }
               >
-                <span
-                  className="material-symbols-outlined text-sm transition-transform"
+                <Icon
+                  name="chevron_right"
+                  className="text-sm transition-transform"
                   style={{
                     color: 'var(--text-ghost)',
-                    fontSize: '18px',
+                    fontSize: 18,
                     transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
                   }}
-                >
-                  chevron_right
-                </span>
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: '16px', color: 'var(--text-secondary)' }}
-                >
-                  table_chart
-                </span>
+                />
+                <Icon
+                  name="table_chart"
+                  style={{ fontSize: 16, color: 'var(--text-secondary)' }}
+                />
                 <span className="font-medium text-sm" style={{ color: 'var(--on-surface)' }}>
                   {table.name}
                 </span>

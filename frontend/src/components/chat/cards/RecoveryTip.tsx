@@ -1,6 +1,7 @@
 // ─── Recovery Tip ────────────────────────────────────────────────────────────
 
 import React from 'react';
+import Icon from '../../ui/Icon';
 
 interface RecoveryTipProps {
   message: string;
@@ -9,12 +10,10 @@ interface RecoveryTipProps {
 const RecoveryTip: React.FC<RecoveryTipProps> = ({ message }) => (
   <div className="flex justify-center my-3">
     <div className="glass-info rounded-full px-4 py-2 flex items-center gap-2">
-      <span
-        className="material-symbols-outlined"
-        style={{ fontSize: '14px', color: 'var(--color-warning)' }}
-      >
-        lightbulb
-      </span>
+      <Icon
+        name="lightbulb"
+        style={{ fontSize: 14, color: 'var(--color-warning)' }}
+      />
       <p className="text-xs text-slate-500 italic">{message}</p>
     </div>
   </div>

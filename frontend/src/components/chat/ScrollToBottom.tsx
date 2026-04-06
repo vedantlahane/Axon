@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import Icon from '../ui/Icon';
 
 interface ScrollToBottomProps {
   scrollRef: React.RefObject<HTMLDivElement | null>;
@@ -65,12 +66,7 @@ const ScrollToBottom: React.FC<ScrollToBottomProps> = ({
           whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.10)' }}
           aria-label="Scroll to bottom"
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: '16px' }}
-          >
-            keyboard_double_arrow_down
-          </span>
+          <Icon name="keyboard_double_arrow_down" size={16} />
           New messages
         </motion.button>
       )}

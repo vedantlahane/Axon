@@ -4,6 +4,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import Icon from '../ui/Icon';
 import { useChatStore } from '../../stores/chatStore';
 import { useAuth } from '../../stores/AuthProvider';
 import { useDatabaseStore } from '../../stores/databaseStore';
@@ -199,9 +200,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             exit={{ opacity: 0, y: 10 }}
             className="mb-3 mx-4 flex w-full max-w-[780px] items-center gap-2 rounded-xl px-4 py-2 text-xs glass-error"
           >
-            <span className="material-symbols-outlined text-sm text-rose-400">
-              error
-            </span>
+            <Icon name="error" size={16} style={{color: 'rgb(248, 113, 113)'}} />
             <span className="flex-1" style={{ color: 'var(--color-error)' }}>
               {sendError}
             </span>
@@ -211,7 +210,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               className="opacity-60 hover:opacity-100 transition-opacity"
               aria-label="Dismiss error"
             >
-              <span className="material-symbols-outlined text-sm">close</span>
+              <Icon name="close" size={16} />
             </button>
           </motion.div>
         )}
@@ -255,12 +254,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
                       border: '1px solid rgba(255, 255, 255, 0.06)',
                     }}
                   >
-                    <span
-                      className="material-symbols-outlined text-slate-500"
-                      style={{ fontSize: '14px' }}
-                    >
-                      {getFileIcon(tile.file.name)}
-                    </span>
+                    <Icon
+                      name={getFileIcon(tile.file.name)}
+                      className="text-slate-500"
+                      style={{ fontSize: 14 }}
+                    />
                     <span
                       className="text-slate-300 max-w-[100px] truncate"
                       title={tile.file.name}
@@ -289,12 +287,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                       onClick={() => handleRemoveFile(tile.id)}
                       aria-label={`Remove ${tile.file.name}`}
                     >
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: '12px' }}
-                      >
-                        close
-                      </span>
+                      <Icon name="close" size={12} />
                     </button>
                   </div>
                 ))}
@@ -318,12 +311,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               disabled={isSending}
               aria-label="Attach file"
             >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: '20px' }}
-              >
-                add
-              </span>
+              <Icon name="add" size={20} />
             </button>
 
             <input
@@ -371,12 +359,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               onClick={() => void handleSend()}
               aria-label="Send message"
             >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: '20px' }}
-              >
-                arrow_upward
-              </span>
+              <Icon name="arrow_upward" size={20} />
             </button>
           </div>
         </div>

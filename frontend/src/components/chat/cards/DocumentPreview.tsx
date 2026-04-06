@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.3 "DocumentPreview"
 
 import React from 'react';
+import Icon from '../../ui/Icon';
 import { formatFileSize } from '../../../utils/formatters';
 
 interface DocumentPreviewProps {
@@ -58,12 +59,11 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
         }}
       >
-        <span
-          className={`material-symbols-outlined ${iconColor}`}
-          style={{ fontSize: '18px' }}
-        >
-          {icon}
-        </span>
+        <Icon
+          name={icon}
+          className={iconColor}
+          style={{ fontSize: 18 }}
+        />
         <span className="text-sm font-medium text-slate-200">{filename}</span>
         {fileSize && (
           <span className="text-xs text-slate-500 ml-1">

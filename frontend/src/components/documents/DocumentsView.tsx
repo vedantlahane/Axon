@@ -8,6 +8,7 @@ import { fadeUp, staggerContainer } from '../../lib/animations';
 import PageContainer from '../layout/PageContainer';
 import DocumentCard from './DocumentCard';
 import StorageBar from './StorageBar';
+import Icon from '../ui/Icon';
 import { fetchDocuments, uploadDocument, deleteDocument } from '../../services/documentService';
 import type { UploadedDocument } from '../../types/documents';
 import { useAuth } from '../../stores/AuthProvider';
@@ -104,9 +105,7 @@ const DocumentsView: React.FC = () => {
               fileInputRef.current?.click();
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-              upload
-            </span>
+            <Icon name="upload" size={16} />
             Upload
           </button>
         </motion.div>
@@ -151,16 +150,15 @@ const DocumentsView: React.FC = () => {
               }}
               className="sr-only"
             />
-            <span
-              className="material-symbols-outlined text-3xl mb-3"
+            <Icon
+              name={isUploading ? 'progress_activity' : 'cloud_upload'}
+              className="text-3xl mb-3"
               style={{
                 color: isDragging
                   ? 'var(--accent-violet-light)'
                   : 'var(--text-ghost)',
               }}
-            >
-              {isUploading ? 'progress_activity' : 'cloud_upload'}
-            </span>
+            />
             <p className="text-sm font-medium text-white mb-1">
               {isUploading
                 ? 'Uploading…'
@@ -184,12 +182,11 @@ const DocumentsView: React.FC = () => {
             variants={fadeUp}
             className="liquid-glass rounded-xl p-12 text-center"
           >
-            <span
-              className="material-symbols-outlined text-4xl mb-4 block"
+            <Icon
+              name="folder_open"
+              className="text-4xl mb-4 block"
               style={{ color: 'var(--text-ghost)' }}
-            >
-              folder_open
-            </span>
+            />
             <p style={{ color: 'var(--text-secondary)' }}>
               No documents uploaded yet.
             </p>

@@ -2,6 +2,7 @@
 // Copy, like, dislike, report buttons. Shown on hover in AssistantMessage.
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import type { FeedbackType } from '../../types/chat';
 
 interface MessageActionsProps {
@@ -53,12 +54,7 @@ const MessageActions: React.FC<MessageActionsProps> = ({
             type === 'copy' ? onCopy() : onFeedback(type as FeedbackType)
           }
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: '16px' }}
-          >
-            {displayIcon}
-          </span>
+          <Icon name={displayIcon} size={16} />
         </button>
       );
     })}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Icon from '../ui/Icon';
 import { cn } from '../../utils/formatters';
 
 interface Command {
@@ -91,9 +92,7 @@ const SlashCommandDropdown: React.FC<SlashCommandDropdownProps> = ({
               idx === selectedIndex ? 'bg-white/10' : 'hover:bg-white/5'
             )}
           >
-            {cmd.icon && (
-              <span className="material-symbols-outlined text-violet-400">{cmd.icon}</span>
-            )}
+            {cmd.icon && <Icon name={cmd.icon} style={{color: 'rgb(167, 139, 250)'}} />}
             <div className="flex-1">
               <p className="font-mono text-on-surface">{cmd.name}</p>
               <p className="text-xs text-on-surface-variant">{cmd.description}</p>

@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.3 "ErrorCard"
 
 import React from 'react';
+import Icon from '../../ui/Icon';
 
 interface ErrorCardProps {
   title: string;
@@ -37,12 +38,11 @@ const ErrorCard: React.FC<ErrorCardProps> = ({
       >
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
-          <span
-            className="material-symbols-outlined text-rose-400 shrink-0"
-            style={{ fontSize: '20px', fontVariationSettings: "'FILL' 1" }}
-          >
-            warning
-          </span>
+          <Icon
+            name="warning"
+            className="text-rose-400 shrink-0"
+            style={{ fontSize: 20, fontVariationSettings: "'FILL' 1" }}
+          />
           <h3 className="font-medium text-rose-300">{title}</h3>
         </div>
 
@@ -88,12 +88,7 @@ const ErrorCard: React.FC<ErrorCardProps> = ({
               }}
               onClick={onRetry}
             >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: '14px' }}
-              >
-                refresh
-              </span>
+              <Icon name="refresh" size={14} />
               Retry
             </button>
           )}
@@ -125,12 +120,10 @@ const ErrorCard: React.FC<ErrorCardProps> = ({
         <div
           className="glass-info rounded-full px-4 py-2 flex items-center gap-2"
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: '14px', color: 'var(--color-warning)' }}
-          >
-            lightbulb
-          </span>
+          <Icon
+            name="lightbulb"
+            style={{ fontSize: 14, color: 'var(--color-warning)' }}
+          />
           <p className="text-xs text-slate-500 italic">{recoveryTip}</p>
         </div>
       </div>

@@ -2,6 +2,7 @@
 // SQL IDE slide-out panel: editor, results, schema.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Icon from '../ui/Icon';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDatabaseStore } from '../../stores/databaseStore';
 import type { SqlQuerySuggestion, SqlQueryHistoryEntry } from '../../types/database';
@@ -183,12 +184,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                           : { color: 'var(--text-ghost)' }
                       }
                     >
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: '14px' }}
-                      >
-                        {tab.icon}
-                      </span>
+                      <Icon name={tab.icon} size={14} />
                       {tab.label}
                     </button>
                   ))}
@@ -203,9 +199,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 className="btn-icon"
                 aria-label="Close SQL canvas"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  close
-                </span>
+                <Icon name="close" style={{ fontSize: 18 }} />
               </button>
             </div>
 
@@ -228,9 +222,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         className="btn-icon"
                         aria-label="Fullscreen schema"
                       >
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                          fullscreen
-                        </span>
+                        <Icon name="fullscreen" size={16} />
                       </button>
                     )}
                   </header>
@@ -314,9 +306,10 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       className="btn-icon"
                       aria-label={hideEditor ? 'Show editor' : 'Hide editor'}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                        {hideEditor ? 'visibility' : 'visibility_off'}
-                      </span>
+                      <Icon
+                        name={hideEditor ? 'visibility' : 'visibility_off'}
+                        style={{ fontSize: 16 }}
+                      />
                     </button>
                   </div>
 
@@ -381,15 +374,13 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                               className="btn-primary text-sm py-2 px-4"
                               aria-label="Run query"
                             >
-                              <span
-                                className="material-symbols-outlined"
+                              <Icon
+                                name="play_arrow"
                                 style={{
-                                  fontSize: '16px',
+                                  fontSize: 16,
                                   fontVariationSettings: "'FILL' 1",
                                 }}
-                              >
-                                play_arrow
-                              </span>
+                              />
                               {isExecuting ? 'Running…' : 'Run'}
                             </button>
                             <button
@@ -399,12 +390,10 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                               className="btn-glass text-sm"
                               aria-label="Get AI suggestions"
                             >
-                              <span
-                                className="material-symbols-outlined"
-                                style={{ fontSize: '16px' }}
-                              >
-                                auto_awesome
-                              </span>
+                              <Icon
+                                name="auto_awesome"
+                                style={{ fontSize: 16 }}
+                              />
                               {isFetchingSuggestions ? '…' : 'AI'}
                             </button>
                             <button
@@ -415,12 +404,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                               title="Refresh schema"
                               aria-label="Refresh schema"
                             >
-                              <span
-                                className="material-symbols-outlined"
-                                style={{ fontSize: '16px' }}
-                              >
-                                refresh
-                              </span>
+                              <Icon name="refresh" size={16} />
                             </button>
                           </div>
                           <div
@@ -617,9 +601,7 @@ const CanvasPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   className="btn-icon"
                   aria-label="Close fullscreen"
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                    close
-                  </span>
+                  <Icon name="close" style={{ fontSize: 18 }} />
                 </button>
               </header>
               <div className="flex-1 overflow-auto p-6">

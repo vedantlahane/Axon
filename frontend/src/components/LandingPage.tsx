@@ -2,6 +2,7 @@
 // Pre-auth hero page. Liquid glass aesthetic matching the design system.
 
 import React from 'react';
+import Icon from './ui/Icon';
 import { motion } from 'framer-motion';
 
 interface LandingPageProps {
@@ -60,16 +61,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => (
           className="w-12 h-12 rounded-2xl liquid-glass flex items-center justify-center"
           style={{ boxShadow: '0 0 30px rgba(124, 58, 237, 0.15)' }}
         >
-          <span
-            className="material-symbols-outlined"
+          <Icon
+            name="bolt"
             style={{
-              fontSize: '24px',
+              fontSize: 24,
               color: 'var(--accent-violet-light, #a78bfa)',
               fontVariationSettings: "'FILL' 1",
             }}
-          >
-            bolt
-          </span>
+          />
         </div>
         <span className="text-2xl font-medium tracking-tighter text-white">axon ai</span>
       </motion.div>
@@ -104,12 +103,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => (
             className="liquid-glass rounded-full px-4 py-2 text-xs font-medium flex items-center gap-2"
             style={{ color: 'var(--text-secondary)' }}
           >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '14px', color: 'var(--accent-violet-light)' }}
-            >
-              {cap.icon}
-            </span>
+            <Icon
+              name={cap.icon}
+              style={{ fontSize: 14, color: 'var(--accent-violet-light)' }}
+            />
             {cap.label}
           </span>
         ))}
@@ -126,12 +123,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => (
           }}
         >
           Get Started
-          <span
-            className="material-symbols-outlined transition-transform group-hover:translate-x-1"
-            style={{ fontSize: '20px' }}
-          >
-            arrow_forward
-          </span>
+          <Icon
+            name="arrow_forward"
+            className="transition-transform group-hover:translate-x-1"
+            style={{ fontSize: 20 }}
+          />
         </button>
       </motion.div>
     </motion.section>
@@ -163,12 +159,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => (
                 background: 'var(--accent-violet-muted, rgba(124, 58, 237, 0.15))',
               }}
             >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: '20px', color: 'var(--accent-violet-light)' }}
-              >
-                {card.icon}
-              </span>
+              <Icon
+                name={card.icon}
+                style={{ fontSize: 20, color: 'var(--accent-violet-light)' }}
+              />
             </div>
             <h3 className="text-sm font-semibold text-white mb-2">{card.title}</h3>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>

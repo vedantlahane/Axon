@@ -2,6 +2,7 @@
 // Search + filter chips for the Library page.
 
 import React from 'react';
+import Icon from '../ui/Icon';
 
 interface LibrarySearchProps {
   query: string;
@@ -21,12 +22,11 @@ const LibrarySearch: React.FC<LibrarySearchProps> = ({
   <div className="space-y-4 mb-6">
     {/* Search */}
     <div className="relative max-w-[280px]">
-      <span
-        className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined"
-        style={{ color: 'var(--text-ghost)', fontSize: '18px' }}
-      >
-        search
-      </span>
+      <Icon
+        name="search"
+        className="absolute left-3 top-1/2 -translate-y-1/2"
+        style={{ color: 'var(--text-ghost)', fontSize: 18 }}
+      />
       <input
         type="text"
         placeholder="Search conversations…"

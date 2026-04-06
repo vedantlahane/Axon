@@ -5,6 +5,7 @@
 import React, { useState, useCallback } from 'react';
 import type { ChatMessage, FeedbackType } from '../../types/chat';
 import type { SqlQueryResult } from '../../types/database';
+import Icon from '../ui/Icon';
 import { formatFileSize } from '../../utils/formatters';
 import { detectSources, detectSqlBlocks, normalizeSql } from '../../utils/sql';
 import { submitFeedback, deleteFeedback } from '../../services/feedbackService';
@@ -140,12 +141,11 @@ const AssistantMessage: React.FC<AssistantMessageProps> = ({
       {/* ── Avatar Row ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center border border-white/10">
-          <span
-            className="material-symbols-outlined text-sm"
+          <Icon
+            name="psychology"
+            className="text-sm"
             style={{ color: 'var(--accent-violet-light, #a78bfa)' }}
-          >
-            psychology
-          </span>
+          />
         </div>
         <span
           className="text-[11px] uppercase font-medium text-slate-300"
@@ -184,9 +184,7 @@ const AssistantMessage: React.FC<AssistantMessageProps> = ({
                   color: '#CBD5E1',
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                  attach_file
-                </span>
+                <Icon name="attach_file" size={14} />
                 <span className="truncate max-w-[100px]">{att.name}</span>
                 <span className="text-slate-500">{formatFileSize(att.size)}</span>
               </a>

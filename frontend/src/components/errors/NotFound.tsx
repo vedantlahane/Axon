@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Icon from '../ui/Icon';
 
 const NotFound: React.FC = () => (
   <div className="flex min-h-[80vh] flex-col items-center justify-center gap-8 px-6 text-center">
@@ -34,15 +35,11 @@ const NotFound: React.FC = () => (
 
     <div className="flex gap-3">
       <Link to="/" className="btn-primary inline-flex items-center gap-2">
-        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-          home
-        </span>
+        <Icon name="home" size={16} />
         Go Home
       </Link>
       <Link to="/library" className="btn-glass inline-flex items-center gap-2">
-        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-          auto_stories
-        </span>
+        <Icon name="auto_stories" size={16} />
         Library
       </Link>
     </div>

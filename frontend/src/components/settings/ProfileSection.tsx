@@ -1,6 +1,7 @@
 // ─── Profile Section ─────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
+import Icon from '../ui/Icon';
 
 interface ProfileSectionProps {
   displayName?: string;
@@ -33,12 +34,10 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   return (
     <section className="liquid-glass rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <span
-          className="material-symbols-outlined"
-          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: '20px' }}
-        >
-          person
-        </span>
+        <Icon
+          name="person"
+          style={{ color: 'var(--accent-violet-light, #a78bfa)', fontSize: 20 }}
+        />
         <h2 className="text-lg font-semibold text-white">Profile</h2>
       </div>
 

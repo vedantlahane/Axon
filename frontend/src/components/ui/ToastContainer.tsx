@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import Icon from './Icon';
 import { useToast, type ToastType } from '../../stores/ToastProvider';
 
 const ICON_MAP: Record<ToastType, string> = {
@@ -48,16 +49,14 @@ const ToastContainer: React.FC = () => {
             className={`${GLASS_MAP[toast.type]} rounded-xl px-4 py-3 flex items-center gap-3`}
             style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)' }}
           >
-            <span
-              className="material-symbols-outlined shrink-0"
+            <Icon
+              name={ICON_MAP[toast.type]}
               style={{
                 color: COLOR_MAP[toast.type],
-                fontSize: '20px',
+                fontSize: 20,
                 fontVariationSettings: "'FILL' 1",
               }}
-            >
-              {ICON_MAP[toast.type]}
-            </span>
+            />
             <span
               className="flex-1 text-sm min-w-0"
               style={{ color: 'var(--text-primary)' }}
@@ -70,12 +69,7 @@ const ToastContainer: React.FC = () => {
               className="btn-icon shrink-0"
               aria-label="Dismiss notification"
             >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: '16px' }}
-              >
-                close
-              </span>
+              <Icon name="close" size={16} />
             </button>
           </motion.div>
         ))}

@@ -1,6 +1,7 @@
 // ─── Document Card ───────────────────────────────────────────────────────────
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import { formatFileSize } from '../../utils/formatters';
 
 interface DocumentCardProps {
@@ -48,12 +49,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
           className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: `${color}15` }}
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: '20px', color }}
-          >
-            {icon}
-          </span>
+          <Icon name={icon} size={20} color={color} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white truncate">{filename}</p>
@@ -85,9 +81,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
               onClick={onDownload}
               aria-label={`Download ${filename}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                download
-              </span>
+              <Icon name="download" size={16} />
             </button>
           )}
           {onDelete && (
@@ -98,9 +92,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
               onClick={onDelete}
               aria-label={`Delete ${filename}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                delete
-              </span>
+              <Icon name="delete" size={16} />
             </button>
           )}
         </div>

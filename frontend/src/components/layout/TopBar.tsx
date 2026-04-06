@@ -6,6 +6,7 @@
 // Navigation: ⌘K CommandPalette + URL routing.
 
 import React from 'react';
+import Icon from '../ui/Icon';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../stores/AuthProvider';
 
@@ -33,9 +34,11 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
       {/* ── Left: Brand ─────────────────────────────────────────────────── */}
       <Link
         to="/"
-        className="text-xl font-medium tracking-tighter text-slate-200 hover:text-white transition-colors"
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        title="Axon"
       >
-        axon ai
+        <img src="/logo.svg" alt="Axon" className="w-6 h-6" />
+        <span className="text-xl font-medium tracking-tighter text-slate-200">axon ai</span>
       </Link>
 
       {/* ── Right: Search + Avatar ──────────────────────────────────────── */}
@@ -49,12 +52,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
             aria-label="Search (⌘K)"
             title="⌘K"
           >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '20px' }}
-            >
-              search
-            </span>
+            <Icon name="search" style={{ fontSize: 20 }} />
           </button>
         )}
 

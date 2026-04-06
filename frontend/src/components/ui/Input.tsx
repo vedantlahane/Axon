@@ -1,6 +1,7 @@
 // ─── Input ───────────────────────────────────────────────────────────────────
 
 import React from 'react';
+import Icon from './Icon';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -19,12 +20,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       )}
       <div className="relative">
         {icon && iconPosition === 'left' && (
-          <span
-            className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined"
+          <Icon
+            name={icon}
+            className="absolute left-3 top-1/2 -translate-y-1/2"
             style={{ fontSize: '18px', color: 'var(--text-ghost)' }}
-          >
-            {icon}
-          </span>
+          />
         )}
         <input
           ref={ref}
@@ -36,12 +36,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {icon && iconPosition === 'right' && (
-          <span
-            className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined"
+          <Icon
+            name={icon}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
             style={{ fontSize: '18px', color: 'var(--text-ghost)' }}
-          >
-            {icon}
-          </span>
+          />
         )}
       </div>
       {error && (

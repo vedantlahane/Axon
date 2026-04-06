@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.5 "Settings — Danger Zone"
 
 import React, { useState } from 'react';
+import Icon from '../ui/Icon';
 
 interface DangerSectionProps {
   onClearHistory?: () => void;
@@ -24,16 +25,14 @@ const DangerSection: React.FC<DangerSectionProps> = ({
   return (
     <section className="glass-error rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <span
-          className="material-symbols-outlined"
+        <Icon
+          name="warning"
           style={{
             color: 'var(--color-error, #FB7185)',
-            fontSize: '20px',
+            fontSize: 20,
             fontVariationSettings: "'FILL' 1",
           }}
-        >
-          warning
-        </span>
+        />
         <h2 className="text-lg font-semibold" style={{ color: '#FB7185' }}>
           Danger Zone
         </h2>
@@ -79,9 +78,7 @@ const DangerSection: React.FC<DangerSectionProps> = ({
               style={{ color: 'var(--color-error)' }}
               onClick={() => setConfirmAction('clear')}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                delete_sweep
-              </span>
+              <Icon name="delete_sweep" size={18} />
               Clear All Conversations
             </button>
 
@@ -101,9 +98,7 @@ const DangerSection: React.FC<DangerSectionProps> = ({
               style={{ color: 'var(--color-error)' }}
               onClick={() => setConfirmAction('delete')}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                person_remove
-              </span>
+              <Icon name="person_remove" size={18} />
               Delete Account
             </button>
           </>

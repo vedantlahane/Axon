@@ -2,6 +2,7 @@
 // Character-by-character streaming display for in-progress AI responses.
 
 import React, { useEffect, useState } from 'react';
+import Icon from '../ui/Icon';
 import MarkdownRenderer from './MarkdownRenderer';
 
 interface StreamingMessageProps {
@@ -45,12 +46,11 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({
       {/* ── Avatar Row ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center border border-white/10">
-          <span
-            className="material-symbols-outlined text-sm"
+          <Icon
+            name="psychology"
+            className="text-sm"
             style={{ color: 'var(--accent-violet-light, #a78bfa)' }}
-          >
-            psychology
-          </span>
+          />
         </div>
         <span
           className="text-[11px] uppercase font-medium text-slate-300"

@@ -3,6 +3,7 @@
 // Matches FRONTEND_CONTEXT.md §5.1 "ChatInput — Metadata row"
 
 import React from 'react';
+import Icon from '../ui/Icon';
 
 interface InputMetadataProps {
   modelName: string;
@@ -33,12 +34,7 @@ const InputMetadata: React.FC<InputMetadataProps> = ({
     {/* Database (optional) */}
     {hasDatabase && (
       <span className="flex items-center gap-1.5">
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: '12px' }}
-        >
-          database
-        </span>
+        <Icon name="database" size={12} />
         Connected
       </span>
     )}
