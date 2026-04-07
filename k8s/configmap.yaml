@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: axon-config
+  namespace: axon
+data:
+  APP_NAME: "Axon AI Platform"
+  API_PREFIX: "/api"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+  CORS_ORIGINS: '["https://axonvercel.vercel.app","http://localhost:3000"]'
