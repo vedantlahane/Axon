@@ -12,7 +12,14 @@ spec:
   hostPath:
     path: /data/axon-uploads
     type: DirectoryOrCreate
-
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - axon-dev-worker
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
