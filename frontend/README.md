@@ -55,19 +55,28 @@ frontend/
 ├── public/                  # Static assets and favicon
 ├── src/
 │   ├── components/          # UI components and feature screens
-│   │   ├── Canvas/
+│   │   ├── canvas/
 │   │   │   ├── CanvasPanel.tsx
-│   │   │   ├── SchemaDiagram.tsx
-│   │   │   ├── SqlHistoryPanel.tsx
-│   │   │   ├── SqlPendingApprovalPanel.tsx
-│   │   │   ├── SqlResultsView.tsx
-│   │   │   ├── SqlSuggestionsPanel.tsx
-│   │   │   └── types.ts
+│   │   │   ├── SchemaViewer.tsx
+│   │   │   ├── SqlHistory.tsx
+│   │   │   ├── SqlPending.tsx
+│   │   │   ├── SqlResults.tsx
+│   │   │   └── SqlSuggestions.tsx
 │   │   ├── chat/
+│   │   │   ├── cards/
+│   │   │   │   ├── ChartCard.tsx
+│   │   │   │   ├── DocumentPreview.tsx
+│   │   │   │   ├── ErrorCard.tsx
+│   │   │   │   ├── NarrativeBlock.tsx
+│   │   │   │   ├── QueryResultsTable.tsx
+│   │   │   │   ├── RecoveryTip.tsx
+│   │   │   │   ├── SchemaCard.tsx
+│   │   │   │   ├── SuggestionChips.tsx
+│   │   │   │   ├── SystemCard.tsx
+│   │   │   │   └── index.ts
 │   │   │   ├── AssistantMessage.tsx
-│   │   │   ├── ChatDisplay.tsx
 │   │   │   ├── ChatView.tsx
-│   │   │   ├── InputSection.tsx
+│   │   │   ├── EmptyState.tsx
 │   │   │   ├── MarkdownRenderer.tsx
 │   │   │   ├── MessageActions.tsx
 │   │   │   ├── MessageList.tsx
@@ -75,47 +84,89 @@ frontend/
 │   │   │   ├── SourceBadges.tsx
 │   │   │   ├── SqlBlock.tsx
 │   │   │   ├── SqlResultsInline.tsx
+│   │   │   ├── StreamingMessage.tsx
 │   │   │   ├── TypingIndicator.tsx
-│   │   │   └── UserMessage.tsx
+│   │   │   ├── UserMessage.tsx
+│   │   │   └── index.ts
 │   │   ├── command/
 │   │   │   └── CommandPalette.tsx
 │   │   ├── documents/
-│   │   │   └── DocumentsView.tsx
+│   │   │   ├── DocumentCard.tsx
+│   │   │   ├── DocumentsView.tsx
+│   │   │   ├── StorageBar.tsx
+│   │   │   ├── UploadDropzone.tsx
+│   │   │   └── index.ts
 │   │   ├── errors/
 │   │   │   ├── ErrorBoundary.tsx
-│   │   │   └── NotFound.tsx
+│   │   │   ├── ErrorFallback.tsx
+│   │   │   ├── NotFound.tsx
+│   │   │   └── index.ts
 │   │   ├── input/
-│   │   │   └── ChatInput.tsx
+│   │   │   ├── ChatInput.tsx
+│   │   │   ├── FileUploadArea.tsx
+│   │   │   ├── InputMetadata.tsx
+│   │   │   ├── SlashCommandDropdown.tsx
+│   │   │   └── index.ts
 │   │   ├── layout/
 │   │   │   ├── AppShell.tsx
-│   │   │   ├── MainPanel.tsx
 │   │   │   ├── PageContainer.tsx
-│   │   │   ├── Sidebar.tsx
 │   │   │   └── TopBar.tsx
 │   │   ├── library/
 │   │   │   ├── ConversationCard.tsx
-│   │   │   └── LibraryView.tsx
+│   │   │   ├── LibrarySearch.tsx
+│   │   │   ├── LibraryView.tsx
+│   │   │   └── index.ts
 │   │   ├── modals/
-│   │   │   ├── AuthModal.tsx
-│   │   │   └── DatabaseConnectionModal.tsx
+│   │   │   └── AuthModal.tsx
 │   │   ├── settings/
-│   │   │   └── SettingsView.tsx
+│   │   │   ├── AppearanceSection.tsx
+│   │   │   ├── DangerSection.tsx
+│   │   │   ├── DatabaseSection.tsx
+│   │   │   ├── ModelSelector.tsx
+│   │   │   ├── ProfileSection.tsx
+│   │   │   ├── SettingsView.tsx
+│   │   │   └── index.ts
 │   │   ├── skeletons/
-│   │   │   └── PageSkeletons.tsx
-│   │   └── ui/
-│   │       └── ToastContainer.tsx
+│   │   │   ├── ChatSkeleton.tsx
+│   │   │   ├── DocumentsSkeleton.tsx
+│   │   │   ├── EditorSkeleton.tsx
+│   │   │   ├── LibrarySkeleton.tsx
+│   │   │   ├── SettingsSkeleton.tsx
+│   │   │   └── index.ts
+│   │   ├── ui/
+│   │   │   ├── Avatar.tsx
+│   │   │   ├── Badge.tsx
+│   │   │   ├── Button.tsx
+│   │   │   ├── Dropdown.tsx
+│   │   │   ├── Icon.tsx
+│   │   │   ├── Input.tsx
+│   │   │   ├── Modal.tsx
+│   │   │   ├── Skeleton.tsx
+│   │   │   ├── Tabs.tsx
+│   │   │   ├── ToastContainer.tsx
+│   │   │   ├── Toggle.tsx
+│   │   │   ├── Tooltip.tsx
+│   │   │   └── index.ts
+│   │   ├── LandingPage.tsx
+│   │   └── Toast.tsx
 │   ├── config/
 │   │   └── api.ts
 │   ├── hooks/
 │   │   ├── index.ts
 │   │   ├── useAuth.ts
+│   │   ├── useChat.ts
+│   │   ├── useCommandPalette.ts
 │   │   ├── useConversationManager.ts
+│   │   ├── useDatabase.ts
 │   │   ├── useDatabaseSettings.ts
 │   │   ├── useKeyboardShortcuts.ts
-│   │   └── useSqlConsole.ts
+│   │   ├── useMediaQuery.ts
+│   │   ├── useSqlConsole.ts
+│   │   └── useToast.ts
+│   ├── lib/
+│   │   └── animations.ts
 │   ├── services/
 │   │   ├── authService.ts
-│   │   ├── chatApi.ts
 │   │   ├── chatService.ts
 │   │   ├── databaseService.ts
 │   │   ├── documentService.ts
@@ -144,24 +195,28 @@ frontend/
 │   │   ├── database.ts
 │   │   ├── documents.ts
 │   │   ├── graph.ts
-│   │   ├── mermaid.d.ts
 │   │   ├── models.ts
 │   │   └── speech.d.ts
 │   ├── utils/
-│   │   ├── chatMappers.ts
 │   │   ├── formatters.ts
 │   │   ├── sql.ts
-│   │   ├── sqlUtils.ts
 │   │   └── theme.ts
 │   ├── App.tsx
 │   ├── main.tsx
+│   ├── vite-env.d.ts
 │   └── index.css
+├── stitch/                  # Design/mockup files
+├── .env.example
+├── .gitignore
 ├── index.html
 ├── package.json
+├── package-lock.json
 ├── tsconfig.app.json
 ├── tsconfig.json
 ├── tsconfig.node.json
 ├── vite.config.ts
+├── eslint.config.js
+├── Dockerfile
 └── vercel.json              # Vercel deploy config
 ```
 
